@@ -1,5 +1,5 @@
-CREATE database if NOT EXISTS `inside` default character set utf8mb4 collate utf8mb4_unicode_ci;
-USE `inside`;
+CREATE database if NOT EXISTS `inside_dev` default character set utf8mb4 collate utf8mb4_unicode_ci;
+USE `inside_dev`;
 /*
  Navicat Premium Data Transfer
 
@@ -7,7 +7,7 @@ USE `inside`;
  Source Server Type    : MySQL
  Source Server Version : 50738 (5.7.38)
  Source Host           : 127.0.0.1:3306
- Source Schema         : inside
+ Source Schema         : inside_dev
 
  Target Server Type    : MySQL
  Target Server Version : 50738 (5.7.38)
