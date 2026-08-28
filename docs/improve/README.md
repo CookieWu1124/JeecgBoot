@@ -52,7 +52,7 @@ docs/improve/
 
 | 模块 | 路径 |
 |------|------|
-| 后端（Phase 1 脚手架） | `jeecg-boot/jeecg-boot-module/jeecg-module-proposal/` |
+| 后端（Phase 1 脚手架） | `jeecg-boot/jeecg-boot-module/jeecg-module-spex-inside/`（业务包 `org.jeecg.modules.proposal`） |
 | 管理端 | `jeecgboot-vue3/` |
 | 小程序端 | `jeecg-uniapp/`（本仓库 monorepo，基于官方 v3.0.0；提案业务页待建 `src/pages/proposal/`） |
 | Jeecg 基础库 SQL | `jeecg-boot/db/jeecgboot-mysql-5.7.sql` |

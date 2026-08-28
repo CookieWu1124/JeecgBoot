@@ -15,7 +15,7 @@
     <modules>
         <module>jeecg-module-demo</module>
         <module>jeecg-boot-module-airag</module>
-        <module>jeecg-module-proposal</module>
+        <module>jeecg-module-spex-inside</module>
     </modules>
 
 

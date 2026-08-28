@@ -24,10 +24,10 @@
             <artifactId>jeecg-module-demo</artifactId>
             <version>${jeecgboot.version}</version>
         </dependency>
-        <!-- 提案改善模块 -->
+        <!-- SPEX 内部业务模块（含提案改善 proposal 等） -->
         <dependency>
             <groupId>org.jeecgframework.boot3</groupId>
-            <artifactId>jeecg-module-proposal</artifactId>
+            <artifactId>jeecg-module-spex-inside</artifactId>
             <version>${jeecgboot.version}</version>
         </dependency>
         

@@ -1,6 +1,6 @@
 ---
 description: 提案改善 DDL 变更须同步 proposal_init.sql，避免上线建表遗漏
-globs: docs/improve/sql/**,jeecg-boot/**/jeecg-module-proposal/**/entity/**,jeecg-boot/**/jeecg-module-proposal/**/*.java
+globs: docs/improve/sql/**,jeecg-boot/**/jeecg-module-spex-inside/**/entity/**,jeecg-boot/**/jeecg-module-spex-inside/**/*.java
 alwaysApply: false
 ---
 
@@ -20,7 +20,7 @@ alwaysApply: false
 |------|------|------|
 | 1 | `docs/improve/sql/proposal_init.sql` | **必改** — 全量 DDL + 幂等种子 |
 | 2 | `docs/improve/sql/proposal_tables.md` | 表结构文档与 init 保持一致 |
-| 3 | `jeecg-module-proposal` 下 `entity/` | Java 字段与表列一致 |
+| 3 | `jeecg-module-spex-inside` 下 `entity/` | Java 字段与表列一致 |
 | 4 | 相关 `Mapper` / `Service` | 若字段名或类型变更 |
 
 可选：`docs/improve/sql/fix/` 下增量脚本（**仅用于已有库的迁移**），但 fix 内容最终仍应合并进 `proposal_init.sql` 对应 `CREATE TABLE` 段。
