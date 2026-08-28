@@ -81,7 +81,7 @@ JeecgBoot低代码平台兼容所有J2EE项目开发，支持信创国产化，�
 |------|------|
 | `jeecg-boot` | 后端 SpringBoot4 源码（Shiro+Mybatis+SpringCloudAlibaba，支持单体/微服务切换） |
 | `jeecgboot-vue3` | 前端 Vue3+TS 源码（vue3+vite6+ts 最新技术栈） |
-| `jeecg-uniapp` | [APP 开发框架，一套代码多端适配，支持 APP、小程序、H5、鸿蒙](https://github.com/jeecgboot/JeecgUniapp) |
+| `jeecg-uniapp` | 移动端 uni-app 源码（本仓库 monorepo，基于官方 JeecgUniapp v3.0.0 二次开发，提案改善业务） |
 | `jeecg-boot-starter` | [jeecg-boot 对应的底层封装 starter](https://github.com/jeecgboot/jeecg-boot-starter)：微服务启动、xxljob、分布式锁、RabbitMQ、分布式事务、ShardingSphere 分库分表等 |
 
 - 参考 [文档](https://help.jeecg.com/ui/2dev/mini) 可以删除不需要的demo，制作一个精简版本
