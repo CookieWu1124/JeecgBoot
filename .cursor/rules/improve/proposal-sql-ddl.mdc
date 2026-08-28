@@ -1,0 +1,58 @@
+---
+description: 提案改善 DDL 变更须同步 proposal_init.sql，避免上线建表遗漏
+globs: docs/improve/sql/**,jeecg-boot/**/jeecg-module-proposal/**/entity/**,jeecg-boot/**/jeecg-module-proposal/**/*.java
+alwaysApply: false
+---
+
+# 提案改善 — 数据库 DDL 同步规则
+
+## 核心原则
+
+**凡涉及改表结构、字段、索引、约束、种子数据的变更，必须同步更新 `docs/improve/sql/proposal_init.sql`。**
+
+`proposal_init.sql` 是新环境/上线一次性建表的**唯一权威全量脚本**。开发库上的临时 ALTER 若未回写 init，会导致后续环境缺表、缺字段。
+
+目标开发库：**`inside_dev`**（与 `application-dev.yml` 一致）。
+
+## 必须同步的文件
+
+| 顺序 | 文件 | 说明 |
+|------|------|------|
+| 1 | `docs/improve/sql/proposal_init.sql` | **必改** — 全量 DDL + 幂等种子 |
+| 2 | `docs/improve/sql/proposal_tables.md` | 表结构文档与 init 保持一致 |
+| 3 | `jeecg-module-proposal` 下 `entity/` | Java 字段与表列一致 |
+| 4 | 相关 `Mapper` / `Service` | 若字段名或类型变更 |
+
+可选：`docs/improve/sql/fix/` 下增量脚本（**仅用于已有库的迁移**），但 fix 内容最终仍应合并进 `proposal_init.sql` 对应 `CREATE TABLE` 段。
+
+## 变更检查清单
+
+完成 DDL 相关改动前，确认：
+
+- [ ] `proposal_init.sql` 中对应 `CREATE TABLE` / `INSERT` 已更新
+- [ ] 11 项通用字段未遗漏：`create_no`, `create_by`, `create_time`, `update_no`, `update_by`, `update_time`, `sys_org_code`, `sys_org_name`, `tenant_id`, `remark`, `active`
+- [ ] 逻辑删除使用 `active`（Y/N），**不要**引入 `del_flag`
+- [ ] 唯一索引组合键**末位含 `tenant_id`**
+- [ ] 业务状态字段不与 `active` 冲突（如 `member_status`, `approver_status`, `dim_status`）
+- [ ] 角色/种子 INSERT 保持幂等（`WHERE NOT EXISTS`）
+- [ ] `proposal_tables.md` 已同步
+
+## init 脚本特性（勿破坏）
+
+- `proposal_*` 业务表段使用 `DROP TABLE IF EXISTS` + `CREATE TABLE` — **重复执行会清空业务数据**
+- `sys_role`、六维评分种子 INSERT 为幂等，可重复执行
+- Flyway 已关闭，脚本手工执行
+
+## 执行命令参考
+
+```bash
+mysql -u root -p inside_dev < docs/improve/sql/proposal_init.sql
+mysql -u root -p inside_dev < docs/improve/sql/proposal_menu.sql
+```
+
+## 禁止
+
+- 只在 Navicat/开发库手工改表，不回写 `proposal_init.sql`
+- 在 entity 新增字段但 init 未建列
+- 用 Flyway 片段替代 init 的全量定义（本项目约定手工 init）
+- `sys_permission.id` 超过 **32 字符**（JeecgBoot 默认为 `varchar(32)`）
