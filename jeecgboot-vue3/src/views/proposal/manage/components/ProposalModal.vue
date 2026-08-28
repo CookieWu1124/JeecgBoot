@@ -1,45 +1,37 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" :title="getTitle" @ok="handleSubmit" :width="720">
+  <BasicModal
+    v-bind="$attrs"
+    @register="registerModal"
+    title="提案详情"
+    :showOkBtn="false"
+    cancelText="关闭"
+    :width="720"
+  >
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
 <script lang="ts" setup>
-  import { ref, computed, unref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicForm, useForm } from '/@/components/Form/index';
-  import { formSchema } from '../proposal.data';
-  import { saveOrUpdateProposal, getProposalById } from '../proposal.api';
+  import { detailFormSchema } from '../proposal.data';
+  import { getProposalById } from '../proposal.api';
 
-  const emit = defineEmits(['success', 'register']);
-  const isUpdate = ref(false);
+  defineEmits(['register']);
 
-  const [registerForm, { resetFields, setFieldsValue, validate }] = useForm({
-    schemas: formSchema,
+  const [registerForm, { resetFields, setFieldsValue }] = useForm({
+    schemas: detailFormSchema,
     showActionButtonGroup: false,
     labelWidth: 110,
   });
 
-  const [registerModal, { setModalProps, closeModal }] = useModalInner(async (data) => {
+  const [registerModal, { setModalProps }] = useModalInner(async (data) => {
     await resetFields();
     setModalProps({ confirmLoading: false });
-    isUpdate.value = !!data?.isUpdate;
-    if (unref(isUpdate) && data?.record?.id) {
+    if (data?.record?.id) {
       const record = await getProposalById({ id: data.record.id });
       await setFieldsValue({ ...record });
+    } else if (data?.record) {
+      await setFieldsValue({ ...data.record });
     }
   });
-
-  const getTitle = computed(() => (!unref(isUpdate) ? '新增提案' : '编辑提案'));
-
-  async function handleSubmit() {
-    try {
-      const values = await validate();
-      setModalProps({ confirmLoading: true });
-      await saveOrUpdateProposal(values, unref(isUpdate));
-      closeModal();
-      emit('success');
-    } finally {
-      setModalProps({ confirmLoading: false });
-    }
-  }
 </script>

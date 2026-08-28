@@ -2,7 +2,9 @@
   <div>
     <BasicTable @register="registerTable">
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:deptLeader:save'">新增</a-button>
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:deptLeader:save'">
+          新增
+        </a-button>
       </template>
       <template #action="{ record }">
         <TableAction :actions="getTableAction(record)" />
@@ -23,7 +25,7 @@
   const { tableContext } = useListPage({
     designScope: 'proposal-config-deptLeader',
     tableProps: {
-      title: '部门负责人',
+      title: '改善部门负责人',
       api: getDeptLeaderList,
       columns: deptLeaderColumns,
       useSearchForm: false,
@@ -42,11 +44,16 @@
     await deleteDeptLeader({ id: record.id }, reload);
   }
   function getTableAction(record) {
+    const configured = !!record.leaderUserId;
     return [
-      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:deptLeader:save' },
+      {
+        label: configured ? '更换' : '配置',
+        onClick: handleEdit.bind(null, record),
+        auth: 'proposal:config:deptLeader:save',
+      },
       {
         label: '删除',
-        popConfirm: { title: '是否确认删除？', confirm: handleDelete.bind(null, record) },
+        popConfirm: { title: '是否确认删除该改善部门配置？', confirm: handleDelete.bind(null, record) },
         auth: 'proposal:config:deptLeader:delete',
       },
     ];

@@ -2,7 +2,9 @@
   <div>
     <BasicTable @register="registerTable">
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:committee:save'">新增</a-button>
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:committee:save'">
+          添加成员
+        </a-button>
       </template>
       <template #action="{ record }">
         <TableAction :actions="getTableAction(record)" />
@@ -45,8 +47,9 @@
     return [
       { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:committee:save' },
       {
-        label: '删除',
-        popConfirm: { title: '是否确认删除？', confirm: handleDelete.bind(null, record) },
+        label: '移除',
+        color: 'error',
+        popConfirm: { title: '是否确认移除该委员？', confirm: handleDelete.bind(null, record) },
         auth: 'proposal:config:committee:delete',
       },
     ];

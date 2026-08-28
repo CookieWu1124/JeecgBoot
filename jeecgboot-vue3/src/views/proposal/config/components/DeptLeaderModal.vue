@@ -24,7 +24,7 @@
     await resetFields();
     setModalProps({ confirmLoading: false });
     isUpdate.value = !!data?.isUpdate;
-    title.value = unref(isUpdate) ? '编辑部门负责人' : '新增部门负责人';
+    title.value = unref(isUpdate) ? '更换部门负责人' : '新增部门负责人';
     if (data?.record) {
       await setFieldsValue({ ...data.record });
     }

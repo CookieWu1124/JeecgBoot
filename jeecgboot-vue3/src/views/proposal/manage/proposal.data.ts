@@ -1,25 +1,116 @@
 import { BasicColumn, FormSchema } from '/@/components/Table';
+import { h } from 'vue';
+import { Progress, Tag } from 'ant-design-vue';
 
-/** 提案状态（与 proposal_init.sql 注释一致） */
+/** 当前环节（对齐原型显示名与状态色） */
 export const proposalStatusOptions = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '待委员审核', value: 'PENDING_REVIEW' },
-  { label: '待批准', value: 'PENDING_APPROVAL' },
-  { label: '终审驳回', value: 'REJECTED_FINAL' },
-  { label: '已撤回', value: 'WITHDRAWN' },
-  { label: '待指派', value: 'PENDING_ASSIGN' },
-  { label: '待认领', value: 'PENDING_CLAIM' },
-  { label: '实施中', value: 'IN_PROGRESS' },
-  { label: '计划书待审核', value: 'PLAN_PENDING_REVIEW' },
-  { label: '计划书待批准', value: 'PLAN_PENDING_APPROVAL' },
-  { label: '计划书驳回', value: 'PLAN_REJECTED' },
-  { label: '待评分', value: 'PENDING_EVALUATION' },
-  { label: '待签核', value: 'PENDING_SIGNOFF' },
-  { label: '已结案', value: 'COMPLETED' },
+  { label: '草稿', value: 'DRAFT', color: 'default' },
+  { label: '待审核', value: 'PENDING_REVIEW', color: 'gold' },
+  { label: '待批准', value: 'PENDING_APPROVAL', color: 'blue' },
+  { label: '不批准', value: 'REJECTED_FINAL', color: 'error' },
+  { label: '已撤回', value: 'WITHDRAWN', color: 'default' },
+  { label: '待指派', value: 'PENDING_ASSIGN', color: 'processing' },
+  { label: '待领取', value: 'PENDING_CLAIM', color: 'processing' },
+  { label: '实施中', value: 'IN_PROGRESS', color: 'processing' },
+  { label: '计划书待审', value: 'PLAN_PENDING_REVIEW', color: 'orange' },
+  { label: '计划书待批', value: 'PLAN_PENDING_APPROVAL', color: 'orange' },
+  { label: '已驳回', value: 'PLAN_REJECTED', color: 'error' },
+  { label: '待评定', value: 'PENDING_EVALUATION', color: 'cyan' },
+  { label: '待签核', value: 'PENDING_SIGNOFF', color: 'cyan' },
+  { label: '已完成', value: 'COMPLETED', color: 'success' },
 ];
 
-const statusMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.value, o.label]));
+/** 改善性质 */
+export const improvementTypeOptions = [
+  { label: '安全改善', value: 'SAFETY' },
+  { label: '品质改善', value: 'QUALITY' },
+  { label: '效率改善', value: 'EFFICIENCY' },
+  { label: '交付改善', value: 'DELIVERY' },
+  { label: '成本改善', value: 'COST' },
+];
 
+const statusMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.value, o]));
+const improvementTypeMap = Object.fromEntries(improvementTypeOptions.map((o) => [o.value, o.label]));
+
+function parseImprovementTypes(raw: unknown): string[] {
+  if (raw == null || raw === '') {
+    return [];
+  }
+  if (Array.isArray(raw)) {
+    return raw.map(String);
+  }
+  const text = String(raw).trim();
+  if (!text) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parsed.map(String);
+    }
+  } catch {
+    // 兼容逗号串
+  }
+  return text
+    .replace(/^\[|\]$/g, '')
+    .split(/[,，/|]/)
+    .map((s) => s.replace(/["'\s]/g, ''))
+    .filter(Boolean);
+}
+
+function formatImprovementTypes(raw: unknown): string {
+  const codes = parseImprovementTypes(raw);
+  if (!codes.length) {
+    return '-';
+  }
+  return codes.map((c) => improvementTypeMap[c] || c).join(' / ');
+}
+
+function formatAward(amount: unknown): string {
+  if (amount == null || amount === '') {
+    return '-';
+  }
+  const num = Number(amount);
+  if (Number.isNaN(num)) {
+    return String(amount);
+  }
+  return `¥${num}`;
+}
+
+function renderReviewProgress(text: unknown) {
+  const raw = text == null || text === '' ? '' : String(text).trim();
+  if (!raw || raw === '-') {
+    return '-';
+  }
+  const match = raw.match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (!match) {
+    return raw;
+  }
+  const done = Number(match[1]);
+  const total = Number(match[2]);
+  const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  const strokeColor = percent >= 100 ? '#52c41a' : '#1677ff';
+  return h('div', { class: 'proposal-review-progress' }, [
+    h(Progress, {
+      percent,
+      size: 'small',
+      showInfo: false,
+      strokeColor,
+      style: { width: '72px', margin: 0 },
+    }),
+    h('span', { class: 'proposal-review-progress__text' }, raw),
+  ]);
+}
+
+function renderStatusTag(status: unknown) {
+  const meta = statusMap[String(status || '')];
+  if (!meta) {
+    return status || '-';
+  }
+  return h(Tag, { color: meta.color }, () => meta.label);
+}
+
+/** 对齐原型：序号 | 提案编号 | 提案名称 | 提案人 | 改善部门 | 改善性质 | 当前环节 | 审核进度 | 核定提案奖 | 提交时间 | 操作 */
 export const columns: BasicColumn[] = [
   {
     title: '提案编号',
@@ -30,163 +121,190 @@ export const columns: BasicColumn[] = [
     title: '提案名称',
     dataIndex: 'title',
     align: 'left',
+    minWidth: 160,
   },
   {
-    title: '状态',
+    title: '提案人',
+    dataIndex: 'proposerName',
+    width: 100,
+    customRender: ({ text }) => text || '-',
+  },
+  {
+    title: '改善部门',
+    dataIndex: 'deptName',
+    width: 120,
+    customRender: ({ text }) => text || '-',
+  },
+  {
+    title: '改善性质',
+    dataIndex: 'improvementTypes',
+    width: 160,
+    align: 'left',
+    customRender: ({ text }) => formatImprovementTypes(text),
+  },
+  {
+    title: '当前环节',
     dataIndex: 'status',
-    width: 120,
-    customRender: ({ text }) => statusMap[text] || text,
+    width: 110,
+    customRender: ({ text }) => renderStatusTag(text),
   },
   {
-    title: '改善部门ID',
-    dataIndex: 'deptId',
-    width: 120,
+    title: '审核进度',
+    dataIndex: 'reviewProgress',
+    width: 140,
+    customRender: ({ text }) => renderReviewProgress(text),
   },
   {
-    title: '提案人ID',
-    dataIndex: 'proposerId',
-    width: 120,
+    title: '核定提案奖',
+    dataIndex: 'awardAmount',
+    width: 110,
+    customRender: ({ text }) => formatAward(text),
   },
   {
-    title: '创建时间',
+    title: '提交时间',
     dataIndex: 'createTime',
     width: 170,
   },
 ];
 
+/** 对齐原型筛选：提案编号 / 名称 / 当前环节 / 改善部门 / 改善性质 / 提案人 / 提交日期 */
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'proposalNo',
     label: '提案编号',
     component: 'Input',
-    colProps: { span: 6 },
+    componentProps: { placeholder: '请输入' },
+    colProps: { span: 4 },
   },
   {
     field: 'title',
     label: '提案名称',
     component: 'Input',
-    colProps: { span: 6 },
+    componentProps: { placeholder: '请输入' },
+    colProps: { span: 4 },
   },
   {
     field: 'status',
-    label: '状态',
+    label: '当前环节',
     component: 'Select',
     componentProps: {
-      options: proposalStatusOptions,
+      options: proposalStatusOptions.map(({ label, value }) => ({ label, value })),
+      placeholder: '请选择',
       allowClear: true,
     },
-    colProps: { span: 6 },
-  },
-];
-
-export const formSchema: FormSchema[] = [
-  {
-    field: 'id',
-    label: '主键',
-    component: 'Input',
-    show: false,
-  },
-  {
-    field: 'title',
-    label: '提案名称',
-    component: 'Input',
-    required: true,
-    componentProps: { maxlength: 100 },
-  },
-  {
-    field: 'status',
-    label: '状态',
-    component: 'Select',
-    defaultValue: 'DRAFT',
-    componentProps: {
-      options: proposalStatusOptions,
-    },
+    colProps: { span: 4 },
   },
   {
     field: 'deptId',
     label: '改善部门',
     component: 'JSelectDept',
     componentProps: {
+      multiple: false,
       sync: false,
       checkStrictly: true,
-      showButton: true,
-      modalTitle: '选择改善部门',
+      showButton: false,
+      placeholder: '请选择',
     },
-  },
-  {
-    field: 'proposerId',
-    label: '提案人',
-    component: 'JSelectUser',
-    required: true,
-    componentProps: {
-      rowKey: 'id',
-      labelKey: 'realname',
-      showButton: true,
-      modalTitle: '选择提案人',
-      isRadioSelection: true,
-    },
-  },
-  {
-    field: 'deptLeaderId',
-    label: '部门负责人',
-    component: 'JSelectUser',
-    componentProps: {
-      rowKey: 'id',
-      labelKey: 'realname',
-      showButton: true,
-      modalTitle: '选择部门负责人',
-      isRadioSelection: true,
-    },
-  },
-  {
-    field: 'implementLeaderId',
-    label: '实施负责人',
-    component: 'JSelectUser',
-    componentProps: {
-      rowKey: 'id',
-      labelKey: 'realname',
-      showButton: true,
-      modalTitle: '选择实施负责人',
-      isRadioSelection: true,
-    },
-  },
-  {
-    field: 'teamType',
-    label: '团队类型',
-    component: 'Select',
-    componentProps: {
-      options: [
-        { label: '个人', value: 'PERSONAL' },
-        { label: '团队', value: 'TEAM' },
-      ],
-      allowClear: true,
-    },
-  },
-  {
-    field: 'planRequired',
-    label: '需计划书',
-    component: 'RadioButtonGroup',
-    defaultValue: 0,
-    componentProps: {
-      options: [
-        { label: '否', value: 0 },
-        { label: '是', value: 1 },
-      ],
-    },
+    colProps: { span: 4 },
   },
   {
     field: 'improvementTypes',
     label: '改善性质',
-    component: 'InputTextArea',
+    component: 'Select',
     componentProps: {
-      rows: 2,
-      placeholder: 'JSON 数组，如 ["SAFETY","QUALITY"]',
+      options: improvementTypeOptions,
+      placeholder: '请选择',
+      allowClear: true,
     },
+    colProps: { span: 4 },
+  },
+  {
+    field: 'proposerName',
+    label: '提案人',
+    component: 'Input',
+    componentProps: { placeholder: '请输入' },
+    colProps: { span: 4 },
+  },
+  {
+    field: 'createTime',
+    label: '提交日期',
+    component: 'RangePicker',
+    componentProps: {
+      valueType: 'Date',
+      placeholder: ['开始日期', '结束日期'],
+      style: { width: '100%' },
+    },
+    // 占两列，与上方「提案编号 + 提案名称」左边缘对齐
+    colProps: { span: 8 },
+  },
+];
+
+/** 详情只读表单（管理端不做新增/编辑） */
+export const detailFormSchema: FormSchema[] = [
+  { field: 'id', label: '主键', component: 'Input', show: false },
+  {
+    field: 'proposalNo',
+    label: '提案编号',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'title',
+    label: '提案名称',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'status',
+    label: '当前环节',
+    component: 'Select',
+    componentProps: {
+      options: proposalStatusOptions.map(({ label, value }) => ({ label, value })),
+      disabled: true,
+    },
+  },
+  {
+    field: 'proposerName',
+    label: '提案人',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'deptName',
+    label: '改善部门',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'improvementTypesLabel',
+    label: '改善性质',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'reviewProgress',
+    label: '审核进度',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'awardAmountText',
+    label: '核定提案奖',
+    component: 'Input',
+    componentProps: { disabled: true },
+  },
+  {
+    field: 'createTime',
+    label: '提交时间',
+    component: 'Input',
+    componentProps: { disabled: true },
   },
   {
     field: 'remark',
     label: '备注',
     component: 'InputTextArea',
-    componentProps: { rows: 2 },
+    componentProps: { rows: 2, disabled: true },
   },
 ];
+
+export { formatImprovementTypes, formatAward };

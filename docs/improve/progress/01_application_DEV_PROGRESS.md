@@ -50,7 +50,7 @@
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [ ] |
 | 批准人待办 | GET | `/proposal/approval/pending` | 共用 | [ ] |
 | 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [ ] |
-| 管理端列表 CRUD | * | `/proposal/admin/manage/*` | 管理端 | [x] |
+| 管理端列表 CRUD | * | `/proposal/admin/manage/*` | 管理端 | [~] 列表查询已对齐原型；管理端不做新增（小程序发起） |
 | 配置（委员/批准人） | * | `/proposal/admin/config/*` | 管理端 | [x] |
 
 ---
@@ -73,8 +73,8 @@
 
 | 页面 | 路径 | 进度 |
 |------|------|------|
-| 提案管理列表 | `views/proposal/manage/index` | [x] |
-| 提案配置（委员/批准人 Tab） | `views/proposal/config/index` | [x] |
+| 提案管理列表（仅查询+详情） | `views/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
+| 提案配置（四 Tab） | `views/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / 评分维度 |
 | 提案详情（全流程时间线） | — | [ ] Phase 5 |
 
 ---
@@ -122,9 +122,10 @@
 | 3 | 委员审核页 | 小程序 | [ ] |
 | 4 | 批准人申请批准页 | 小程序 | [ ] |
 | 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [ ] |
-| 6 | 管理端提案列表（基础 CRUD） | 管理端 | [x] |
-| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [ ] |
+| 6 | 管理端提案列表（查询对齐原型） | 管理端 | [x] 仅查询+详情；筛选/列/进度条/状态 Tag |
+| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置四 Tab + 提案管理列表均已回显 |
 | 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] |
+| 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
 
 ---
 
@@ -145,7 +146,8 @@
 - [x] `proposal_menu.sql` 菜单权限已执行
 - [x] `admin`、`proposal_admin` 角色已授权提案相关菜单
 - [ ] 委员会名册、部门负责人、批准人已在管理端配置（业务数据）
-- [ ] HR 用户导入，`username = work_no`
+- [~] HR 用户：全量导入未做；斯派科样例见 `../sql/proposal_spex_user_seed.sql`（`username = work_no`）
+- [x] `jeecg-uniapp/` 工程骨架已在仓库（平台登录/首页等可用；提案业务页待建）
 
 ---
 
@@ -155,3 +157,7 @@
 |------|------|
 | 2026-08-28 | 初版进度文档；Phase 1 后端提交/撤回、管理端列表与配置页已落地 |
 | 2026-08-28 | `inside_dev` 已执行 `proposal_init.sql`、`proposal_menu.sql`；admin / proposal_admin 已授权菜单 |
+| 2026-08-28 | 修正：`jeecg-uniapp/` 骨架已纳入 monorepo；补充斯派科样例用户种子 SQL 路径 |
+| 2026-08-28 | 提案配置：改善部门改为单选；部门/用户名称回显（queryByIds） |
+| 2026-08-28 | 提案配置四 Tab 对齐原型列（工号/职位/评分职责/批准人卡片/权重合计）；保存补审计字段；无需改表 |
+| 2026-08-28 | **管理端告一段落**：提案管理改为仅查询（去新增/勾选），筛选与列表列对齐原型；批准人卡片对齐 SPEX 原型；委员会维持全局跨部门名册（不按部门拆席位）；提交日期筛选 label 对齐 |

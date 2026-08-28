@@ -21,6 +21,12 @@
 | 姓名 | `sys_user.realname` | |
 | 岗位 | `sys_user.position_type` | |
 
+## 样例种子（联调用）
+
+| 脚本 | 说明 |
+|------|------|
+| [`../sql/proposal_spex_user_seed.sql`](../sql/proposal_spex_user_seed.sql) | 从本 Excel 抽取「斯派科」中心 12 人 + 组织树；`username=work_no`，初始密码 `123456` |
+
 ## 导入流程（规划）
 
 ```text

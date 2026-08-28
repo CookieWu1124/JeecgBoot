@@ -1,14 +1,11 @@
 <template>
   <div>
-    <BasicTable @register="registerTable" :rowSelection="rowSelection">
-      <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:manage:add'">新增</a-button>
-      </template>
+    <BasicTable @register="registerTable">
       <template #action="{ record }">
         <TableAction :actions="getTableAction(record)" />
       </template>
     </BasicTable>
-    <ProposalModal @register="registerModal" @success="reload" />
+    <ProposalModal @register="registerModal" />
   </div>
 </template>
 <script lang="ts" name="proposal-manage" setup>
@@ -16,7 +13,7 @@
   import { useModal } from '/@/components/Modal';
   import { useListPage } from '/@/hooks/system/useListPage';
   import { columns, searchFormSchema } from './proposal.data';
-  import { getProposalList, deleteProposal } from './proposal.api';
+  import { getProposalList } from './proposal.api';
   import ProposalModal from './components/ProposalModal.vue';
 
   const [registerModal, { openModal }] = useModal();
@@ -24,49 +21,53 @@
   const { tableContext } = useListPage({
     designScope: 'proposal-manage',
     tableProps: {
-      title: '提案管理',
       api: getProposalList,
       columns,
+      showIndexColumn: true,
       formConfig: {
         schemas: searchFormSchema,
         autoSubmitOnEnter: true,
+        showAdvancedButton: false,
+        // 固定 label 宽度，避免第二行 span:8 与首行 span:4 比例 labelCol 错位
+        labelWidth: 80,
+        baseColProps: { span: 4 },
+        actionColOptions: { span: 4, style: { textAlign: 'left' } },
+        fieldMapToTime: [['createTime', ['createTime_begin', 'createTime_end'], 'YYYY-MM-DD']],
       },
       actionColumn: {
-        width: 160,
+        width: 80,
+        title: '操作',
         fixed: 'right',
       },
     },
   });
 
-  const [registerTable, { reload }, { rowSelection }] = tableContext;
+  // 不绑定 rowSelection，去掉勾选列与「未选中任何数据」提示
+  const [registerTable] = tableContext;
 
-  function handleAdd() {
-    openModal(true, { isUpdate: false });
-  }
-
-  function handleEdit(record) {
-    openModal(true, { record, isUpdate: true });
-  }
-
-  async function handleDelete(record) {
-    await deleteProposal({ id: record.id }, reload);
+  function handleDetail(record) {
+    openModal(true, { record });
   }
 
   function getTableAction(record) {
     return [
       {
-        label: '编辑',
-        onClick: handleEdit.bind(null, record),
-        auth: 'proposal:manage:edit',
-      },
-      {
-        label: '删除',
-        popConfirm: {
-          title: '是否确认删除？',
-          confirm: handleDelete.bind(null, record),
-        },
-        auth: 'proposal:manage:delete',
+        label: '详情',
+        onClick: handleDetail.bind(null, record),
       },
     ];
   }
 </script>
+<style lang="less">
+  .proposal-review-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &__text {
+      color: rgba(0, 0, 0, 0.65);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+  }
+</style>

@@ -10,6 +10,7 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.service.IProposalService;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +31,16 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
     public Result<IPage<Proposal>> list(Proposal proposal,
                                         @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                         @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                        @RequestParam(name = "proposerName", required = false) String proposerName,
                                         HttpServletRequest req) {
         QueryWrapper<Proposal> queryWrapper = QueryGenerator.initQueryWrapper(proposal, req.getParameterMap());
+        //update-begin---author:cursor ---date:2026-08-28  for：【提案管理】按提案人姓名模糊检索-----------
+        if (oConvertUtils.isNotEmpty(proposerName)) {
+            queryWrapper.apply(
+                    "proposer_id in (select id from sys_user where realname like concat('%',{0},'%'))",
+                    proposerName.trim());
+        }
+        //update-end---author:cursor ---date:2026-08-28  for：【提案管理】按提案人姓名模糊检索-----------
         queryWrapper.orderByDesc("create_time");
         Page<Proposal> page = new Page<>(pageNo, pageSize);
         IPage<Proposal> pageList = service.page(page, queryWrapper);

@@ -6,11 +6,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.*;
 import org.jeecg.modules.proposal.service.*;
+import org.jeecg.modules.proposal.util.ProposalAuditHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,13 +50,18 @@ public class ProposalConfigController {
         return Result.OK(deptLeaderService.page(new Page<>(pageNo, pageSize), qw));
     }
 
+    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】部门负责人保存强制单部门+审计字段-----------
     @AutoLog(value = "管理端-提案配置-部门负责人-保存")
     @Operation(summary = "部门负责人-保存")
     @PostMapping("/deptLeader/save")
     public Result<String> deptLeaderSave(@RequestBody ProposalDeptLeader entity) {
+        entity.setDeptId(firstId(entity.getDeptId()));
+        entity.setLeaderUserId(firstId(entity.getLeaderUserId()));
+        fillAudit(entity);
         deptLeaderService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
+    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】部门负责人保存强制单部门+审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-部门负责人-删除")
     @Operation(summary = "部门负责人-删除")
@@ -73,13 +82,20 @@ public class ProposalConfigController {
         return Result.OK(committeeMemberService.page(new Page<>(pageNo, pageSize), qw));
     }
 
+    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
     @AutoLog(value = "管理端-提案配置-委员会-保存")
     @Operation(summary = "委员会成员-保存")
     @PostMapping("/committee/save")
     public Result<String> committeeSave(@RequestBody ProposalCommitteeMember entity) {
+        entity.setUserId(firstId(entity.getUserId()));
+        if (entity.getScoreEnabled() != null && entity.getScoreEnabled() == 0) {
+            entity.setSeatNo(null);
+        }
+        fillAudit(entity);
         committeeMemberService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
+    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-委员会-删除")
     @Operation(summary = "委员会成员-删除")
@@ -97,13 +113,20 @@ public class ProposalConfigController {
         return Result.OK(approverService.list(qw));
     }
 
+    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
     @AutoLog(value = "管理端-提案配置-批准人-保存")
     @Operation(summary = "批准人-保存")
     @PostMapping("/approver/save")
     public Result<String> approverSave(@RequestBody ProposalApprover entity) {
+        entity.setUserId(firstId(entity.getUserId()));
+        if (oConvertUtils.isEmpty(entity.getApproverStatus())) {
+            entity.setApproverStatus("active");
+        }
+        fillAudit(entity);
         approverService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
+    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-批准人-删除")
     @Operation(summary = "批准人-删除")
@@ -121,13 +144,16 @@ public class ProposalConfigController {
         return Result.OK(scoreDimensionService.list(qw));
     }
 
+    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
     @AutoLog(value = "管理端-提案配置-评分维度-保存")
     @Operation(summary = "评分维度-保存")
     @PostMapping("/scoreDimension/save")
     public Result<String> scoreDimensionSave(@RequestBody ProposalScoreDimension entity) {
+        fillAudit(entity);
         scoreDimensionService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
+    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-评分维度-删除")
     @Operation(summary = "评分维度-删除")
@@ -135,5 +161,25 @@ public class ProposalConfigController {
     public Result<String> scoreDimensionDelete(@RequestParam String id) {
         scoreDimensionService.removeById(id);
         return Result.OK("删除成功");
+    }
+
+    private void fillAudit(ProposalBaseEntity entity) {
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        if (oConvertUtils.isEmpty(entity.getId())) {
+            ProposalAuditHelper.fillOnCreate(loginUser, entity);
+        } else {
+            ProposalAuditHelper.fillOnUpdate(loginUser, entity);
+        }
+    }
+
+    private String firstId(String value) {
+        if (oConvertUtils.isEmpty(value)) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.contains(",")) {
+            return trimmed.split(",")[0].trim();
+        }
+        return trimmed;
     }
 }

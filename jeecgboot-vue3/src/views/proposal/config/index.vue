@@ -1,7 +1,7 @@
 <template>
   <div class="p-4">
     <a-tabs v-model:activeKey="activeKey" type="card">
-      <a-tab-pane key="deptLeader" tab="部门负责人">
+      <a-tab-pane key="deptLeader" tab="改善部门负责人">
         <DeptLeaderPanel />
       </a-tab-pane>
       <a-tab-pane key="committee" tab="委员会成员">

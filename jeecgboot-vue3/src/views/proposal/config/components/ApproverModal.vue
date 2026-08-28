@@ -24,7 +24,7 @@
     await resetFields();
     setModalProps({ confirmLoading: false });
     isUpdate.value = !!data?.isUpdate;
-    title.value = unref(isUpdate) ? '编辑批准人' : '新增批准人';
+    title.value = unref(isUpdate) ? '更换批准人' : '配置批准人';
     if (data?.record) {
       await setFieldsValue({ ...data.record });
     }
