@@ -1,0 +1,2178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提案改善系统 · 玻璃拟态 v4.3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/outfit@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/outfit@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/outfit@5/700.css">
+<style>
+:root{
+  --ink:#1A1F36; --ink-2:#096DD9; --ink-90:rgba(26,31,54,.9);
+  --pri:#1890FF; --pri-2:#69C0FF; --pri-bg:#E6F4FF;
+  --acc:#13C2C2; --acc-d:#08979C; --acc-bg:#E6FFFB;
+  --paper:transparent; --card:rgba(255,255,255,.62);
+  --line:rgba(24,144,255,.12); --line-2:rgba(24,144,255,.18);
+  --txt:#1E2438; --sub:#6B7390; --hint:#9AA3BD;
+  --ok:#10B981; --ok-bg:#E8F8EE;
+  --warn:#D98F0E; --warn-bg:#FEF4DE;
+  --err:#F25555; --err-bg:#FEEFEF;
+  --blue:#1890FF; --blue-bg:#E6F4FF;
+  --purple:#2F54EB; --purple-bg:#F0F5FF;
+  --teal:#13C2C2; --teal-bg:#E6FFFB;
+  --glass:rgba(255,255,255,.58); --glass-2:rgba(255,255,255,.72); --glass-3:rgba(255,255,255,.86);
+  --glass-line:rgba(255,255,255,.55);
+  --blur:blur(22px) saturate(160%);
+  --disp:"Outfit","PingFang SC",system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;background:linear-gradient(160deg,#E9E9E9 0%,#F0F0F0 40%,#F6F7F8 100%);color:var(--txt);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh}
+.layout{display:flex;gap:32px;padding:32px 40px;max-width:1400px;margin:0 auto;align-items:flex-start;min-height:100vh}
+
+/* ============ 演示控制台（浅色卡片 · 品牌蓝青） ============ */
+.side{width:340px;flex:none;position:sticky;top:24px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.95);border-radius:20px;box-shadow:0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;color:var(--txt);max-height:calc(100vh - 48px);overflow:auto}
+.side::-webkit-scrollbar{width:4px}
+.side::-webkit-scrollbar-thumb{background:#D8D8D8;border-radius:4px}
+.side-hd{padding:22px 22px 16px;border-bottom:1px solid #F0F0F0;position:relative}
+.side-logo{display:flex;align-items:center;gap:12px;padding-right:56px}
+.side-logo-badge{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#1890FF,#13C2C2);color:#fff;display:flex;align-items:center;justify-content:center;font:800 18px/1 var(--disp);box-shadow:0 6px 14px rgba(24,144,255,.32);flex-shrink:0}
+.side-hd .kick{font:700 10px/1 var(--disp);letter-spacing:2.5px;background:linear-gradient(90deg,#1890FF,#13C2C2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block}
+.side-hd h1{font-size:17px;font-weight:700;color:var(--txt);margin-top:6px;letter-spacing:.5px}
+.side-hd .vs{position:absolute;right:22px;top:24px;background:linear-gradient(135deg,#1890FF,#13C2C2);color:#fff;font:800 11px/1 var(--disp);letter-spacing:1px;padding:5px 10px;border-radius:999px;box-shadow:0 6px 18px rgba(24,144,255,.35)}
+.role-box{margin:16px 18px 0;padding:14px;background:#F7F7F7;border-radius:14px}
+.role-box h3{font:700 11px/1 var(--disp);letter-spacing:2px;color:#B2B2B2;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.role-box h3::before{content:"";width:3px;height:12px;border-radius:2px;background:linear-gradient(135deg,#1890FF,#13C2C2)}
+.role-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:1.5px solid #E5E5E5;border-radius:8px;background:#fff;color:#888888;cursor:pointer;margin-bottom:7px;font-size:12.5px;text-align:left;transition:.16s;font-family:inherit;font-weight:500}
+.role-btn:last-child{margin-bottom:0}
+.role-btn:hover{border-color:#91D5FF;color:#1890FF;background:#F0F8FF}
+.role-btn.on{border-color:#1890FF;background:linear-gradient(135deg,#1890FF,#13C2C2);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(24,144,255,.28)}
+.role-btn .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.role-btn.on .dot{box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+.nav{padding:8px 18px 8px}
+.nav::-webkit-scrollbar{width:4px}
+.nav::-webkit-scrollbar-thumb{background:#D8D8D8;border-radius:4px}
+.nav-gp{font:700 11px/1 var(--disp);letter-spacing:2px;color:#B2B2B2;margin:16px 2px 8px;display:flex;align-items:center;gap:6px}
+.nav-gp::before{content:"";width:3px;height:12px;border-radius:2px;background:linear-gradient(135deg,#1890FF,#13C2C2)}
+.nav-gp:first-child{margin-top:10px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;color:#888888;margin-bottom:4px;transition:.14s;background:#F5F5F5;font-weight:500}
+.nav-item:hover{background:#E6F4FF;color:#1890FF;transform:translateY(-1px)}
+.nav-item.on{background:linear-gradient(135deg,#1890FF,#13C2C2);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(24,144,255,.28)}
+.nav-item .pgno{font:700 10px/1 var(--disp);letter-spacing:1px;color:#B2B2B2;width:20px}
+.nav-item.on .pgno{color:rgba(255,255,255,.85)}
+.nav-item .bdg{font:700 10px/1 var(--disp);background:linear-gradient(135deg,#36CFC9,#13C2C2);color:#fff;border-radius:999px;padding:2.5px 7px;margin-left:auto}
+.nav-item.on .bdg{background:rgba(255,255,255,.25)}
+
+/* ============ 展示区与手机壳 ============ */
+.stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:visible;padding:8px 0 40px;position:relative;background:transparent}
+.phone{width:393px;height:816px;background:linear-gradient(160deg,#2A2D3E,#1B1D2A);border-radius:54px;padding:11px;box-shadow:0 30px 60px rgba(30,27,75,.35),0 0 0 2px #3A3D52 inset,0 0 0 4px #15161F inset;flex-shrink:0;position:relative}
+.phone::after{content:"";position:absolute;top:14px;left:50%;transform:translateX(-50%);width:110px;height:28px;background:#0A0D18;border-radius:20px;z-index:5}
+.screen-wrap{width:100%;height:100%;border-radius:43px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:radial-gradient(320px 220px at 10% 0%,rgba(105,192,255,.35),transparent 60%),radial-gradient(280px 240px at 100% 20%,rgba(54,207,201,.22),transparent 55%),linear-gradient(180deg,#E6F4FF 0%,#F0F8FF 40%,#EEF5FF 70%,#F5FAFF 100%)}
+.statusbar{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px 0 34px;font:600 13px var(--disp);letter-spacing:.5px;background:inherit;color:inherit}
+.statusbar .capsule{width:84px;height:30px;border:1px solid rgba(35,42,68,.1);border-radius:999px;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;gap:7px}
+.capsule i{display:block;background:var(--txt);border-radius:50%}
+.capsule .c1{width:7px;height:7px}.capsule .c2{width:12px;height:12px;position:relative}
+.capsule .c2::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#fff}
+.dark-sb{background:#1890FF;color:#fff}
+.dark-sb .capsule{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.16)}
+.dark-sb .capsule i{background:#fff}
+.dark-sb .capsule .c2::after{background:#1890FF}
+.navbar{height:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background:inherit;position:relative;letter-spacing:1px;color:var(--txt)}
+.navbar .back{position:absolute;left:12px;width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;font-weight:400;opacity:.75;background:rgba(255,255,255,.45);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.5);font-family:var(--disp)}
+.body{flex:1;overflow-y:auto;position:relative}
+.body::-webkit-scrollbar{width:0}
+.screen{display:none;flex-direction:column;height:100%}
+.screen.act{display:flex;animation:pgin .34s cubic-bezier(.22,1,.36,1)}
+@keyframes pgin{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+
+/* ============ TabBar ============ */
+.tabbar{height:82px;flex-shrink:0;margin:0 10px 10px;background:rgba(255,255,255,.62);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,.65);border-radius:26px;display:flex;padding:8px 6px 0;box-shadow:0 12px 40px rgba(24,144,255,.12),inset 0 1px 0 rgba(255,255,255,.8)}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#9AA2BC;cursor:pointer;padding-top:5px;position:relative;letter-spacing:1px;transition:.15s}
+.tab-item svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab-item.on{color:var(--pri);font-weight:600}
+.tab-item.on::before{content:"";position:absolute;top:-8px;width:20px;height:3.5px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,var(--pri),var(--pri-2))}
+.tab-item .bdg{position:absolute;top:0;right:calc(50% - 26px);min-width:16px;height:16px;border-radius:999px;background:#FF4D4F;color:#fff;font:700 10px/16px var(--disp);text-align:center;padding:0 4px;box-shadow:0 2px 6px rgba(255,77,79,.4)}
+.tab-bulge{flex:1;display:flex;justify-content:center;align-items:flex-start}
+.tab-bulge .bulge{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#69C0FF,#1890FF 55%,#13C2C2);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 12px 28px rgba(24,144,255,.45),0 0 0 5px rgba(255,255,255,.55);cursor:pointer;transition:.18s}
+.tab-bulge .bulge:active{transform:scale(.92)}
+.tab-bulge .bulge svg{width:25px;height:25px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
+
+/* ============ 基础组件 ============ */
+.page{padding:16px 16px 28px}
+.card{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 10px 28px rgba(24,144,255,.08)}
+.card-band{border-left:4px solid var(--band,var(--pri))}
+.card-t{font-size:14.5px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;letter-spacing:.3px;color:var(--txt)}
+.card-t .idx{font:700 10px/1 var(--disp);letter-spacing:1px;color:var(--pri);background:var(--pri-bg);padding:4px 8px;border-radius:8px;margin-right:8px}
+.sec{font-size:13px;font-weight:700;color:#3A4260;margin:18px 2px 10px;display:flex;align-items:center;gap:8px;letter-spacing:.5px}
+.sec::before{content:"";width:4px;height:14px;border-radius:2px;background:linear-gradient(180deg,var(--pri),var(--pri-2));flex-shrink:0}
+.sec .n{margin-left:auto;color:#AAB1C9;font-weight:500;font-size:11px;font-family:var(--disp);letter-spacing:.5px}
+.stamp{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.5px;white-space:nowrap;line-height:1.6}
+.stamp::before{content:"";width:4px;height:4px;border-radius:50%;background:currentColor}
+.s-blue{color:var(--blue);background:var(--blue-bg)}
+.s-amber{color:var(--warn);background:var(--warn-bg)}
+.s-green{color:var(--ok);background:var(--ok-bg)}
+.s-red{color:var(--err);background:var(--err-bg)}
+.s-gray{color:#8A92AC;background:#EFF2F9}
+.s-teal{color:var(--teal);background:var(--teal-bg)}
+.s-purple{color:var(--purple);background:var(--purple-bg)}
+.s-ink{color:#4A5478;background:#E9EDF8}
+.nat{display:inline-flex;font-size:10.5px;padding:3px 10px;border-radius:999px;color:#096DD9;background:var(--pri-bg);letter-spacing:.5px;font-weight:500}
+.btn{display:block;width:100%;padding:13px;border-radius:14px;border:none;font-size:14.5px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;letter-spacing:1px;transition:.16s}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn-pri{background:linear-gradient(135deg,#69C0FF,#1890FF 50%,#13C2C2);color:#fff;box-shadow:0 10px 28px rgba(24,144,255,.35)}
+.btn-acc{background:linear-gradient(135deg,#36CFC9,#13C2C2);color:#fff;box-shadow:0 10px 24px rgba(19,194,194,.35)}
+.btn-ghost{background:#fff;border:1.5px solid var(--pri);color:var(--pri)}
+.btn-plain{background:#EDF0F9;color:#5A6380}
+.btn-danger{background:linear-gradient(135deg,#FF7070,#F25555);color:#fff;box-shadow:0 8px 20px rgba(242,85,85,.28)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-s{display:inline-block;width:auto;padding:9px 18px;font-size:13px;border-radius:12px}
+.ftbar{padding:12px 16px 18px;background:rgba(255,255,255,.55);backdrop-filter:var(--blur);border-top:1px solid rgba(255,255,255,.5);display:flex;gap:10px;flex-shrink:0}
+.ftbar .btn{flex:1}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #EFF2F9;font-size:13.5px;gap:12px}
+.cell:last-child{border-bottom:none}
+.cell .lab{color:var(--sub);flex-shrink:0}
+.cell .val{text-align:right;flex:1;word-break:break-all;line-height:1.6}
+.cell .val.ro{color:#9AA2BC}
+.cell .val b{font-family:var(--disp);font-size:15px;letter-spacing:.5px;font-weight:600}
+.arrow{color:#C2C8DC;margin-left:4px;font-size:16px}
+.m-ic{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.m-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.m-t{flex:1;font-size:14px;font-weight:500;color:var(--txt)}
+.m-d{font-size:11px;color:var(--hint);margin-left:auto;margin-right:2px}
+.empty{text-align:center;color:var(--hint);font-size:13px;padding:36px 0}
+.form-item{margin-bottom:16px}
+.form-item label{display:block;font-size:12px;color:#5A6380;margin-bottom:8px;font-weight:600;letter-spacing:.5px}
+.form-item label .req{color:var(--err);margin-left:2px}
+.ipt{width:100%;border:1.5px solid rgba(24,144,255,.14);border-radius:12px;padding:11px 13px;font-size:13.5px;background:rgba(255,255,255,.55);color:var(--txt);outline:none;font-family:inherit;transition:.16s;backdrop-filter:blur(8px)}
+.ipt:focus{border-color:var(--pri);box-shadow:0 0 0 3.5px rgba(24,144,255,.13);background:#fff}
+.ipt-ro{background:#F3F5FB;color:#9AA2BC;border-style:dashed}
+textarea.ipt{resize:none;height:88px;line-height:1.75}
+.hint-t{font-size:11px;color:var(--hint);margin-top:7px;line-height:1.6}
+.banner{border-radius:14px;padding:11px 13px;font-size:12px;line-height:1.75;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+.banner .bic{width:18px;height:18px;border-radius:50%;color:#fff;font:700 10.5px/18px var(--disp);text-align:center;flex-shrink:0;margin-top:2px}
+.bn-err{background:var(--err-bg);color:#C44545}
+.bn-err .bic{background:linear-gradient(135deg,#FF7070,#F25555)}
+.bn-info{background:var(--pri-bg);color:#096DD9}
+.bn-info .bic{background:linear-gradient(135deg,#40A9FF,#1890FF)}
+.bn-warn{background:var(--warn-bg);color:#A76B0A}
+.bn-warn .bic{background:linear-gradient(135deg,#FFC53D,#F0A020)}
+
+/* ============ 提案卡（左边框色带） ============ */
+.prop{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-left:4px solid var(--band,var(--pri));border-radius:18px;padding:14px 16px;margin-bottom:12px;cursor:pointer;transition:.18s;box-shadow:0 10px 28px rgba(24,144,255,.08)}
+.prop:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(24,144,255,.12);border-left-width:5px;padding-left:15px}
+.prop-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.prop-title{font-size:14.5px;font-weight:700;line-height:1.55;flex:1;letter-spacing:.2px}
+.prop-no{font:500 11px/1.5 var(--disp);letter-spacing:1px;color:var(--hint);margin-top:5px}
+.prop-no b{color:#8A92AC;font-weight:600}
+.prop-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.prog{margin-top:12px;display:flex;align-items:center;gap:10px}
+.prog-bar{flex:1;height:5px;background:#EAEEF9;border-radius:999px;overflow:hidden}
+.prog-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pri-2),var(--pri));border-radius:999px;transition:.3s}
+.prog-t{font:600 10.5px/1 var(--disp);letter-spacing:1px;color:var(--sub);white-space:nowrap}
+
+/* ============ 筛选 ============ */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px}
+.chips::-webkit-scrollbar{height:0}
+.chip{flex-shrink:0;padding:7px 16px;border-radius:999px;background:rgba(255,255,255,.55);font-size:12px;color:#5A6380;border:1px solid rgba(255,255,255,.65);cursor:pointer;letter-spacing:1px;transition:.15s;backdrop-filter:blur(8px)}
+.chip.on{background:linear-gradient(135deg,#40A9FF,#1890FF);border-color:transparent;color:#fff;font-weight:500;box-shadow:0 5px 14px rgba(24,144,255,.3)}
+.search{display:flex;align-items:center;gap:9px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-line);border-radius:999px;padding:10px 16px;margin-bottom:12px;color:var(--hint);font-size:13px;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.search svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.search input{border:none;outline:none;flex:1;font-size:13px;font-family:inherit;color:var(--txt);background:transparent}
+
+/* ============ 时间轴 ============ */
+.tl{padding:2px 0 0}
+.tl-item{display:flex;gap:14px;position:relative;padding-bottom:22px}
+.tl-item:last-child{padding-bottom:2px}
+.tl-rail{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px}
+.tl-no{width:28px;height:28px;border-radius:50%;border:2px solid #E0E6F4;background:#fff;color:#AAB1C9;font:700 11px/24px var(--disp);text-align:center;letter-spacing:.5px;z-index:1;transition:.2s}
+.tl-item.done .tl-no{border-color:transparent;background:linear-gradient(135deg,#40A9FF,#1890FF);color:#fff;box-shadow:0 4px 10px rgba(24,144,255,.3)}
+.tl-item.cur .tl-no{border-color:transparent;background:linear-gradient(135deg,#40A9FF,#1890FF);color:#fff;box-shadow:0 0 0 5px rgba(24,144,255,.16)}
+.tl-item.err .tl-no{border-color:transparent;background:linear-gradient(135deg,#FF7070,#F25555);color:#fff}
+.tl-line{width:2px;flex:1;background:#E7EBF6;margin-top:4px;border-radius:1px}
+.tl-item.done .tl-line{background:#91D5FF}
+.tl-body{flex:1;padding-top:3px}
+.tl-t{font-size:13.5px;font-weight:700;color:#B4BACB;letter-spacing:.5px}
+.tl-item.done .tl-t,.tl-item.cur .tl-t,.tl-item.err .tl-t{color:var(--txt)}
+.tl-item.cur .tl-t{color:var(--pri)}
+.tl-d{font:500 11px/1.5 var(--disp);letter-spacing:1px;color:var(--hint);margin-top:3px}
+.tl-x{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.65}
+
+/* ============ 步骤条 ============ */
+.steps{display:flex;background:var(--glass);backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:18px;padding:16px 8px 13px;margin-bottom:14px;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.step{flex:1;text-align:center;position:relative}
+.step .n{width:26px;height:26px;border-radius:50%;border:2px solid #E0E6F4;color:#AAB1C9;font:700 12px/22px var(--disp);margin:0 auto 6px;background:#fff;transition:.15s}
+.step.on .n{border-color:transparent;background:linear-gradient(135deg,#40A9FF,#1890FF);color:#fff;box-shadow:0 5px 12px rgba(24,144,255,.35)}
+.step.fin .n{border-color:transparent;background:#D9E3FD;color:var(--pri)}
+.step .s{font-size:10.5px;color:var(--hint);letter-spacing:.5px}
+.step.on .s{color:var(--pri);font-weight:600}
+.step::after{content:"";position:absolute;top:13px;left:calc(50% + 19px);width:calc(100% - 38px);height:2px;background:#E7EBF6;border-radius:1px}
+.step.fin::after{background:#91D5FF}
+.step:last-child::after{display:none}
+
+/* ============ 待办卡 ============ */
+.todo{display:flex;align-items:center;gap:12px;background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:18px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:.16s;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.todo:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(24,144,255,.1)}
+.todo-ic{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.todo-bd{flex:1;min-width:0}
+.todo-t{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px}
+.todo-s{font:500 11px/1.5 var(--disp);letter-spacing:.5px;color:var(--hint);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============ 选项卡 ============ */
+.opt{border:1.5px solid rgba(24,144,255,.14);border-radius:14px;padding:13px 15px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:14px;background:rgba(255,255,255,.55);transition:.15s;font-weight:500;backdrop-filter:blur(8px)}
+.opt .rd{width:19px;height:19px;border-radius:50%;border:2px solid #C9D2E8;flex-shrink:0;position:relative;transition:.15s}
+.opt:hover{border-color:#91D5FF}
+.opt.on{border-color:var(--pri);background:#F0F8FF;box-shadow:0 4px 14px rgba(24,144,255,.12)}
+.opt.on .rd{border-color:var(--pri)}
+.opt.on .rd::after{content:"";position:absolute;inset:3.5px;border-radius:50%;background:linear-gradient(135deg,#40A9FF,#1890FF)}
+
+/* ============ 评分 ============ */
+.sc-row{margin-bottom:18px}
+.sc-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sc-name{font-size:13px;font-weight:600;letter-spacing:.5px}
+.sc-w{font:600 10.5px/1 var(--disp);letter-spacing:1px;color:var(--acc-d);background:var(--acc-bg);padding:3px 9px;border-radius:999px;margin-left:7px}
+.sc-v{font:700 20px/1 var(--disp);color:var(--txt);letter-spacing:.5px}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:#EAEEF9;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3.5px solid var(--pri);box-shadow:0 3px 10px rgba(24,144,255,.4);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3.5px solid var(--pri);cursor:pointer}
+
+/* ============ 图表 ============ */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:18px;padding:14px 15px;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.metric .k{font:500 11px/1.5 var(--disp);letter-spacing:1.5px;color:#8A92AC}
+.metric .v{font:700 28px/1.15 var(--disp);letter-spacing:.5px;color:var(--txt);margin-top:5px}
+.metric .v .u{font-size:12px;font-weight:500;color:var(--hint);margin-left:3px;letter-spacing:1px}
+.metric .d{font-size:10.5px;margin-top:5px;letter-spacing:.5px}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar-col i{width:100%;background:linear-gradient(180deg,#69C0FF,#40A9FF);border-radius:6px 6px 3px 3px;transition:.2s}
+.bar-col.hot i{background:linear-gradient(180deg,#5CDBD3,#13C2C2);box-shadow:0 4px 12px rgba(19,194,194,.35)}
+.bar-col span{font:600 9.5px/1 var(--disp);letter-spacing:1px;color:var(--hint)}
+.hbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.hbar:last-child{margin-bottom:2px}
+.hbar .nm{width:62px;font-size:12px;color:#5A6380;flex-shrink:0;text-align:right}
+.hbar .tk{flex:1;height:14px;background:#EAEEF9;border-radius:999px;overflow:hidden}
+.hbar .tk i{display:block;height:100%;background:linear-gradient(90deg,#69C0FF,#1890FF);border-radius:999px}
+.hbar:first-child .tk i{background:linear-gradient(90deg,#5CDBD3,#13C2C2)}
+.hbar .vl{width:26px;font:700 14px/1 var(--disp);flex-shrink:0;letter-spacing:.5px;color:var(--txt)}
+.donut-wrap{display:flex;align-items:center;gap:22px}
+.donut{width:118px;height:118px;border-radius:50%;background:conic-gradient(#1890FF 0 43%,#36CFC9 43% 68%,#FFC53D 68% 84%,#13C2C2 84% 100%);position:relative;flex-shrink:0;box-shadow:0 8px 22px rgba(24,144,255,.15)}
+.donut::after{content:"128件";position:absolute;inset:27px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 15px var(--disp);letter-spacing:1px;box-shadow:inset 0 2px 8px rgba(24,144,255,.08)}
+.leg{flex:1}
+.leg-row{display:flex;align-items:center;gap:9px;font-size:12px;color:#5A6380;margin-bottom:10px}
+.leg-row i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.leg-row b{margin-left:auto;font:700 13px var(--disp);color:var(--txt);letter-spacing:.5px}
+
+/* ============ 弹层 ============ */
+.toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.96);background:rgba(35,42,68,.92);color:#fff;font-size:12.5px;padding:12px 22px;border-radius:14px;z-index:99;display:none;box-shadow:0 14px 40px rgba(23,30,60,.35);letter-spacing:.5px;max-width:80%;text-align:center;line-height:1.65}
+.toast.show{display:block;animation:tin .2s cubic-bezier(.22,1,.36,1)}
+@keyframes tin{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+/* ============ 首页顶栏（v2 蓝渐变头 + 内嵌 KPI） ============ */
+.home-head{position:relative;background:linear-gradient(135deg,#096DD9 0%,#1890FF 45%,#40A9FF 100%);border-radius:0 0 26px 26px;padding:4px 16px 18px;color:#fff;overflow:hidden;box-shadow:0 16px 36px rgba(24,144,255,.25)}
+.home-head::after{content:"";position:absolute;right:-46px;top:-46px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.09)}
+.home-head::before{content:"";position:absolute;left:-34px;bottom:-70px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hh-top{display:flex;align-items:center;justify-content:flex-end;position:relative;z-index:2;min-height:0;margin-bottom:-28px}
+.hh-actions{display:flex;align-items:center;gap:8px;flex:none}
+.hh-btn{width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex:none}
+.hh-btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hh-btn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:#FF5A5F;border:1.5px solid #fff}
+.home-hi{font-size:22px;font-weight:800;margin-top:0;padding-right:48px;position:relative;z-index:2;letter-spacing:-.3px;text-shadow:0 2px 8px rgba(0,0,0,.12)}
+.home-sub{font-size:12.5px;opacity:.88;margin-top:4px;position:relative;z-index:2}
+.kpi-row{display:flex;margin-top:16px;position:relative;z-index:2;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:11px 4px}
+.kpi-row .k{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,.16);cursor:pointer}
+.kpi-row .k:last-child{border-right:none}
+.kpi-row .k .n{font-size:22px;font-weight:800;letter-spacing:-.5px;text-shadow:0 2px 8px rgba(0,0,0,.12)}
+.kpi-row .k .l{font-size:10.5px;opacity:.82;margin-top:2px}
+/* 兼容旧类名（其他页可能引用） */
+.brand-bar,.greet,.metric-row,.m-card{display:none}
+.icon-btn{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.62);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;box-shadow:0 6px 16px rgba(24,144,255,.08)}
+.icon-btn svg{width:18px;height:18px;stroke:var(--txt);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:#FF4D4F;border:1.5px solid #fff}
+.avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#69C0FF,#1890FF);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;border:2px solid rgba(255,255,255,.85);box-shadow:0 8px 18px rgba(24,144,255,.28)}
+.feed{display:flex;gap:12px;background:var(--glass);backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:16px;padding:13px 14px;margin-bottom:10px;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.feed-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700}
+.feed-bd{flex:1;min-width:0}
+.feed-t{font-size:13.5px;font-weight:700;line-height:1.45}
+.feed-s{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.55}
+.feed-time{font:500 11px/1 var(--disp);color:var(--hint);margin-top:6px;letter-spacing:.5px}
+/* 我的页仍用旧 hero */
+.hero{background:linear-gradient(135deg,#096DD9 0%,#1890FF 45%,#40A9FF 100%);color:#fff;padding:20px 18px 18px;position:relative;border-radius:0 0 26px 26px;overflow:hidden;box-shadow:0 16px 36px rgba(24,144,255,.25)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(140px 140px at 88% -10%,rgba(255,255,255,.25),transparent),radial-gradient(180px 120px at -8% 110%,rgba(255,255,255,.14),transparent);pointer-events:none}
+.hero-row{display:flex;align-items:center;gap:14px;margin-top:15px}
+.hero .h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+.hero .h2{font-size:11px;color:rgba(255,255,255,.75);margin-top:5px;letter-spacing:1px}
+.role-chip{font-size:9.5px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:2px 8px;margin-left:7px;vertical-align:2px;letter-spacing:1px;font-weight:500}
+.hero-stats{display:flex;margin-top:17px;border-top:1px solid rgba(255,255,255,.22);padding-top:14px}
+.hstat{flex:1;text-align:center}
+.hstat+.hstat{border-left:1px solid rgba(255,255,255,.22)}
+.hstat .v{font:700 26px/1 var(--disp);letter-spacing:.5px}
+.hstat .v.acc{color:#B5F5EC}
+.hstat .k{font-size:10px;color:rgba(255,255,255,.72);margin-top:6px;letter-spacing:2px}
+
+/* ============ 登录页 ============ */
+.login-body{display:flex;flex-direction:column;align-items:center;padding:60px 36px 0;height:100%;background:linear-gradient(175deg,#1890FF 0%,#096DD9 48%,#003A8C 100%);color:#fff;position:relative}
+.login-body::before{content:"";position:absolute;inset:0;background:radial-gradient(300px 260px at 85% 8%,rgba(255,255,255,.14),transparent),radial-gradient(260px 220px at -10% 75%,rgba(255,255,255,.1),transparent);pointer-events:none}
+.logo{width:88px;height:88px;border-radius:26px;background:linear-gradient(135deg,#36CFC9,#13C2C2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;box-shadow:0 16px 40px rgba(19,194,194,.45);margin-bottom:22px;position:relative;z-index:1}
+.login-h{font-size:24px;font-weight:700;letter-spacing:5px;position:relative;z-index:1}
+.login-s{font:600 11px/1 var(--disp);letter-spacing:4px;color:rgba(255,255,255,.62);margin:12px 0 0;text-transform:uppercase;position:relative;z-index:1}
+.login-s2{font-size:12.5px;color:rgba(255,255,255,.78);margin:16px 0 38px;letter-spacing:2px;position:relative;z-index:1}
+.login-cta{width:100%;padding:14px;border-radius:14px;border:none;background:#fff;color:#096DD9;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:2px;box-shadow:0 10px 24px rgba(0,0,0,.18);position:relative;z-index:1}
+.legal{font-size:10.5px;color:rgba(255,255,255,.42);text-align:center;line-height:1.8;margin-top:auto;padding-bottom:34px;letter-spacing:.5px;position:relative;z-index:1}
+.login-form{width:100%;background:#fff;border-radius:20px;padding:24px 20px;color:var(--txt);position:relative;z-index:1;box-shadow:0 20px 50px rgba(23,30,60,.25)}
+.login-form .lf-t{font-size:15px;font-weight:700;text-align:center;letter-spacing:2px}
+.login-form .lf-s{font-size:11px;color:var(--sub);text-align:center;margin:8px 0 20px;line-height:1.6}
+.login-hint{font-size:11px;color:rgba(255,255,255,.72);margin-top:14px;text-align:center;line-height:1.7;position:relative;z-index:1}
+.login-body.login-card-step{justify-content:center;padding:28px 22px 36px;overflow-y:auto}
+.login-body.login-card-step .login-form{margin-top:0;padding:22px 18px 20px}
+.settings-tip{font-size:12px;color:var(--sub);line-height:1.7;margin:0 0 12px}
+
+/* ============ 委员意见卡 ============ */
+.op-card{border:1px solid rgba(24,144,255,.1);border-left:3px solid #D8DEF0;border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:12px;background:rgba(255,255,255,.55);backdrop-filter:blur(8px)}
+.op-card.yes{border-left-color:var(--ok)}
+.op-card.no{border-left-color:#C9D2E8}
+.op-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.op-hd .nm{font-weight:700;font-size:13px;letter-spacing:.5px}
+.op-bd{color:var(--sub);line-height:1.75}
+.op-ft{display:flex;gap:16px;margin-top:9px;color:var(--hint);font:500 11px var(--disp);letter-spacing:1px}
+
+/* ============ v4.3 增补 ============ */
+.upload{border:1.5px dashed rgba(24,144,255,.35);border-radius:14px;padding:18px 14px;text-align:center;background:rgba(255,255,255,.4);cursor:pointer;transition:.15s}
+.upload:hover{border-color:var(--pri);background:rgba(230,244,255,.7)}
+.upload .up-ic{font-size:22px;margin-bottom:6px}
+.upload .up-t{font-size:13px;font-weight:600;color:var(--txt)}
+.upload .up-s{font-size:11px;color:var(--hint);margin-top:4px}
+.upload-files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+/* 改善性质：蓝色 · 一行三个 */
+.nature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nature-tag{display:flex;align-items:center;justify-content:center;padding:10px 4px;border-radius:12px;background:rgba(255,255,255,.55);border:1.5px solid rgba(24,144,255,.14);color:#5A6380;cursor:pointer;font-size:12.5px;font-weight:500;text-align:center;transition:.15s;user-select:none}
+.nature-tag.on{background:#E6F4FF;border-color:rgba(24,144,255,.45);color:#1890FF;font-weight:700;box-shadow:0 4px 12px rgba(24,144,255,.15)}
+/* 正方形图片上传（移动端） */
+.img-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.img-slot{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.55);border:1.5px dashed rgba(24,144,255,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;color:#6B7390;font-size:11px;gap:4px}
+.img-slot.add .plus{font-size:22px;font-weight:700;color:#1890FF;line-height:1}
+.img-slot.has{border-style:solid;border-color:rgba(24,144,255,.2);background:linear-gradient(135deg,#E6F4FF,#F0FBFF);color:#096DD9;font-weight:600}
+.img-slot .rm{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;line-height:1}
+.person{border:1px solid rgba(24,144,255,.1);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,.45)}
+.person:last-child{margin-bottom:0}
+.person .pn{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.person .pm{font-size:11px;color:var(--sub);margin-top:4px;line-height:1.6;letter-spacing:.3px}
+.rank-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #EFF2F9;font-size:13px}
+.rank-row:last-child{border-bottom:none}
+.rank-row.me{background:rgba(24,144,255,.06);margin:0 -8px;padding:10px 8px;border-radius:10px;border-bottom:none}
+.rank-no{width:22px;font:700 14px var(--disp);color:var(--hint);text-align:center}
+.rank-row:nth-child(1) .rank-no,.rank-row.top1 .rank-no{color:#D4A017}
+.rank-name{flex:1;font-weight:600}
+.rank-meta{font-size:11px;color:var(--hint)}
+.rank-val{font:700 14px var(--disp);color:var(--txt)}
+select.ipt{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8A92AC 50%),linear-gradient(135deg,#8A92AC 50%,transparent 50%);background-position:calc(100% - 18px) calc(50% - 3px),calc(100% - 12px) calc(50% - 3px);background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:32px}
+.check{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1.5px solid rgba(24,144,255,.14);border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.55);cursor:pointer}
+.check.on{border-color:var(--pri);background:#F0F8FF}
+.check .cb{width:18px;height:18px;border-radius:5px;border:2px solid #C9D2E8;flex-shrink:0;position:relative}
+.check.on .cb{border-color:var(--pri);background:linear-gradient(135deg,#40A9FF,#1890FF)}
+.check.on .cb::after{content:"✓";position:absolute;inset:0;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.stats-pane{display:none}.stats-pane.on{display:block}
+
+/* ============ 提案详情（对齐 v2 分块） ============ */
+.detail-head{padding:10px 14px 14px;background:linear-gradient(135deg,#096DD9 0%,#1890FF 55%,#40A9FF 100%);color:#fff;border-radius:0 0 22px 22px;box-shadow:0 12px 28px rgba(24,144,255,.28)}
+.detail-head .dh-nav{display:flex;justify-content:space-between;align-items:center}
+.detail-head .dh-back{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;line-height:1}
+.detail-head .dh-title{font-size:15px;font-weight:600;letter-spacing:.5px}
+.detail-head .no{font:600 11px/1.4 var(--disp);letter-spacing:1px;opacity:.85;margin-top:12px}
+.detail-head h2{font-size:18px;font-weight:800;margin:8px 0 10px;line-height:1.35}
+.detail-head .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.detail-head .meta .st{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.28);font-size:10.5px;padding:3px 9px;border-radius:999px;font-weight:600}
+.detail-head .meta .who{font-size:11.5px;opacity:.9}
+.blk{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-line);border-radius:18px;padding:14px;margin:0 14px 12px;box-shadow:0 8px 22px rgba(24,144,255,.08)}
+.blk.muted{opacity:.55}
+.blk-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.blk-hd .dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#40A9FF,#1890FF);flex-shrink:0;box-shadow:0 0 0 3px rgba(24,144,255,.16)}
+.blk-hd .tt{font-size:14px;font-weight:700;flex:1;letter-spacing:.3px}
+.blk-hd .more{font-size:11px;color:#1890FF;cursor:pointer;font-weight:600}
+.kv{display:grid;grid-template-columns:76px 1fr;gap:8px 10px;font-size:13px}
+.kv .k{color:#6B7390}
+.kv .v{color:#1E2438;line-height:1.5}
+.person-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(24,144,255,.08)}
+.person-row:last-child{border-bottom:none;padding-bottom:0}
+.person-row .av{width:36px;height:36px;border-radius:12px;background:#E6F4FF;color:#1890FF;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.person-row .nm{font-size:13px;font-weight:700}
+.person-row .ds{font-size:11.5px;color:#6B7390;margin-top:3px;line-height:1.45}
+.op-mini{border-left:3px solid #D8DEF0;background:rgba(255,255,255,.45);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.op-mini.yes{border-left-color:#10B981}
+.op-mini.no{border-left-color:#C9D2E8}
+.op-mini .top{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12.5px;font-weight:700;flex-wrap:wrap}
+.op-mini .c{font-size:12px;color:#5A6380;line-height:1.55}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.score-grid .it{background:rgba(255,255,255,.5);border-radius:12px;padding:10px;font-size:12px}
+.score-grid .it b{display:block;font-size:16px;margin-top:4px;color:#1890FF}
+.detail-actions{padding:4px 14px 20px}
+.pending-tip{font-size:12px;color:#8A92AC;text-align:center;padding:16px 8px}
+.st{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.5px;line-height:1.6}
+.st-green{color:var(--ok);background:var(--ok-bg)}
+.st-blue{color:var(--blue);background:var(--blue-bg)}
+.st-gray{color:#8A92AC;background:#EFF2F9}
+.st-teal{color:var(--teal);background:var(--teal-bg)}
+.st-amber{color:var(--warn);background:var(--warn-bg)}
+.st-red{color:var(--err);background:var(--err-bg)}
+.st-purple{color:var(--purple);background:var(--purple-bg)}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- =============== 演示控制台 =============== -->
+<div class="side">
+  <div class="side-hd">
+    <div class="side-logo">
+      <div class="side-logo-badge">改</div>
+      <div>
+        <span class="kick">SPEX · BRAND GLASS</span>
+        <h1>提案改善系统</h1>
+      </div>
+    </div>
+    <span class="vs">V4.3</span>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="role-box">
+    <h3>切换角色视角</h3>
+    <button class="role-btn on" data-role="staff" onclick="setRole('staff')"><span class="dot" style="background:#4A90E2"></span>张伟 · 普通员工</button>
+    <button class="role-btn" data-role="committee" onclick="setRole('committee')"><span class="dot" style="background:#3BBA9E"></span>李静 · 委员</button>
+    <button class="role-btn" data-role="approver" onclick="setRole('approver')"><span class="dot" style="background:#F2B33D"></span>王建国 · 批准人</button>
+    <button class="role-btn" data-role="leader" onclick="setRole('leader')"><span class="dot" style="background:#9B7BD8"></span>赵强 · 部门负责人</button>
+    <button class="role-btn" data-role="implementer" onclick="setRole('implementer')"><span class="dot" style="background:#13C2C2"></span>张伟 · 实施负责人</button>
+  </div>
+</div>
+
+<!-- =============== 手机预览 =============== -->
+<div class="stage">
+<div class="phone"><div class="screen-wrap" id="phone">
+
+<!-- ============ P1 工号密码登录 ============ -->
+<div class="screen act" id="p-login" data-title="提案改善" data-dark>
+  <div class="statusbar dark-sb"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="body" style="background:linear-gradient(175deg,#1890FF,#096DD9 48%,#003A8C)">
+    <div class="login-body" id="login-1">
+      <div class="logo">改</div>
+      <div class="login-h">提案改善</div>
+      <div class="login-s">Improve Proposal System</div>
+      <div class="login-s2">人人参与改善 · 点滴汇聚效益</div>
+      <button class="login-cta" onclick="loginStep(2)">工号密码登录</button>
+      <div class="legal">登录即代表同意《用户协议》与《隐私政策》<br>账号由管理员后台预录入 · 初始密码 123456</div>
+    </div>
+    <div class="login-body login-card-step" id="login-2" style="display:none">
+      <div class="login-form">
+        <div class="lf-t">账号登录</div>
+        <div class="lf-s">请输入后台预录入的工号与密码</div>
+        <div class="form-item"><label class="req">工号</label><input class="ipt" id="login-empno" placeholder="请输入工号" value="100861"></div>
+        <div class="form-item"><label class="req">密码</label><input class="ipt" id="login-pwd" type="password" placeholder="请输入密码" value="123456"></div>
+        <button class="btn btn-pri" onclick="doLogin()">登录</button>
+        <div class="hint-t" style="margin-top:12px;text-align:center">忘记密码请联系管理员在后台重置</div>
+      </div>
+      <div class="login-hint">首次登录或重置后须强制修改密码，未改密不可进入业务功能</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2 工作台 ============ -->
+<div class="screen" id="p-home" data-title="首页" data-dark>
+  <div class="statusbar dark-sb"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="body">
+    <div id="hero"></div>
+    <div class="page" id="home-body" style="padding-top:14px"></div>
+  </div>
+  <div class="tabbar" id="tb"></div>
+</div>
+
+<!-- ============ P3 提案列表 ============ -->
+<div class="screen" id="p-list" data-title="提案列表">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar">提案列表</div>
+  <div class="body">
+    <div class="page">
+      <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="搜索提案名称 / 编号"></div>
+      <div class="chips" id="list-tabs">
+        <span class="chip on" onclick="fList(this)">全部</span>
+        <span class="chip" onclick="fList(this)">我提交的</span>
+        <span class="chip" onclick="fList(this)">我参与的</span>
+        <span class="chip" onclick="fList(this)">我改善的</span>
+      </div>
+      <div id="prop-list"></div>
+    </div>
+  </div>
+  <div class="tabbar" id="tb2"></div>
+</div>
+
+<!-- ============ P4 提案详情 ============ -->
+<div class="screen" id="p-detail" data-title="提案详情" data-dark>
+  <div class="statusbar dark-sb"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="body" id="detail-body"></div>
+</div>
+
+<!-- ============ P5 申请表 ============ -->
+<div class="screen" id="p-apply" data-title="发起提案">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>发起提案</div>
+  <div class="body">
+    <div class="page">
+      <div class="steps" id="apply-steps"></div>
+      <div id="apply-body"></div>
+    </div>
+  </div>
+  <div class="ftbar" id="apply-ft"></div>
+</div>
+
+<!-- ============ P6 委员待办 ============ -->
+<div class="screen" id="p-review-todo" data-title="委员审核">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>委员审核待办</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-info"><span class="bic">i</span><div>委员并行独立审核；计划书待审请点下方入口</div></div>
+      <div class="todo" onclick="go('p-plan-review-todo')" style="margin-bottom:14px">
+        <div class="todo-ic" style="background:var(--teal-bg);color:var(--teal)">计</div>
+        <div class="todo-bd"><div class="todo-t">计划书审核待办</div><div class="todo-s">可行 / 不可行 · 与申请单意见独立</div></div>
+        <span class="stamp s-teal">1</span>
+      </div>
+      <div class="sec">待出具意见 <span class="n">2 items</span></div>
+      <div class="todo" onclick="go('p-review-form')">
+        <div class="todo-ic" style="background:var(--blue-bg);color:var(--blue)">审</div>
+        <div class="todo-bd"><div class="todo-t">产线换模时间过长改善</div><div class="todo-s">NO. 202608240001 · 生产一部 · 张伟</div></div>
+        <span class="stamp s-blue">待审核</span>
+      </div>
+      <div class="todo" onclick="go('p-review-form')">
+        <div class="todo-ic" style="background:var(--blue-bg);color:var(--blue)">审</div>
+        <div class="todo-bd"><div class="todo-t">车间周转器具定量管理</div><div class="todo-s">NO. 202608240004 · 生产二部 · 陈晨</div></div>
+        <span class="stamp s-blue">待审核</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P7 委员审核表单 ============ -->
+<div class="screen" id="p-review-form" data-title="出具审核意见">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-review-todo')">‹</span>出具审核意见</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:9px">
+          <div style="font-size:15px;font-weight:700;line-height:1.5">产线换模时间过长改善</div>
+          <span class="stamp s-blue">待审核</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608240001 · 张伟 · 生产一部</div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">A</span>提案内容</span></div>
+        <div style="font-size:12.5px;color:#5B6068;line-height:1.9">
+          <b style="color:var(--txt)">目前状况及问题</b><br>目前注塑车间换模平均耗时 45 分钟，超出行业标准约 40%，月均换模 60 次，占用有效产能约 45 小时……<br><br>
+          <b style="color:var(--txt)">改善意见</b><br>推行 SMED 快速换模法，将内部作业转换为外部作业，预置标准化模具小车与快换夹具……
+        </div>
+        <div class="prop-meta" style="margin-top:11px"><span class="nat">效率改善</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">B</span>审核结论</span><span style="color:var(--err);font-size:11px;font-weight:500">必填</span></div>
+        <div class="opt on" onclick="pickOpt(this,'adopt')"><span class="rd"></span>采用</div>
+        <div class="opt" onclick="pickOpt(this,'reject')"><span class="rd"></span>不采用</div>
+        <div id="adopt-extra">
+          <div class="form-item" style="margin-top:15px"><label class="req">是否形成改善计划书</label>
+            <div style="display:flex;gap:10px">
+              <div class="opt on" style="flex:1;margin:0"><span class="rd"></span>形成计划书</div>
+              <div class="opt" style="flex:1;margin:0"><span class="rd"></span>不形成</div>
+            </div>
+          </div>
+          <div class="form-item"><label>提案奖额度（元）<span style="color:var(--hint);font-weight:400;font-size:10.5px">（采用时建议）</span></label><input class="ipt" value="300" placeholder="建议额度"></div>
+        </div>
+        <div class="form-item"><label>综合评价</label><textarea class="ipt" placeholder="填写综合评价">改善方向明确，效益测算依据充分，具备落地条件，建议采纳并形成计划书推进实施。</textarea></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="toast('意见已提交（2/5 位委员已完成）');setTimeout(()=>go('p-review-todo'),900)">提交意见</button></div>
+</div>
+
+<!-- ============ P8 批准人待办 ============ -->
+<div class="screen" id="p-approve-todo" data-title="批准待办">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>批准待办</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-info"><span class="bic">i</span><div>可查看全部委员意见；批准即通过</div></div>
+      <div class="prop" style="--band:var(--warn)" onclick="go('p-approve-form')">
+        <div class="prop-hd"><div class="prop-title">车间物料标识标准化</div><span class="stamp s-amber">待批准</span></div>
+        <div class="prop-no"><b>NO.</b> 202608230008 · 品质部 · 刘洋</div>
+        <div class="prop-meta"><span class="stamp s-green">采用 4</span><span class="stamp s-gray">不采用 1</span><span class="prog-t">委员会 5/5 · 建议形成计划书 · 奖励 ¥200</span></div>
+      </div>
+      <div class="prop" style="--band:var(--teal)" onclick="go('p-plan-approve-form')">
+        <div class="prop-hd"><div class="prop-title">产线换模时间过长改善</div><span class="stamp s-amber">计划书待批</span></div>
+        <div class="prop-no"><b>NO.</b> 202608240001 · 第 2 轮 · 张伟</div>
+        <div class="prop-meta"><span class="stamp s-green">可行 4</span><span class="stamp s-gray">不可行 1</span><span class="prog-t">委员会 5/5</span></div>
+      </div>
+      <div class="prop" style="--band:var(--purple)" onclick="go('p-sign')">
+        <div class="prop-hd"><div class="prop-title">仓库照明节能改造</div><span class="stamp s-purple">待签核</span></div>
+        <div class="prop-no"><b>NO.</b> 202608180005 · 仓储部 · 周敏</div>
+        <div class="prop-meta"><span class="prog-t">评分完成 · 86.5 分</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P9 批准决策 ============ -->
+<div class="screen" id="p-approve-form" data-title="批准决策">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-approve-todo')">‹</span>批准决策</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:9px">
+          <div style="font-size:15px;font-weight:700;line-height:1.5">车间物料标识标准化</div>
+          <span class="stamp s-amber">待批准</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608230008 · 品质部 · 刘洋</div>
+        <div class="prop-meta" style="margin-top:9px"><span class="nat">品质改善</span></div>
+      </div>
+      <div class="sec">委员意见汇总 <span class="n">5/5 已完成</span></div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">李静</span><span class="stamp s-green">采用</span><span class="stamp s-blue">形成计划书</span></div>
+        <div class="op-bd">标识标准化可显著降低错料风险，建议同步修订检验指导书。</div>
+        <div class="op-ft"><span>建议奖励 ¥200</span></div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">孙磊</span><span class="stamp s-green">采用</span><span class="stamp s-blue">形成计划书</span></div>
+        <div class="op-bd">投入小见效快，同意。</div>
+        <div class="op-ft"><span>建议奖励 ¥200</span></div>
+      </div>
+      <div class="op-card no">
+        <div class="op-hd"><span class="nm">吴芳</span><span class="stamp s-gray">不采用</span></div>
+        <div class="op-bd">现有标识体系已运行两年，建议先评估再推广。</div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">郑军</span><span class="stamp s-green">采用</span><span class="stamp s-blue">形成计划书</span></div>
+        <div class="op-bd">同意，注意旧标识的过渡期管理。</div>
+        <div class="op-ft"><span>建议奖励 ¥200</span></div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">何丽</span><span class="stamp s-green">采用</span><span class="stamp s-blue">形成计划书</span></div>
+        <div class="op-bd">可行。</div>
+        <div class="op-ft"><span>建议奖励 ¥200</span></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-t"><span><span class="idx">C</span>批准决策</span><span style="color:var(--err);font-size:11px;font-weight:500">必填</span></div>
+        <div class="opt on"><span class="rd"></span>批准</div>
+        <div class="opt"><span class="rd"></span>不批准（终态，不可退回）</div>
+        <div class="form-item" style="margin-top:15px"><label>核定是否形成改善计划书</label>
+          <div style="display:flex;gap:10px">
+            <div class="opt on" style="flex:1;margin:0"><span class="rd"></span>形成</div>
+            <div class="opt" style="flex:1;margin:0"><span class="rd"></span>不形成</div>
+          </div>
+        </div>
+        <div class="form-item"><label>核定提案奖金额（元）<span style="color:var(--hint);font-weight:400;font-size:10.5px">（以委员会建议为基础）</span></label><input class="ipt" value="200"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="toast('已批准，转入任务分配');setTimeout(()=>go('p-approve-todo'),900)">确认批准</button></div>
+</div>
+
+<!-- ============ P10 任务指派 ============ -->
+<div class="screen" id="p-assign" data-title="任务指派">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>任务指派</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="font-size:15px;font-weight:700">车间物料标识标准化</div>
+        <div class="prop-no" style="margin-top:5px"><b>NO.</b> 202608230008 · 已批准 · 需指派实施人</div>
+      </div>
+      <div class="chips" style="padding-bottom:12px">
+        <span class="chip on">指派</span>
+        <span class="chip" onclick="go('p-pool')">任务池领取</span>
+      </div>
+      <div class="banner bn-info"><span class="bic">i</span><div>多人时须指定实施负责人；计划书 / 报告书由其统一填写</div></div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">A</span>选择实施人</span><span style="font-size:11px;color:var(--hint)">改善部门成员</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span class="stamp s-ink" style="padding:6px 13px;font-size:12.5px">张伟 ✓</span>
+          <span class="stamp s-ink" style="padding:6px 13px;font-size:12.5px">陈晨 ✓</span>
+          <span class="stamp s-gray" style="padding:6px 13px;font-size:12.5px;cursor:pointer">＋ 添加成员</span>
+        </div>
+        <div class="form-item" style="margin-top:16px"><label class="req">指定实施负责人（第一改善人）</label>
+          <div class="opt on"><span class="rd"></span>张伟（已选成员）</div>
+          <div class="opt"><span class="rd"></span>陈晨（已选成员）</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cell"><span class="lab">团队类型</span><span class="val">团队（2 人）</span></div>
+        <div class="cell"><span class="lab">改善部门</span><span class="val">品质部（负责人：赵强）</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-plain" onclick="toast('已放入部门任务池')">放入任务池</button><button class="btn btn-pri" onclick="toast('已指派：张伟（负责人）、陈晨');setTimeout(()=>go('p-home'),900)">确认指派</button></div>
+</div>
+
+<!-- ============ P11 任务池 ============ -->
+<div class="screen" id="p-pool" data-title="部门任务池">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>部门任务池</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-warn"><span class="bic">!</span><div>仅个人领取；需多人请走负责人指派，或领取后转团队</div></div>
+      <div class="prop" style="--band:var(--warn)">
+        <div class="prop-hd"><div class="prop-title">包装线人效提升方案</div><span class="stamp s-amber">待领取</span></div>
+        <div class="prop-no"><b>NO.</b> 202608220012 · 生产二部</div>
+        <div style="margin-top:13px">
+          <button class="btn btn-acc" onclick="toast('领取成功，可转为团队');setTimeout(()=>go('p-claim-team'),900)">个人领取</button>
+        </div>
+        <p class="hint-t">▸ 领取后如需协助，可添加成员并指定实施负责人</p>
+      </div>
+      <div class="prop" style="--band:var(--teal)">
+        <div class="prop-hd"><div class="prop-title">注塑机模温机点检标准化</div><span class="stamp s-teal">已领取 · 个人</span></div>
+        <div class="prop-no"><b>NO.</b> 202608210009 · 生产一部 · 领取人：张伟</div>
+        <div style="margin-top:12px">
+          <button class="btn btn-ghost btn-s" onclick="go('p-claim-team')">转为团队</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P11b 领取转团队 ============ -->
+<div class="screen" id="p-claim-team" data-title="领取转团队">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-pool')">‹</span>领取转团队</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-info"><span class="bic">i</span><div>转团队后，计划书 / 报告书由实施负责人统一提交（仅一份）</div></div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700">包装线人效提升方案</div>
+        <div class="prop-no" style="margin-top:5px"><b>NO.</b> 202608220012 · 生产二部 · 领取人：张伟</div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">A</span>添加团队成员</span><span style="font-size:11px;color:var(--hint)">改善部门在职</span></div>
+        <div class="check on" onclick="this.classList.toggle('on')"><span class="cb"></span><div><b>张伟</b><div style="font-size:11px;color:var(--hint);margin-top:2px">100861 · 产线工程师 · 生产二部</div></div></div>
+        <div class="check on" onclick="this.classList.toggle('on')"><span class="cb"></span><div><b>陈晨</b><div style="font-size:11px;color:var(--hint);margin-top:2px">100872 · 工艺员 · 生产二部</div></div></div>
+        <div class="check" onclick="this.classList.toggle('on')"><span class="cb"></span><div><b>马超</b><div style="font-size:11px;color:var(--hint);margin-top:2px">100855 · 班组长 · 生产二部</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">B</span>指定实施负责人</span><span style="color:var(--err);font-size:11px">必填</span></div>
+        <div class="opt on"><span class="rd"></span>张伟（领取人 · 可继续担任）</div>
+        <div class="opt"><span class="rd"></span>陈晨</div>
+        <div class="opt"><span class="rd"></span>马超</div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-plain" onclick="go('p-pool')">取消</button><button class="btn btn-pri" onclick="toast('已转为团队，实施负责人：张伟');setTimeout(()=>go('p-plan'),900)">确认转团队</button></div>
+</div>
+
+<!-- ============ P12 计划书 ============ -->
+<div class="screen" id="p-plan" data-title="改善计划书">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>改善计划书</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-err"><span class="bic">!</span><div><b>第 1 轮被驳回</b>：请补充效益测算依据后重提</div></div>
+      <div class="card">
+        <div class="cell"><span class="lab">提案名称</span><span class="val ro">产线换模时间过长改善</span></div>
+        <div class="cell"><span class="lab">提案编号</span><span class="val ro"><b>202608240001</b></span></div>
+        <div class="cell"><span class="lab">实施负责人</span><span class="val ro">张伟</span></div>
+        <div class="cell"><span class="lab">团队成员</span><span class="val ro">陈晨</span></div>
+        <div class="cell"><span class="lab">提案属性</span><span class="val ro">团队</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">01</span>现状描述（问题）</span><span style="color:var(--err);font-size:11px">必填</span></div>
+        <textarea class="ipt">注塑车间换模平均 45 分钟，内部作业占 70%……</textarea>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">02</span>改善对策及成本</span><span style="color:var(--err);font-size:11px">必填</span></div>
+        <textarea class="ipt">推行 SMED 快速换模，配置模具小车 2 台、快换夹具 4 套，预计投入 ¥18,000……</textarea>
+      </div>
+      <div class="card" style="border-color:rgba(19,194,194,.45);box-shadow:inset 4px 0 0 var(--acc)">
+        <div class="card-t"><span><span class="idx">03</span>预估效益评估</span><span style="color:var(--err);font-size:11px">必填</span></div>
+        <textarea class="ipt">按月均换模 60 次测算：单次缩短 18 分钟 → 月省产能 18 小时 → 年化节约 ¥64,800（按产能工时费率 ¥75/h，测算依据见附件）……</textarea>
+        <p class="hint-t">▸ 驳回补充：效益测算已补充工时费率来源与计算过程</p>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">04</span>实施计划</span><span style="color:var(--err);font-size:11px">必填</span></div>
+        <textarea class="ipt" style="height:96px">第 1 周：现状测时与瓶颈拆解（张伟）
+第 2–3 周：模具小车与快换夹具到货调试（陈晨）
+第 4–5 周：试点产线试运行并固化 SOP
+第 6 周：推广培训与结案复盘</textarea>
+        <div class="form-item" style="margin-top:12px"><label class="req">计划开始日期</label><input class="ipt" type="date" value="2026-09-01"></div>
+        <div class="form-item"><label class="req">计划完成日期</label><input class="ipt" type="date" value="2026-10-15"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-plain" onclick="toast('草稿已暂存')">暂存</button><button class="btn btn-pri" onclick="toast('计划书已提交委员会审核');setTimeout(()=>go('p-home'),900)">提交审核</button></div>
+</div>
+
+<!-- ============ P12b 计划书委员待办 ============ -->
+<div class="screen" id="p-plan-review-todo" data-title="计划书审核">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>计划书审核待办</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-info"><span class="bic">i</span><div>计划书审核意见独立记录；结论为可行 / 不可行</div></div>
+      <div class="sec">待出具意见 <span class="n">1</span></div>
+      <div class="todo" onclick="go('p-plan-review-form')">
+        <div class="todo-ic" style="background:var(--teal-bg);color:var(--teal)">计</div>
+        <div class="todo-bd"><div class="todo-t">产线换模时间过长改善</div><div class="todo-s">NO. 202608240001 · 第 2 轮 · 实施负责人 张伟</div></div>
+        <span class="stamp s-teal">计划书待审</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P12c 计划书委员审核 ============ -->
+<div class="screen" id="p-plan-review-form" data-title="计划书意见">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-plan-review-todo')">‹</span>计划书审核意见</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:9px">
+          <div style="font-size:15px;font-weight:700;line-height:1.5">产线换模时间过长改善</div>
+          <span class="stamp s-teal">计划书待审</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608240001 · 第 2 轮 · 实施负责人 张伟</div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">A</span>计划书摘要</span></div>
+        <div style="font-size:12.5px;color:#5B6068;line-height:1.85">
+          <b style="color:var(--txt)">现状</b>：换模平均 45 分钟，内部作业占比高<br>
+          <b style="color:var(--txt)">对策</b>：SMED + 模具小车 / 快换夹具，投入约 ¥18,000<br>
+          <b style="color:var(--txt)">效益</b>：年化节约约 ¥64,800（已补测算依据）<br>
+          <b style="color:var(--txt)">计划</b>：2026-09-01 ~ 2026-10-15，分 6 周推进
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">B</span>可行性</span><span style="color:var(--err);font-size:11px;font-weight:500">必填</span></div>
+        <div class="opt on"><span class="rd"></span>可行</div>
+        <div class="opt"><span class="rd"></span>不可行</div>
+        <div class="form-item" style="margin-top:14px"><label class="req">审核意见</label><textarea class="ipt" placeholder="填写审核说明">测算依据已补齐，实施节奏合理，建议批准推进。</textarea></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="toast('计划书意见已提交（2/5）');setTimeout(()=>go('p-plan-review-todo'),900)">提交意见</button></div>
+</div>
+
+<!-- ============ P12d 计划书批准 ============ -->
+<div class="screen" id="p-plan-approve-form" data-title="计划书批准">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-approve-todo')">‹</span>计划书批准</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:9px">
+          <div style="font-size:15px;font-weight:700;line-height:1.5">产线换模时间过长改善</div>
+          <span class="stamp s-amber">计划书待批</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608240001 · 第 2 轮 · 实施负责人 张伟</div>
+      </div>
+      <div class="sec">委员意见汇总 <span class="n">5/5</span></div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">李静</span><span class="stamp s-green">可行</span></div>
+        <div class="op-bd">测算依据充分，节奏可行。</div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">孙磊</span><span class="stamp s-green">可行</span></div>
+        <div class="op-bd">同意推进。</div>
+      </div>
+      <div class="op-card no">
+        <div class="op-hd"><span class="nm">吴芳</span><span class="stamp s-gray">不可行</span></div>
+        <div class="op-bd">试点范围建议再收窄。</div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">郑军</span><span class="stamp s-green">可行</span></div>
+        <div class="op-bd">可批准。</div>
+      </div>
+      <div class="op-card yes">
+        <div class="op-hd"><span class="nm">何丽</span><span class="stamp s-green">可行</span></div>
+        <div class="op-bd">同意。</div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-t"><span><span class="idx">C</span>批准决策</span><span style="color:var(--err);font-size:11px;font-weight:500">必填</span></div>
+        <div class="opt on" onclick="togglePlanReject(false)"><span class="rd"></span>批准</div>
+        <div class="opt" onclick="togglePlanReject(true)"><span class="rd"></span>驳回（退回实施负责人修改）</div>
+        <div class="form-item" style="margin-top:15px"><label id="plan-approve-lab">审核意见</label><textarea class="ipt" id="plan-approve-comment" placeholder="填写审核说明">委员多数认为可行，批准进入实施。</textarea></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="submitPlanApprove()">提交决策</button></div>
+</div>
+
+<!-- ============ P13 报告书 ============ -->
+<div class="screen" id="p-report" data-title="改善报告书">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>改善报告书</div>
+  <div class="body">
+    <div class="page">
+      <div class="banner bn-info"><span class="bic">i</span><div>由实施负责人统一填写（仅一份），提交后进入评分</div></div>
+      <div class="card">
+        <div class="cell"><span class="lab">提案名称 / 编号</span><span class="val ro">仓库照明节能改造 <b>202608180005</b></span></div>
+        <div class="cell"><span class="lab">填写日期</span><span class="val ro">2026-08-20（系统自动）</span></div>
+        <div class="cell"><span class="lab">立案日期</span><span class="val ro">2026-08-18（申请批准时间）</span></div>
+        <div class="cell"><span class="lab">结案日期</span><span class="val">签核时系统填写</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">P</span>参与人员</span><span style="font-size:10.5px;color:var(--hint)">任务分配自动带出</span></div>
+        <div class="person"><div class="pn">周敏 <span class="stamp s-gray">提案人</span></div><div class="pm">工号 100740 · 仓储主管 · 仓储部</div></div>
+        <div class="person"><div class="pn">吴刚 <span class="stamp s-teal">第一改善人</span></div><div class="pm">工号 100812 · 设备工程师 · 仓储部</div></div>
+        <div class="person"><div class="pn">马超 <span class="stamp s-ink">改善人</span></div><div class="pm">工号 100855 · 班组长 · 仓储部</div></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">A</span>改善性质</span><span style="font-size:10.5px;color:var(--hint)">带出可改</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="nat">成本改善 ✓</span>
+          <span class="stamp s-gray" style="padding:5px 12px;font-size:12px;cursor:pointer">安全改善</span>
+          <span class="stamp s-gray" style="padding:5px 12px;font-size:12px;cursor:pointer">品质改善</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">01</span>现状描述</span></div>
+        <textarea class="ipt">仓库传统金卤灯 288 盏，单盏 400W，日均照明 14 小时……</textarea>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">02</span>改善对策及成本</span></div>
+        <textarea class="ipt">更换 LED 灯 288 盏，总投入 ¥86,400，分两批完成……</textarea>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">03</span>实施效果及推广</span></div>
+        <textarea class="ipt">单盏功耗降至 150W，照度提升 20%；该方案可推广至二厂仓库……</textarea>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">04</span>效益评估</span></div>
+        <textarea class="ipt">年节电约 10.2 万度，节约电费 ¥81,600，投资回收期 13 个月……</textarea>
+      </div>
+      <div class="card" style="background:var(--purple-bg);border:1px dashed rgba(143,107,242,.4)">
+        <div class="card-t" style="color:var(--purple)"><span><span class="idx" style="color:var(--purple)">S</span>评分矩阵</span><span style="font-size:10.5px;color:rgba(143,107,242,.7)">提交后由委员评分</span></div>
+        <div style="font-size:12px;color:rgba(143,107,242,.85);line-height:2.1;letter-spacing:.5px">有形绩效 30% · 无形绩效 10% · 难易度 20%<br>思考性 10% · 推广性 15% · 创新性 15%</div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-plain" onclick="toast('草稿已暂存')">暂存</button><button class="btn btn-pri" onclick="toast('报告书已提交，进入评分环节');setTimeout(()=>go('p-home'),900)">提交评定</button></div>
+</div>
+
+<!-- ============ P14 评分 ============ -->
+<div class="screen" id="p-score" data-title="提案评分">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>提案评分</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:15px;font-weight:700">仓库照明节能改造</div><span class="stamp s-purple">待评定</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608180005 · 仓储部 · 报告书已提交</div>
+      </div>
+      <div class="banner bn-info"><span class="bic">i</span><div>委员独立打分，权重按配置快照记录</div></div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">S</span>六维评分</span><span style="font-size:10.5px;color:var(--hint)">当前委员：李静</span></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">有形绩效<span class="sc-w">30%</span></span><span class="sc-v" id="v1">85</span></div><input type="range" min="0" max="100" value="85" oninput="calcScore(1,this.value)"></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">无形绩效<span class="sc-w">10%</span></span><span class="sc-v" id="v2">80</span></div><input type="range" min="0" max="100" value="80" oninput="calcScore(2,this.value)"></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">难易度<span class="sc-w">20%</span></span><span class="sc-v" id="v3">75</span></div><input type="range" min="0" max="100" value="75" oninput="calcScore(3,this.value)"></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">思考性<span class="sc-w">10%</span></span><span class="sc-v" id="v4">70</span></div><input type="range" min="0" max="100" value="70" oninput="calcScore(4,this.value)"></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">推广性<span class="sc-w">15%</span></span><span class="sc-v" id="v5">90</span></div><input type="range" min="0" max="100" value="90" oninput="calcScore(5,this.value)"></div>
+        <div class="sc-row"><div class="sc-hd"><span class="sc-name">创新性<span class="sc-w">15%</span></span><span class="sc-v" id="v6">75</span></div><input type="range" min="0" max="100" value="75" oninput="calcScore(6,this.value)"></div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#1890FF,#1890FF 55%,#40A9FF);color:#fff;display:flex;align-items:center;justify-content:space-between;border:none;box-shadow:0 12px 28px rgba(24,144,255,.35)">
+        <div><div style="font:600 10px/1 var(--disp);letter-spacing:2px;color:rgba(255,255,255,.5)">加权总分</div><div style="font:700 34px/1.2 var(--disp);letter-spacing:1px" id="score-total">81.8</div></div>
+        <div style="text-align:right"><div style="font:600 10px/1 var(--disp);letter-spacing:2px;color:rgba(255,255,255,.5)">加权总分</div><div style="font:700 27px/1.4 var(--disp);color:#B5F5EC" id="score-total-side">86.5</div><div style="font-size:9.5px;color:rgba(255,255,255,.4)">一期不做自动判级</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="toast('评分已提交（3/5 委员已完成）');setTimeout(()=>go('p-home'),900)">提交评分</button></div>
+</div>
+
+<!-- ============ P15 签核 ============ -->
+<div class="screen" id="p-sign" data-title="报告书签核">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-approve-todo')">‹</span>报告书签核</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:15px;font-weight:700">仓库照明节能改造</div><span class="stamp s-purple">待签核</span>
+        </div>
+        <div class="prop-no"><b>NO.</b> 202608180005 · 仓储部 · 报告书已评定</div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#1890FF,#1890FF 55%,#40A9FF);color:#fff;border:none;display:flex;align-items:center;gap:18px;box-shadow:0 12px 28px rgba(24,144,255,.35)">
+        <div style="text-align:center;flex-shrink:0"><div style="font:800 38px/1 var(--disp);letter-spacing:1px">86.5</div><div style="font:600 9.5px/1 var(--disp);letter-spacing:2px;color:rgba(255,255,255,.5);margin-top:6px">总分</div></div>
+        <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.15)"></div>
+        <div style="flex:1">
+          <div style="font-size:12.5px;margin-bottom:7px">加权总分 <span style="font:800 19px var(--disp);color:#B5F5EC;margin-left:4px">86.5</span></div>
+          <div style="font-size:10.5px;color:rgba(255,255,255,.55);line-height:1.9">核定提案奖 ¥500（批准人核定）<br>结案日期 2026-08-24（签核时系统填写）</div>
+        </div>
+      </div>
+      <div class="sec">各委员评分 <span class="n">5/5 已完成</span></div>
+      <div class="card" style="padding-top:6px">
+        <div class="cell"><span class="lab">李静 · 委员</span><span class="val"><b>88.0</b> · 有形90 无形85 难易80 思考75 推广95 创新80</span></div>
+        <div class="cell"><span class="lab">孙磊 · 委员</span><span class="val"><b>85.5</b> · 有形88 无形80 难易75 思考70 推广90 创新78</span></div>
+        <div class="cell"><span class="lab">吴芳 · 委员</span><span class="val"><b>86.0</b> · 有形86 无形82 难易78 思考72 推广92 创新76</span></div>
+        <div class="cell"><span class="lab">郑军 · 委员</span><span class="val"><b>86.5</b> · 有形90 无形78 难易76 思考74 推广90 创新80</span></div>
+        <div class="cell"><span class="lab">陈华 · 委员</span><span class="val"><b>87.0</b> · 有形88 无形84 难易77 思考73 推广91 创新79</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">✓</span>签核</span></div>
+        <div class="cell"><span class="lab">签核人</span><span class="val ro">王建国（自动记录）</span></div>
+        <div class="cell"><span class="lab">批准人</span><span class="val ro">王建国（自动记录）</span></div>
+        <div class="cell"><span class="lab">签核时间</span><span class="val ro">提交时系统自动记录</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-acc" onclick="toast('签核完成，提案已结案！');setTimeout(()=>go('p-home'),900)">确认签核</button></div>
+</div>
+
+<!-- ============ P16 统计看板 ============ -->
+<div class="screen" id="p-stats" data-title="统计看板">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar">统计看板</div>
+  <div class="body">
+    <div class="page">
+      <div class="chips" style="padding-bottom:13px" id="stats-tabs">
+        <span class="chip on" onclick="showStats('overview', this)">总览</span>
+        <span class="chip" onclick="showStats('me', this)">个人成绩</span>
+        <span class="chip" onclick="showStats('rank', this)">排行</span>
+      </div>
+      <div class="stats-pane on" id="stats-overview">
+        <div class="chips" style="padding-bottom:13px">
+          <span class="chip on">本年</span><span class="chip">本季</span><span class="chip">本月</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="k">提案总数</div><div class="v">128<span class="u">件</span></div><div class="d" style="color:var(--ok)">↑ 12% 同比</div></div>
+          <div class="metric"><div class="k">采用率</div><div class="v" style="color:var(--acc)">76<span class="u">%</span></div><div class="d" style="color:var(--ok)">↑ 3.2pt</div></div>
+          <div class="metric"><div class="k">进行中</div><div class="v">18<span class="u">件</span></div><div class="d" style="color:var(--sub)">待我处理 2</div></div>
+          <div class="metric"><div class="k">累计提案奖</div><div class="v">3.2<span class="u">万</span></div><div class="d" style="color:var(--sub)">节约 86 万</div></div>
+        </div>
+        <div class="card">
+          <div class="card-t"><span><span class="idx">T</span>月度提案量</span></div>
+          <div class="bar-chart">
+            <div class="bar-col"><i style="height:38%"></i><span>1月</span></div>
+            <div class="bar-col"><i style="height:30%"></i><span>2月</span></div>
+            <div class="bar-col"><i style="height:52%"></i><span>3月</span></div>
+            <div class="bar-col"><i style="height:46%"></i><span>4月</span></div>
+            <div class="bar-col"><i style="height:64%"></i><span>5月</span></div>
+            <div class="bar-col"><i style="height:58%"></i><span>6月</span></div>
+            <div class="bar-col"><i style="height:72%"></i><span>7月</span></div>
+            <div class="bar-col hot"><i style="height:86%"></i><span>8月</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-t"><span><span class="idx">N</span>改善性质分布</span></div>
+          <div class="donut-wrap">
+            <div class="donut"></div>
+            <div class="leg">
+              <div class="leg-row"><i style="background:#1890FF"></i>效率改善<b>55</b></div>
+              <div class="leg-row"><i style="background:#36CFC9"></i>品质改善<b>32</b></div>
+              <div class="leg-row"><i style="background:#FFC53D"></i>成本改善<b>21</b></div>
+              <div class="leg-row"><i style="background:#13C2C2"></i>安全 / 交付<b>20</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-t"><span><span class="idx">D</span>部门提案排行</span></div>
+          <div class="hbar"><span class="nm">生产一部</span><div class="tk"><i style="width:100%"></i></div><span class="vl">36</span></div>
+          <div class="hbar"><span class="nm">品质部</span><div class="tk"><i style="width:75%"></i></div><span class="vl">27</span></div>
+          <div class="hbar"><span class="nm">生产二部</span><div class="tk"><i style="width:61%"></i></div><span class="vl">22</span></div>
+          <div class="hbar"><span class="nm">仓储部</span><div class="tk"><i style="width:47%"></i></div><span class="vl">17</span></div>
+          <div class="hbar"><span class="nm">设备部</span><div class="tk"><i style="width:39%"></i></div><span class="vl">14</span></div>
+        </div>
+      </div>
+      <div class="stats-pane" id="stats-me">
+        <div class="card" style="background:linear-gradient(135deg,#096DD9,#1890FF 55%,#40A9FF);color:#fff;border:none;box-shadow:0 12px 28px rgba(24,144,255,.3)">
+          <div style="font-size:13px;opacity:.85">张伟 · 个人成绩单</div>
+          <div style="font:700 22px/1.4 var(--disp);margin-top:6px">超过 85% 的员工</div>
+          <div style="font-size:11px;opacity:.7;margin-top:4px">全公司排名第 12 名</div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="k">提交数</div><div class="v">6</div></div>
+          <div class="metric"><div class="k">采用数</div><div class="v" style="color:var(--acc)">4</div></div>
+          <div class="metric"><div class="k">采用率</div><div class="v">67<span class="u">%</span></div></div>
+          <div class="metric"><div class="k">参与实施</div><div class="v">3</div></div>
+          <div class="metric"><div class="k">累计得分</div><div class="v">86.5</div></div>
+          <div class="metric"><div class="k">提案奖</div><div class="v">¥900</div></div>
+        </div>
+        <div class="banner bn-info"><span class="bic">i</span><div>金额仅本人可见；排行榜不展示他人奖金</div></div>
+      </div>
+      <div class="stats-pane" id="stats-rank">
+        <div class="chips" style="padding-bottom:12px" id="rank-tabs">
+          <span class="chip on" onclick="switchRank(this,'submit')">提交排行</span>
+          <span class="chip" onclick="switchRank(this,'adopt')">被采用</span>
+          <span class="chip" onclick="switchRank(this,'impl')">改善实施</span>
+        </div>
+        <div class="card" id="rank-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P17 我的 ============ -->
+<div class="screen" id="p-me" data-title="我的">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar">我的</div>
+  <div class="body">
+    <div class="hero" style="border-radius:0">
+      <div class="hero-row">
+        <div class="avatar">张</div>
+        <div><div class="h1">张伟 <span class="role-chip">在职</span></div><div class="h2">100861 · 生产一部 · 产线工程师</div></div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="v">6</div><div class="k">我的提案</div></div>
+        <div class="hstat"><div class="v acc">420</div><div class="k">累计积分</div></div>
+        <div class="hstat"><div class="v">¥900</div><div class="k">提案奖</div></div>
+      </div>
+    </div>
+    <div class="page" style="padding-top:14px">
+      <div class="card" style="padding:4px 15px">
+        <div class="cell" onclick="go('p-list')" style="cursor:pointer">
+          <span class="m-ic" style="background:#E6F4FF;color:#1890FF"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.4"/></svg></span>
+          <span class="m-t">我的提案</span><span class="arrow">›</span>
+        </div>
+        <div class="cell" onclick="go('p-pool')" style="cursor:pointer">
+          <span class="m-ic" style="background:#E6FFFB;color:#13C2C2"><svg viewBox="0 0 24 24"><path d="M3 7l9 11 9-11"/><path d="M3 7h5l4 5 4-5h5"/></svg></span>
+          <span class="m-t">部门任务池</span><span class="arrow">›</span>
+        </div>
+        <div class="cell" onclick="openMyScore()" style="cursor:pointer">
+          <span class="m-ic" style="background:#FEF4DE;color:#D98F0E"><svg viewBox="0 0 24 24"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.9 7.2 18l.9-5.4L4.2 8.7l5.4-.8z"/></svg></span>
+          <span class="m-t">个人成绩单</span><span class="m-d">超过 85%</span><span class="arrow">›</span>
+        </div>
+        <div class="cell" onclick="go('p-stats')" style="cursor:pointer">
+          <span class="m-ic" style="background:#F0F5FF;color:#2F54EB"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M21 20H3"/></svg></span>
+          <span class="m-t">统计看板</span><span class="m-d">总览 / 排行</span><span class="arrow">›</span>
+        </div>
+        <div class="cell" onclick="go('p-settings')" style="cursor:pointer">
+          <span class="m-ic" style="background:#F9F0FF;color:#722ED1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
+          <span class="m-t">设置</span><span class="m-d">修改密码</span><span class="arrow">›</span>
+        </div>
+        <div class="cell" onclick="go('p-msg')" style="cursor:pointer">
+          <span class="m-ic" style="background:#E6F4FF;color:#1890FF"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+          <span class="m-t">消息通知</span><span class="arrow">›</span>
+        </div>
+        <div class="cell">
+          <span class="m-ic" style="background:#F3F5FB;color:#8A92AC"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.5h.01" stroke-width="2.2"/></svg></span>
+          <span class="m-t">关于提案改善</span><span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar" id="tb4"></div>
+</div>
+
+<!-- ============ P17b 设置 / 修改密码 ============ -->
+<div class="screen" id="p-settings" data-title="设置">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" id="settings-back" onclick="go('p-me')">‹</span>设置</div>
+  <div class="body">
+    <div class="page">
+      <div class="card">
+        <div class="card-t"><span><span class="idx">01</span>账号信息</span></div>
+        <div class="cell"><span class="lab">工号</span><span class="val ro">100861</span></div>
+        <div class="cell"><span class="lab">姓名</span><span class="val ro">张伟</span></div>
+        <div class="cell"><span class="lab">部门</span><span class="val ro">生产一部 · 注塑组</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span><span class="idx">02</span>修改密码</span></div>
+        <p class="settings-tip">首次登录或管理员重置后须先修改密码（不少于 6 位，不能仍为 123456）。忘记密码请联系管理员重置。</p>
+        <div class="form-item"><label class="req">当前密码</label><input class="ipt" id="pwd-old" type="password" placeholder="请输入当前密码"></div>
+        <div class="form-item"><label class="req">新密码</label><input class="ipt" id="pwd-new" type="password" placeholder="不少于 6 位，且不能与初始密码相同"></div>
+        <div class="form-item" style="margin-bottom:0"><label class="req">确认新密码</label><input class="ipt" id="pwd-confirm" type="password" placeholder="再次输入新密码"></div>
+      </div>
+      <div class="banner bn-info"><span class="bic">i</span><div>管理员重置后，密码将恢复为初始密码 123456</div></div>
+    </div>
+  </div>
+  <div class="ftbar"><button class="btn btn-pri" onclick="changePassword()">保存新密码</button></div>
+</div>
+
+<!-- ============ P18a 我的待办（Tab） ============ -->
+<div class="screen" id="p-todo" data-title="我的待办">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar">我的待办</div>
+  <div class="body">
+    <div class="page" id="todo-body"></div>
+  </div>
+  <div class="tabbar" id="tb3"></div>
+</div>
+
+<!-- ============ P18 消息（右上角铃铛） ============ -->
+<div class="screen" id="p-msg" data-title="消息">
+  <div class="statusbar"><span>9:41</span><div class="capsule"><i class="c1"></i><i class="c2"></i></div></div>
+  <div class="navbar"><span class="back" onclick="go('p-home')">‹</span>消息</div>
+  <div class="body">
+    <div class="page">
+      <div class="todo" onclick="go('p-review-form')">
+        <div class="todo-ic" style="background:var(--warn-bg);color:var(--warn)">催</div>
+        <div class="todo-bd"><div class="todo-t">审核待办提醒</div><div class="todo-s">「产线换模时间过长改善」等待您出具委员意见 · 10:24</div></div>
+      </div>
+      <div class="todo">
+        <div class="todo-ic" style="background:var(--ok-bg);color:var(--ok)">批</div>
+        <div class="todo-bd"><div class="todo-t">申请已批准</div><div class="todo-s">「车间物料标识标准化」已批准并核定提案奖 ¥200 · 昨天 16:02</div></div>
+      </div>
+      <div class="todo" onclick="go('p-plan')">
+        <div class="todo-ic" style="background:var(--err-bg);color:var(--err)">驳</div>
+        <div class="todo-bd"><div class="todo-t">计划书被驳回</div><div class="todo-s">「产线换模时间过长改善」预估效益评估缺少测算依据 · 昨天 09:15</div></div>
+      </div>
+      <div class="todo">
+        <div class="todo-ic" style="background:var(--purple-bg);color:var(--purple)">评</div>
+        <div class="todo-bd"><div class="todo-t">评分结果通知</div><div class="todo-s">「安全通道划线规范」评分完成：86.5 分 · 08-22</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+</div></div>
+</div>
+
+</div>
+
+<script>
+/* ================= 图标 ================= */
+const IC = {
+  home:'<svg viewBox="0 0 24 24"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6.5 10.5V19a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-8.5"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.4"/></svg>',
+  msg:'<svg viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H9.5L5 19.5v-3.5H4z"/></svg>',
+  user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  pen:'<svg viewBox="0 0 24 24"><path d="m14.5 5.5 4 4L8 20l-4.5.5L4 16z"/><path d="m12.5 7.5 4 4"/></svg>',
+  box:'<svg viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/></svg>',
+  chart:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M21 20H3"/></svg>',
+  pool:'<svg viewBox="0 0 24 24"><path d="M3 7l9 11 9-11"/><path d="M3 7h5l4 5 4-5h5"/></svg>',
+  todo:'<svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M5 6h.01M5 12h.01M5 18h.01" stroke-width="2.6"/><path d="m4.2 11.2 1.3 1.3 2.4-2.5" stroke-width="1.8"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  bell:'<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>'
+};
+
+/* ================= 页面注册 ================= */
+const NAV = [
+  {g:'入口与主导航', items:[['p-login','工号密码登录'],['p-home','首页'],['p-list','提案列表'],['p-todo','我的待办'],['p-msg','消息（铃铛）'],['p-me','我的'],['p-settings','设置 / 改密']]},
+  {g:'主流程表单', items:[['p-apply','发起提案（2 步）'],['p-plan','计划书（含驳回）'],['p-report','报告书']]},
+  {g:'任务分配', items:[['p-assign','任务指派'],['p-pool','部门任务池'],['p-claim-team','领取转团队']]},
+  {g:'审核与评分', items:[['p-review-todo','申请委员待办'],['p-review-form','申请委员审核'],['p-plan-review-todo','计划书委员待办'],['p-plan-review-form','计划书委员审核'],['p-approve-todo','批准人待办'],['p-approve-form','申请批准'],['p-plan-approve-form','计划书批准'],['p-score','六维评分'],['p-sign','报告书签核'],['p-detail','提案详情']]},
+  {g:'统计', items:[['p-stats','统计看板']]}
+];
+const cur = {page:'p-login', role:'staff'};
+
+const navEl = document.getElementById('nav');
+NAV.forEach(gp=>{
+  const h = document.createElement('div'); h.className='nav-gp'; h.textContent=gp.g; navEl.appendChild(h);
+  gp.items.forEach(([id,name],i)=>{
+    const d = document.createElement('div'); d.className='nav-item'; d.dataset.pg=id;
+    d.innerHTML = `<span class="pgno">${String(i+1).padStart(2,'0')}</span>${name}` +
+      (id==='p-review-todo'?'<span class="bdg">2</span>':(id==='p-approve-todo'?'<span class="bdg">2</span>':''));
+    d.onclick=()=>go(id); navEl.appendChild(d);
+  });
+});
+
+/* ================= Mock 数据 ================= */
+const STAGES = ['申请提交','委员会审核','批准人批准','任务分配','计划书','计划书审核','实施','报告书','评分','签核完成'];
+const PROPS = [
+  {no:'202608240001', title:'产线换模时间过长改善', dept:'生产一部', who:'张伟', nature:['效率改善'], st:'计划书待批', cls:'s-amber', band:'var(--warn)', stage:5, prog:'5/5', pd:'100', pdate:'08-24'},
+  {no:'202608240004', title:'车间周转器具定量管理', dept:'生产二部', who:'陈晨', nature:['交付改善'], st:'待审核', cls:'s-blue', band:'var(--blue)', stage:1, prog:'1/5', pd:'20', pdate:'08-24'},
+  {no:'202608230008', title:'车间物料标识标准化', dept:'品质部', who:'刘洋', nature:['品质改善'], st:'待批准', cls:'s-amber', band:'var(--warn)', stage:2, prog:'5/5', pd:'100', pdate:'08-23'},
+  {no:'202608220012', title:'包装线人效提升方案', dept:'生产二部', who:'王鑫', nature:['效率改善'], st:'待领取', cls:'s-amber', band:'var(--warn)', stage:3, prog:'', pd:'', pdate:'08-22'},
+  {no:'202608210009', title:'注塑机模温机点检标准化', dept:'生产一部', who:'马超', nature:['安全改善'], st:'计划书待审', cls:'s-teal', band:'var(--teal)', stage:5, prog:'2/5', pd:'40', pdate:'08-21'},
+  {no:'202608180005', title:'仓库照明节能改造', dept:'仓储部', who:'周敏', nature:['成本改善'], st:'待评定', cls:'s-purple', band:'var(--purple)', stage:8, prog:'3/5', pd:'75', pdate:'08-18'},
+  {no:'202608120003', title:'安全通道划线规范', dept:'设备部', who:'郑浩', nature:['安全改善'], st:'已完成', cls:'s-green', band:'var(--ok)', stage:9, prog:'5/5', pd:'100', score:'86.5 · A', pdate:'08-12'},
+  {no:'202608100002', title:'办公耗材领用流程优化', dept:'综合部', who:'孙悦', nature:['成本改善'], st:'已驳回', cls:'s-red', band:'var(--err)', stage:4, prog:'第1轮', pd:'', pdate:'08-10'},
+  {no:'202608060001', title:'产线噪声超标治理', dept:'设备部', who:'李强', nature:['安全改善'], st:'不批准', cls:'s-gray', band:'#9AA2BC', stage:2, prog:'', pd:'', pdate:'08-06'}
+];
+
+/* ================= 页面切换 ================= */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act'));
+  document.getElementById(id).classList.add('act');
+  cur.page = id;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on', n.dataset.pg===id));
+  const map = {'p-home':0,'p-todo':1,'p-list':2,'p-me':3};
+  const tb = document.querySelector('#'+id+' .tabbar');
+  if(tb) syncTab(tb, map[id]);
+  if(id==='p-todo') renderTodoPage();
+  if(id==='p-home') renderHome();
+}
+
+/* ================= TabBar ================= */
+/* ================= 角色与工作台 ================= */
+const ROLES = {
+  staff:{name:'张伟', title:'普通员工 · 生产一部', dept:'生产一部 · 注塑组', av:'张', todo:2, doing:2, done:1},
+  committee:{name:'李静', title:'委员 · 品质部', dept:'品质部 · 体系组', av:'李', todo:2, doing:0, done:14},
+  approver:{name:'王建国', title:'批准人 · 总经理办公室', dept:'总经理办公室', av:'王', todo:3, doing:0, done:31},
+  leader:{name:'赵强', title:'部门负责人 · 品质部', dept:'品质部 · 管理组', av:'赵', todo:1, doing:3, done:8},
+  implementer:{name:'张伟', title:'实施负责人 · 生产一部', dept:'生产一部 · 注塑组', av:'张', todo:2, doing:1, done:2}
+};
+function syncTab(el, idx){
+  const todoN = (ROLES[cur.role] && ROLES[cur.role].todo) || 0;
+  const todoBadge = todoN > 0 ? `<span class="bdg">${todoN}</span>` : '';
+  el.innerHTML = `
+  <div class="tab-item" onclick="go('p-home')">${IC.home}首页</div>
+  <div class="tab-item" onclick="go('p-todo')">${IC.todo}待办${todoBadge}</div>
+  <div class="tab-bulge"><div class="bulge" onclick="go('p-apply')">${IC.plus}</div></div>
+  <div class="tab-item" onclick="go('p-list')">${IC.list}提案</div>
+  <div class="tab-item" onclick="go('p-me')">${IC.user}我的</div>`;
+  el.querySelectorAll('.tab-item').forEach((t,i)=>t.classList.toggle('on', i===idx));
+}
+['tb','tb2','tb3','tb4'].forEach(id=>{const el=document.getElementById(id); if(el) syncTab(el, id==='tb'?0:(id==='tb2'?2:(id==='tb3'?1:3)));});
+function setRole(r){
+  cur.role = r;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('on', b.dataset.role===r));
+  renderHome();
+  if(cur.page==='p-todo') renderTodoPage();
+  if(cur.page==='p-detail' && cur.detailNo) openDetail(cur.detailNo);
+  if(cur.page==='p-home' || cur.page==='p-todo' || cur.page==='p-detail') toast('已切换身份：'+ROLES[r].name+' · '+ROLES[r].title);
+}
+function todo(char, color, title, sub, stamp, cls, target){
+  return `<div class="todo" ${target?`onclick="go('${target}')"`:''}>
+    <div class="todo-ic" style="background:var(--${color}-bg);color:var(--${color})">${char}</div>
+    <div class="todo-bd"><div class="todo-t">${title}</div><div class="todo-s">${sub}</div></div>
+    ${stamp?`<span class="stamp ${cls}">${stamp}</span>`:''}
+  </div>`;
+}
+function roleTodos(limit){
+  let items = [];
+  if(cur.role==='committee') items = [
+    todo('审','blue','审核「车间周转器具定量管理」','申请单待审 · NO. 202608240004','待审核','s-blue','p-review-form'),
+    todo('计','teal','审核计划书「注塑机模温机点检」','第 1 轮 · 进度 2/5','计划书待审','s-teal','p-plan-review-form')
+  ];
+  else if(cur.role==='approver') items = [
+    todo('批','warn','批准「车间物料标识标准化」','申请单 · 委员会 5/5','待批准','s-amber','p-approve-form'),
+    todo('计','teal','批准计划书「产线换模时间过长改善」','可行 4 / 不可行 1','计划书待批','s-amber','p-plan-approve-form'),
+    todo('签','purple','签核「仓库照明节能改造」','评分 86.5 · 待签核','待签核','s-purple','p-sign')
+  ];
+  else if(cur.role==='leader') items = [
+    todo('派','purple','指派「车间物料标识标准化」','已批准 · 请指派实施人','待指派','s-amber','p-assign')
+  ];
+  else if(cur.role==='implementer') items = [
+    todo('填','ok','修改计划书「办公耗材领用流程优化」','第 1 轮被驳回 · 请补充后重提','已驳回','s-red','p-plan'),
+    todo('团','teal','转团队「包装线人效提升方案」','已领取 · 可添加成员','已领取','s-teal','p-claim-team')
+  ];
+  else items = [
+    `<div class="todo" onclick="openDetail('202608240001')"><div class="todo-ic" style="background:var(--blue-bg);color:var(--blue)">审</div><div class="todo-bd"><div class="todo-t">关注「产线换模时间过长改善」</div><div class="todo-s">计划书待批准人决策</div></div><span class="stamp s-amber">计划书待批</span></div>`,
+    todo('池','warn','领取「包装线人效提升方案」','部门任务池待领取','待领取','s-amber','p-pool')
+  ];
+  if(limit && items.length > limit) return items.slice(0, limit).join('');
+  return items.join('');
+}
+function roleFeeds(){
+  const common = [
+    {ic:'通',color:'blue',t:'「车间物料标识标准化」已批准',s:'批准人核定提案奖 ¥200，等待改善部门指派',time:'昨天 16:02'},
+    {ic:'驳',color:'err',t:'「产线换模时间过长改善」计划书被驳回',s:'请补充效益测算依据后重新提交',time:'昨天 09:15'},
+    {ic:'评',color:'purple',t:'「安全通道划线规范」评分完成',s:'总分 86.5 · 已签核归档',time:'08-22 15:30'}
+  ];
+  return common.map(f=>`
+    <div class="feed">
+      <div class="feed-ic" style="background:var(--${f.color==='err'?'err':f.color}-bg);color:var(--${f.color==='err'?'err':f.color})">${f.ic}</div>
+      <div class="feed-bd">
+        <div class="feed-t">${f.t}</div>
+        <div class="feed-s">${f.s}</div>
+        <div class="feed-time">${f.time}</div>
+      </div>
+    </div>`).join('');
+}
+function renderTodoPage(){
+  const el = document.getElementById('todo-body');
+  if(!el) return;
+  const r = ROLES[cur.role];
+  el.innerHTML = `
+    <div class="banner bn-info"><span class="bic">i</span><div>当前身份：${r.title} · 共 ${r.todo} 项待办</div></div>
+    ${roleTodos()}
+  `;
+}
+function renderHome(){
+  const r = ROLES[cur.role];
+  const hour = 9;
+  const greet = hour < 12 ? '早上好' : (hour < 18 ? '下午好' : '晚上好');
+  document.getElementById('hero').innerHTML = `
+    <div class="home-head">
+      <div class="hh-top">
+        <div style="flex:1"></div>
+        <div class="hh-actions">
+          <div class="hh-btn" onclick="go('p-msg')" title="消息">${IC.bell}<span class="dot"></span></div>
+        </div>
+      </div>
+      <div class="home-hi">${greet}，${r.name}</div>
+      <div class="home-sub">${r.dept}</div>
+      <div class="kpi-row">
+        <div class="k" onclick="go('p-todo')"><div class="n">${r.todo}</div><div class="l">待办</div></div>
+        <div class="k" onclick="go('p-list')"><div class="n">${r.doing}</div><div class="l">进行中</div></div>
+        <div class="k" onclick="go('p-list')"><div class="n">${r.done}</div><div class="l">已结案</div></div>
+      </div>
+    </div>`;
+  document.getElementById('home-body').innerHTML = `
+    <div class="sec">我的待办 <span class="n" style="cursor:pointer" onclick="go('p-todo')">全部 ›</span></div>
+    ${roleTodos(2)}
+    <div class="sec">最新动态</div>
+    ${roleFeeds()}
+  `;
+  // refresh tab badges if visible
+  document.querySelectorAll('.tabbar').forEach(tb=>{
+    const on = [...tb.querySelectorAll('.tab-item')].findIndex(t=>t.classList.contains('on'));
+    if(on>=0) syncTab(tb, on);
+  });
+  renderTodoPage();
+}
+function propCard(p){
+  return `<div class="prop" style="--band:${p.band}" onclick="openDetail('${p.no}')">
+    <div class="prop-hd"><div class="prop-title">${p.title}</div><span class="stamp ${p.cls}">${p.st}</span></div>
+    <div class="prop-no"><b>NO.</b> ${p.no} · ${p.dept} · ${p.who}</div>
+    <div class="prop-meta">${p.nature.map(n=>`<span class="nat">${n}</span>`).join('')}${p.score?`<span class="stamp s-purple">评分 ${p.score}</span>`:''}</div>
+    ${p.prog?`<div class="prog"><div class="prog-bar"><i style="width:${p.pd||60}%"></i></div><span class="prog-t">${/^\d+\/\d+$/.test(p.prog)?'审核进度 '+p.prog:p.prog}</span></div>`:''}
+  </div>`;
+}
+
+/* ================= 列表 ================= */
+function fList(el){
+  el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+document.getElementById('prop-list').innerHTML = PROPS.map(propCard).join('');
+
+/* ================= 详情（对齐 v2：分阶段内容块） ================= */
+const DETAIL_FULL = {
+  '202608180005': {
+    status:'已完成', nature:'成本改善',
+    apply:{
+      name:'仓库照明节能改造', nature:'成本改善',
+      dept:'仓储部（负责人：周敏）',
+      now:'仓库传统金卤灯 288 盏，单盏 400W，日均照明 14 小时，电费高且照度不足。',
+      idea:'分两批更换 LED 灯 288 盏，总投入约 ¥86,400，预期年节电约 10.2 万度。',
+      pics:'📷 现状照片 ×2', time:'2026-08-18 09:12'
+    },
+    review:{
+      tip:'并行独立审核 · 进度 5/5 · 采用 4 / 不采用 1',
+      ops:[
+        {yes:true, name:'李静', tags:['采用','形成计划书'], c:'投入小、回收快，建议采纳并形成计划书。奖额建议 ¥300'},
+        {yes:true, name:'孙磊', tags:['采用','形成计划书'], c:'同意，注意分批施工不影响仓储作业。奖额建议 ¥300'},
+        {yes:true, name:'吴芳', tags:['采用'], c:'可行。奖额建议 ¥200'},
+        {yes:false, name:'郑军', tags:['不采用'], c:'建议先试点 1 个库区再推广。'},
+        {yes:true, name:'陈华', tags:['采用'], c:'同意试点后推广。奖额建议 ¥300'}
+      ]
+    },
+    approve:{result:'批准', plan:'形成计划书', award:'¥500', opinion:'委员多数采用，效益测算充分，批准推进。', who:'王建国 · 2026-08-18 16:02'},
+    assign:{
+      mode:'负责人指派 · 团队任务', time:'2026-08-18 16:30',
+      people:[
+        {av:'吴', name:'吴刚', tag:'第一改善人', tagCls:'st-teal', ds:'工号 100812 · 设备工程师 · 仓储部<br>负责计划书 / 报告书统一填写提交'},
+        {av:'马', name:'马超', tag:'改善人', tagCls:'st-gray', ds:'工号 100855 · 班组长 · 仓储部'}
+      ]
+    },
+    plan:{
+      tip:'第 1 轮 · 已批准 · 填写人：吴刚',
+      now:'金卤灯功耗高、照度不均，夜间作业投诉较多。',
+      invest:'更换 LED 288 盏，投入 ¥86,400；分两批周末施工。',
+      benefit:'年节电约 10.2 万度，节约电费约 ¥81,600，回收期约 13 个月。',
+      schedule:'2026-08-20 ~ 2026-09-15：采购进场 → A 区试点 → 全仓更换 → 复盘。',
+      reviewOk:true, reviewTip:'可行 5/5', reviewC:'测算依据充分，实施节奏合理。',
+      approve:'批准 · 王建国 · 08-20'
+    },
+    report:{
+      dates:'2026-08-18 / 2026-08-24', writer:'吴刚（第一改善人）',
+      now:'改造前单盏 400W，照度不足且能耗高。',
+      invest:'LED 更换完成 288 盏，实际投入 ¥84,900。',
+      effect:'单盏降至 150W，照度提升约 20%；可推广至二厂仓库。',
+      benefit:'年节电约 10.2 万度，节约电费 ¥81,600。'
+    },
+    score:{
+      items:[['有形绩效 30%','90'],['无形绩效 10%','82'],['难易度 20%','78'],['思考性 10%','74'],['推广性 15%','92'],['创新性 15%','80']],
+      total:'86.5', grade:'A', seats:'5/5 已评分',
+      signer:'王建国 · 2026-08-24 15:30', award:'¥500（已记录待发放）'
+    }
+  },
+  '202608120003': {
+    status:'已完成', nature:'安全改善',
+    apply:{
+      name:'安全通道划线规范', nature:'安全改善',
+      dept:'设备部（负责人：郑浩）',
+      now:'通道划线磨损严重，叉车与行人混行存在安全隐患。',
+      idea:'统一黄色警示线 + 地面箭头，并在交叉口增设反光标识。',
+      pics:'📷 现场照片 ×3', time:'2026-08-12 10:20'
+    },
+    review:{
+      tip:'并行独立审核 · 进度 5/5 · 采用 5 / 不采用 0',
+      ops:[
+        {yes:true, name:'李静', tags:['采用','形成计划书'], c:'安全隐患明确，建议尽快推进。奖额建议 ¥200'},
+        {yes:true, name:'孙磊', tags:['采用'], c:'同意，注意施工时段避开高峰。奖额建议 ¥200'},
+        {yes:true, name:'吴芳', tags:['采用'], c:'可行。奖额建议 ¥150'},
+        {yes:true, name:'郑军', tags:['采用'], c:'支持。奖额建议 ¥200'},
+        {yes:true, name:'陈华', tags:['采用'], c:'同意推进。奖额建议 ¥200'}
+      ]
+    },
+    approve:{result:'批准', plan:'形成计划书', award:'¥200', opinion:'安全类改善优先批准。', who:'王建国 · 2026-08-13 11:00'},
+    assign:{
+      mode:'负责人指派 · 个人任务', time:'2026-08-13 14:00',
+      people:[{av:'郑', name:'郑浩', tag:'第一改善人', tagCls:'st-teal', ds:'工号 100620 · 设备主管 · 设备部'}]
+    },
+    plan:{
+      tip:'第 1 轮 · 已批准 · 填写人：郑浩',
+      now:'划线磨损、标识不清。', invest:'重新划线 + 反光标识，投入约 ¥3,200。',
+      benefit:'降低混行事故风险，预计相关隐患清零。',
+      schedule:'08-14 ~ 08-18：采购涂料 → 夜间施工 → 验收。',
+      reviewOk:true, reviewTip:'可行 5/5', reviewC:'方案简单可行。', approve:'批准 · 王建国 · 08-15'
+    },
+    report:{
+      dates:'2026-08-12 / 2026-08-20', writer:'郑浩（第一改善人）',
+      now:'划线磨损、交叉口无反光标识。', invest:'实际投入 ¥2,980。',
+      effect:'通道标识清晰，叉车与行人分流明确。', benefit:'隐患排查项关闭，无新增事故。'
+    },
+    score:{
+      items:[['有形绩效 30%','80'],['无形绩效 10%','90'],['难易度 20%','70'],['思考性 10%','72'],['推广性 15%','88'],['创新性 15%','75']],
+      total:'86.5', grade:'A', seats:'5/5 已评分',
+      signer:'王建国 · 2026-08-22 15:30', award:'¥200（已记录待发放）'
+    }
+  }
+};
+
+/* 详情操作权限：角色 × 状态；无权限不露出入口 */
+function canAct(kind, p){
+  const role = cur.role;
+  const st = p.st;
+  const stage = p.stage;
+  switch(kind){
+    case 'review': return role==='committee' && st==='待审核';
+    case 'planReview': return role==='committee' && st==='计划书待审';
+    case 'score': return role==='committee' && st==='待评定';
+    case 'approve': return role==='approver' && st==='待批准';
+    case 'planApprove': return role==='approver' && st==='计划书待批';
+    case 'sign': return role==='approver' && (st==='已完成' || st==='待评定');
+    case 'assign': return role==='leader' && stage===3 && st!=='待领取' && st!=='不批准' && st!=='已完成' && st!=='待评定';
+    case 'pool': return role==='implementer' && st==='待领取';
+    case 'plan': return role==='implementer' && (st==='已驳回' || st==='计划书编制中' || (stage===4 && st!=='计划书待审' && st!=='计划书待批'));
+    case 'report': return role==='implementer' && (st==='待评定' || stage===7);
+    case 'withdraw': return role==='staff' && st==='待审核';
+    default: return false;
+  }
+}
+function moreLink(kind, p, label, target){
+  if(!canAct(kind, p)) return '';
+  return `<span class="more" onclick="go('${target}')">${label}</span>`;
+}
+function detailActions(p){
+  const role = cur.role;
+  const parts = [];
+  if(role==='staff'){
+    if(canAct('withdraw', p)) parts.push(`<button class="btn btn-plain" style="margin-bottom:10px" onclick="toast('已撤回（终态，可重新发起新提案）')">撤回提案</button>`);
+    parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  } else if(role==='committee'){
+    if(canAct('review', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-review-form')">去委员审核 →</button>`);
+    else if(canAct('planReview', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-plan-review-form')">去计划书审核 →</button>`);
+    else if(canAct('score', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-score')">去评分 →</button>`);
+    else parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  } else if(role==='approver'){
+    if(canAct('approve', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-approve-form')">去申请批准 →</button>`);
+    else if(canAct('planApprove', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-plan-approve-form')">去计划书批准 →</button>`);
+    else if(canAct('sign', p) && p.st==='已完成') parts.push(`<button class="btn btn-plain" onclick="go('p-sign')">查看签核结果</button>`);
+    else if(canAct('sign', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-sign')">去签核归档 →</button>`);
+    else parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  } else if(role==='leader'){
+    if(canAct('assign', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-assign')">去任务指派 →</button>`);
+    else parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  } else if(role==='implementer'){
+    if(canAct('pool', p)) parts.push(`<button class="btn btn-acc" onclick="go('p-pool')">去任务池领取 →</button>`);
+    else if(canAct('plan', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-plan')">去填写计划书 →</button>`);
+    else if(canAct('report', p)) parts.push(`<button class="btn btn-pri" onclick="go('p-report')">去填写报告书 →</button>`);
+    else parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  } else {
+    parts.push(`<button class="btn btn-ghost" onclick="go('p-list')">返回提案列表</button>`);
+  }
+  return parts.join('');
+}
+
+function renderOpMini(op){
+  const tags = (op.tags||[]).map(t=>{
+    const cls = t==='不采用'?'st-gray':(t==='形成计划书'?'st-blue':'st-green');
+    return `<span class="st ${cls}">${t}</span>`;
+  }).join('');
+  return `<div class="op-mini ${op.yes?'yes':'no'}"><div class="top"><span>${op.name}</span>${tags}</div><div class="c">${op.c}</div></div>`;
+}
+
+function openDetail(no){
+  const p = PROPS.find(x=>x.no===no) || PROPS[0];
+  cur.detailNo = p.no;
+  const full = DETAIL_FULL[p.no];
+  const stage = p.stage; // 0..9
+  const nature = (p.nature && p.nature[0]) || (full && full.nature) || '改善';
+  const statusLabel = (full && full.status) || p.st;
+
+  // stage thresholds for showing filled blocks (aligned to STAGES index)
+  // 0申请 1委员审 2批准 3任务分配 4计划书 5计划书审核 6实施 7报告书 8评分 9签核
+  const showReview = stage >= 1;
+  const showApprove = stage >= 2;
+  const showAssign = stage >= 3;
+  const showPlan = stage >= 4;
+  const showReport = stage >= 7;
+  const showScore = stage >= 8;
+
+  // 分块右上角入口：仅当前角色对当前状态有权时显示
+  const linkReview = moreLink('review', p, '去审核 ›', 'p-review-form');
+  const linkPlanReview = moreLink('planReview', p, '去审核 ›', 'p-plan-review-form');
+  const linkApprove = moreLink('approve', p, '去批准 ›', 'p-approve-form');
+  const linkPlanApprove = moreLink('planApprove', p, '去批准 ›', 'p-plan-approve-form');
+  const linkAssign = moreLink('assign', p, '去指派 ›', 'p-assign');
+  const linkPool = moreLink('pool', p, '去领取 ›', 'p-pool');
+  const linkPlan = moreLink('plan', p, p.st==='已驳回'?'去修改 ›':'去填写 ›', 'p-plan');
+  const linkReport = moreLink('report', p, '去填写 ›', 'p-report');
+  const linkScore = moreLink('score', p, '去评分 ›', 'p-score');
+
+  let applyBlk, reviewBlk, approveBlk, assignBlk, planBlk, reportBlk, scoreBlk;
+
+  if(full){
+    const a = full.apply;
+    applyBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">1. 申请信息</span></div>
+      <div class="kv">
+        <div class="k">提案名称</div><div class="v">${a.name}</div>
+        <div class="k">改善性质</div><div class="v">${a.nature}</div>
+        <div class="k">改善部门</div><div class="v">${a.dept}</div>
+        <div class="k">目前状况</div><div class="v">${a.now}</div>
+        <div class="k">改善意见</div><div class="v">${a.idea}</div>
+        <div class="k">现场图片</div><div class="v">${a.pics}</div>
+        <div class="k">提交时间</div><div class="v">${a.time}</div>
+      </div>
+    </div>`;
+    const r = full.review;
+    reviewBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">2. 委员会审核</span>${linkReview}</div>
+      <div style="font-size:12px;color:#6B7390;margin-bottom:10px">${r.tip}</div>
+      ${r.ops.map(renderOpMini).join('')}
+    </div>`;
+    const ap = full.approve;
+    approveBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">3. 批准人终审</span>${linkApprove}</div>
+      <div class="kv">
+        <div class="k">批准结论</div><div class="v"><span class="st st-green">${ap.result}</span></div>
+        <div class="k">是否计划书</div><div class="v">${ap.plan}</div>
+        <div class="k">核定奖额</div><div class="v">${ap.award}</div>
+        <div class="k">批准意见</div><div class="v">${ap.opinion}</div>
+        <div class="k">批准人</div><div class="v">${ap.who}</div>
+      </div>
+    </div>`;
+    const as = full.assign;
+    assignBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">4. 任务与实施人</span>${linkAssign}</div>
+      <div class="kv" style="margin-bottom:8px">
+        <div class="k">分配方式</div><div class="v">${as.mode}</div>
+        <div class="k">指派时间</div><div class="v">${as.time}</div>
+      </div>
+      ${as.people.map(pe=>`<div class="person-row"><div class="av">${pe.av}</div><div><div class="nm">${pe.name} <span class="st ${pe.tagCls}">${pe.tag}</span></div><div class="ds">${pe.ds}</div></div></div>`).join('')}
+    </div>`;
+    const pl = full.plan;
+    planBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span>${linkPlan || linkPlanReview || linkPlanApprove}</div>
+      <div style="font-size:12px;color:#6B7390;margin-bottom:10px">${pl.tip}</div>
+      <div class="kv">
+        <div class="k">现状描述</div><div class="v">${pl.now}</div>
+        <div class="k">对策投入</div><div class="v">${pl.invest}</div>
+        <div class="k">预估效益</div><div class="v">${pl.benefit}</div>
+        <div class="k">实施计划</div><div class="v">${pl.schedule}</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px dashed rgba(24,144,255,.15)">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">计划书审核</div>
+        <div class="op-mini yes"><div class="top"><span>委员汇总</span><span class="st st-green">${pl.reviewTip}</span></div><div class="c">${pl.reviewC}</div></div>
+        <div class="kv"><div class="k">批准结论</div><div class="v"><span class="st st-green">批准</span> · ${pl.approve.replace(/^批准 · /,'')}</div></div>
+      </div>
+    </div>`;
+    const rp = full.report;
+    reportBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">6. 报告书</span>${linkReport}</div>
+      <div class="kv">
+        <div class="k">立案 / 结案</div><div class="v">${rp.dates}</div>
+        <div class="k">填写人</div><div class="v">${rp.writer}</div>
+        <div class="k">现状描述</div><div class="v">${rp.now}</div>
+        <div class="k">对策投入</div><div class="v">${rp.invest}</div>
+        <div class="k">实施效果</div><div class="v">${rp.effect}</div>
+        <div class="k">效益评估</div><div class="v">${rp.benefit}</div>
+      </div>
+    </div>`;
+    const sc = full.score;
+    scoreBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">7. 评分与签核</span>${linkScore}</div>
+      <div class="score-grid">${sc.items.map(([k,v])=>`<div class="it">${k}<b>${v}</b></div>`).join('')}</div>
+      <div class="kv" style="margin-top:12px">
+        <div class="k">加权总分</div><div class="v"><b style="color:#1890FF;font-size:18px">${sc.total}</b></div>
+        <div class="k">委员进度</div><div class="v">${sc.seats}</div>
+        <div class="k">签核人</div><div class="v">${sc.signer}</div>
+        <div class="k">批准人</div><div class="v">${sc.signer}</div>
+        <div class="k">提案奖</div><div class="v">${sc.award}</div>
+      </div>
+    </div>`;
+  } else {
+    applyBlk = `<div class="blk">
+      <div class="blk-hd"><span class="dot"></span><span class="tt">1. 申请信息</span></div>
+      <div class="kv">
+        <div class="k">提案名称</div><div class="v">${p.title}</div>
+        <div class="k">改善性质</div><div class="v">${nature}</div>
+        <div class="k">改善部门</div><div class="v">${p.dept}（负责人：赵强）</div>
+        <div class="k">目前状况</div><div class="v">现场存在可改善点，影响效率 / 成本 / 品质，详见申请表描述。</div>
+        <div class="k">改善意见</div><div class="v">通过标准化 / 工装 / 流程优化等手段降低浪费，预期可量化收益。</div>
+        <div class="k">现场图片</div><div class="v">📷 现状照片 ×2</div>
+        <div class="k">提交时间</div><div class="v">2026-${p.pdate} 09:15</div>
+      </div>
+    </div>`;
+
+    if(showReview){
+      const done = p.prog && /^\d+\/\d+$/.test(p.prog) ? p.prog : (stage>1?'5/5':'1/5');
+      reviewBlk = `<div class="blk">
+        <div class="blk-hd"><span class="dot"></span><span class="tt">2. 委员会审核</span>${linkReview}</div>
+        <div style="font-size:12px;color:#6B7390;margin-bottom:10px">并行独立审核 · 进度 ${done}</div>
+        ${stage>1?`
+          ${renderOpMini({yes:true,name:'李静',tags:['采用','形成计划书'],c:'建议采纳并形成计划书。奖额建议 ¥300'})}
+          ${renderOpMini({yes:true,name:'孙磊',tags:['采用'],c:'同意推进。奖额建议 ¥200'})}
+          ${stage>=2?renderOpMini({yes:true,name:'吴芳',tags:['采用'],c:'可行。奖额建议 ¥200'}):''}
+          ${stage>=2?renderOpMini({yes:false,name:'郑军',tags:['不采用'],c:'建议先试点再推广。'}):''}
+        `:`<div class="pending-tip">等待委员出具意见…</div>`}
+      </div>`;
+    } else {
+      reviewBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">2. 委员会审核</span></div><div class="pending-tip">提交后进入委员会并行审核</div></div>`;
+    }
+
+    if(showApprove){
+      if(p.st==='不批准'){
+        approveBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">3. 批准人终审</span></div>
+          <div class="kv">
+            <div class="k">批准结论</div><div class="v"><span class="st st-red">不批准</span></div>
+            <div class="k">批准意见</div><div class="v">综合评估后暂不推进，流程终止。</div>
+            <div class="k">批准人</div><div class="v">王建国 · 2026-${p.pdate}</div>
+          </div>
+        </div>`;
+      } else if(stage===2 && p.st==='待批准'){
+        approveBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">3. 批准人终审</span>${linkApprove}</div>
+          <div class="pending-tip">委员会已完成 · 等待批准人决策</div>
+        </div>`;
+      } else {
+        approveBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">3. 批准人终审</span>${linkApprove}</div>
+          <div class="kv">
+            <div class="k">批准结论</div><div class="v"><span class="st st-green">批准</span></div>
+            <div class="k">是否计划书</div><div class="v">形成计划书</div>
+            <div class="k">核定奖额</div><div class="v">¥200</div>
+            <div class="k">批准意见</div><div class="v">委员多数采用，批准推进。</div>
+            <div class="k">批准人</div><div class="v">王建国 · 2026-${p.pdate} 16:02</div>
+          </div>
+        </div>`;
+      }
+    } else {
+      approveBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">3. 批准人终审</span></div><div class="pending-tip">委员审核完成后进入批准</div></div>`;
+    }
+
+    if(showAssign){
+      if(p.st==='待领取'){
+        assignBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">4. 任务与实施人</span>${linkPool}</div>
+          <div class="kv" style="margin-bottom:8px">
+            <div class="k">分配方式</div><div class="v">放入部门任务池</div>
+            <div class="k">当前状态</div><div class="v"><span class="st st-amber">待领取</span></div>
+          </div>
+          <div class="pending-tip">等待实施人领取，领取后可转团队</div>
+        </div>`;
+      } else {
+        assignBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">4. 任务与实施人</span>${linkAssign}</div>
+          <div class="kv" style="margin-bottom:8px">
+            <div class="k">分配方式</div><div class="v">负责人指派 · 团队任务</div>
+            <div class="k">指派时间</div><div class="v">2026-${p.pdate} 16:30</div>
+          </div>
+          <div class="person-row"><div class="av">张</div><div><div class="nm">张伟 <span class="st st-teal">第一改善人</span></div><div class="ds">工号 100501 · 工程师 · ${p.dept}<br>负责计划书 / 报告书统一填写提交</div></div></div>
+          <div class="person-row"><div class="av">陈</div><div><div class="nm">陈晨 <span class="st st-gray">改善人</span></div><div class="ds">工号 100622 · 班组长 · ${p.dept}</div></div></div>
+        </div>`;
+      }
+    } else {
+      assignBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">4. 任务与实施人</span></div><div class="pending-tip">批准后由改善部门负责人指派或入池</div></div>`;
+    }
+
+    if(showPlan){
+      if(p.st==='已驳回'){
+        planBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span>${linkPlan}</div>
+          <div class="banner bn-err" style="margin-bottom:10px"><span class="bic">!</span><div>第 1 轮被驳回：请补充效益测算依据后重新提交</div></div>
+          <div class="kv">
+            <div class="k">现状描述</div><div class="v">办公耗材领用审批链路长，库存与领用对不上。</div>
+            <div class="k">对策投入</div><div class="v">线上化领用 + 定额管理，投入约 ¥8,000。</div>
+            <div class="k">预估效益</div><div class="v"><span style="color:var(--err)">测算依据不足（需补充）</span></div>
+          </div>
+        </div>`;
+      } else if(p.st==='计划书待审'){
+        planBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span>${linkPlanReview}</div>
+          <div style="font-size:12px;color:#6B7390;margin-bottom:10px">第 1 轮 · 委员会审核中 · 进度 ${p.prog||'2/5'}</div>
+          <div class="kv">
+            <div class="k">现状描述</div><div class="v">点检标准不统一，漏检风险高。</div>
+            <div class="k">对策投入</div><div class="v">制定点检表 + 二维码扫码确认。</div>
+            <div class="k">预估效益</div><div class="v">降低故障停机，预计月均减少 4h。</div>
+            <div class="k">实施计划</div><div class="v">试点 2 台 → 全线推广。</div>
+          </div>
+          <div class="pending-tip" style="padding-top:8px">等待委员出具「可行 / 不可行」意见</div>
+        </div>`;
+      } else if(p.st==='计划书待批'){
+        planBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span>${linkPlanApprove}</div>
+          <div style="font-size:12px;color:#6B7390;margin-bottom:10px">第 1 轮 · 委员已完成 · 待批准人决策</div>
+          <div class="kv">
+            <div class="k">现状描述</div><div class="v">换模步骤多、等待时间长，影响产能。</div>
+            <div class="k">对策投入</div><div class="v">工装快换 + 标准化作业，投入约 ¥12,000。</div>
+            <div class="k">预估效益</div><div class="v">单次换模缩短 18 分钟，年节约约 ¥96,000。</div>
+            <div class="k">实施计划</div><div class="v">08-25 ~ 09-10：工装制作 → 试运行 → 固化。</div>
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px dashed rgba(24,144,255,.15)">
+            <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">计划书审核</div>
+            <div class="op-mini yes"><div class="top"><span>委员汇总</span><span class="st st-green">可行 4 / 不可行 1</span></div><div class="c">多数委员认为方案可行，请批准人决策。</div></div>
+            <div class="pending-tip">等待批准人批准 / 驳回</div>
+          </div>
+        </div>`;
+      } else {
+        planBlk = `<div class="blk">
+          <div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span>${linkPlan}</div>
+          <div class="pending-tip">实施人填写计划书后提交委员会审核</div>
+        </div>`;
+      }
+    } else {
+      planBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">5. 计划书</span></div><div class="pending-tip">任务分配完成后填写计划书</div></div>`;
+    }
+
+    if(showReport){
+      reportBlk = `<div class="blk">
+        <div class="blk-hd"><span class="dot"></span><span class="tt">6. 报告书</span>${linkReport}</div>
+        <div class="kv">
+          <div class="k">立案 / 结案</div><div class="v">2026-${p.pdate} / —</div>
+          <div class="k">填写人</div><div class="v">${p.who}（第一改善人）</div>
+          <div class="k">实施效果</div><div class="v">改善已落地，效果待评定确认。</div>
+        </div>
+      </div>`;
+    } else {
+      reportBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">6. 报告书</span></div><div class="pending-tip">计划书批准并实施后填写报告书</div></div>`;
+    }
+
+    if(showScore){
+      scoreBlk = `<div class="blk">
+        <div class="blk-hd"><span class="dot"></span><span class="tt">7. 评分与签核</span>${linkScore}</div>
+        ${p.score?`
+          <div class="score-grid">
+            <div class="it">有形绩效 30%<b>90</b></div><div class="it">无形绩效 10%<b>82</b></div>
+            <div class="it">难易度 20%<b>78</b></div><div class="it">思考性 10%<b>74</b></div>
+            <div class="it">推广性 15%<b>92</b></div><div class="it">创新性 15%<b>80</b></div>
+          </div>
+          <div class="kv" style="margin-top:12px">
+            <div class="k">加权总分</div><div class="v"><b style="color:#1890FF;font-size:18px">${p.score.split(' · ')[0]}</b> · ${p.score.split(' · ')[1]||''}</div>
+            <div class="k">委员进度</div><div class="v">5/5 已评分</div>
+          </div>
+        `:`<div style="font-size:12px;color:#6B7390;margin-bottom:8px">评分进度 ${p.prog||'3/5'}</div>
+          <div class="pending-tip">等待委员评分完成 · 完成后进入签核</div>`}
+      </div>`;
+    } else {
+      scoreBlk = `<div class="blk muted"><div class="blk-hd"><span class="dot"></span><span class="tt">7. 评分与签核</span></div><div class="pending-tip">报告书提交后进入六维评分与签核</div></div>`;
+    }
+  }
+
+  const roleName = ROLES[cur.role] ? (ROLES[cur.role].name + ' · ' + ROLES[cur.role].title.split(' · ')[0]) : cur.role;
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-head">
+      <div class="dh-nav">
+        <span class="dh-back" onclick="go('p-list')">‹</span>
+        <span class="dh-title">提案详情</span>
+        <span style="width:32px"></span>
+      </div>
+      <div class="no">NO. ${p.no}</div>
+      <h2>${p.title}</h2>
+      <div class="meta">
+        <span class="st">${statusLabel}</span>
+        <span class="st">${nature}</span>
+        <span class="who">提案人 ${p.who} · ${p.dept}</span>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    ${applyBlk}
+    ${reviewBlk}
+    ${approveBlk}
+    ${assignBlk}
+    ${planBlk}
+    ${reportBlk}
+    ${scoreBlk}
+    <div class="detail-actions">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px">当前角色：${roleName} · 仅显示本角色可执行操作</div>
+      ${detailActions(p)}
+    </div>
+  `;
+  go('p-detail');
+}
+
+/* ================= 申请表向导 ================= */
+const APPLY_STEPS = ['内容填写','确认提交'];
+let applyStep = 1;
+const DEPT_LEADERS = {
+  '生产一部':'赵强',
+  '生产二部':'赵强',
+  '品质部':'赵强',
+  '仓储部':'周敏',
+  '设备部':'郑浩',
+  '综合部':''
+};
+const NATURES = ['安全改善','品质改善','效率改善','交付改善','成本改善'];
+let applyDept = '生产一部';
+let applyNatures = ['效率改善'];
+let applyImgs = ['现状1'];
+const INITIAL_PASSWORD = '123456';
+let accountPassword = INITIAL_PASSWORD;
+function onDeptChange(sel){
+  applyDept = sel.value;
+  const leader = DEPT_LEADERS[applyDept] || '';
+  const box = document.getElementById('dept-leader');
+  const tip = document.getElementById('dept-tip');
+  if(!leader){
+    box.textContent = '未配置负责人';
+    tip.style.display = 'block';
+  } else {
+    box.textContent = leader + '（选完自动带出，用于批准后任务指派）';
+    tip.style.display = 'none';
+  }
+}
+function toggleNature(name){
+  const i = applyNatures.indexOf(name);
+  if(i>=0) applyNatures.splice(i,1);
+  else applyNatures.push(name);
+  renderApply();
+}
+function addApplyImg(){
+  if(applyImgs.length >= 4){ toast('最多上传 4 张图片'); return; }
+  applyImgs.push('现状'+(applyImgs.length+1));
+  toast('已添加图片');
+  renderApply();
+}
+function removeApplyImg(i){
+  applyImgs.splice(i,1);
+  renderApply();
+}
+function renderApply(){
+  document.getElementById('apply-steps').innerHTML = APPLY_STEPS.map((s,i)=>{
+    const n=i+1; const cls = n<applyStep?'fin':(n===applyStep?'on':'');
+    return `<div class="step ${cls}"><div class="n">${n<applyStep?'✓':n}</div><div class="s">${s}</div></div>`;
+  }).join('');
+  const B = document.getElementById('apply-body'), F = document.getElementById('apply-ft');
+  const leader = DEPT_LEADERS[applyDept] || '';
+  if(applyStep===1){
+    B.innerHTML = `
+    <div class="card">
+      <div class="card-t"><span><span class="idx">A</span>提案人信息</span><span style="font-size:11px;color:var(--hint)">自动带出</span></div>
+      <div class="cell"><span class="lab">姓名</span><span class="val ro">张伟</span></div>
+      <div class="cell"><span class="lab">工号</span><span class="val ro"><b>100861</b></span></div>
+      <div class="cell"><span class="lab">职位</span><span class="val ro">产线工程师</span></div>
+      <div class="cell"><span class="lab">部门 / 组别</span><span class="val ro">生产一部 · 注塑组</span></div>
+</div>
+    </div>
+    <div class="card">
+      <div class="card-t"><span><span class="idx">B</span>提案内容</span></div>
+      <div class="form-item"><label class="req">提案名称（≤50 字）</label><input class="ipt" value="产线换模时间过长改善"></div>
+      <div class="form-item"><label class="req">目前状况及问题</label><textarea class="ipt">目前注塑车间换模平均耗时 45 分钟，超出行业标准约 40%，月均换模 60 次……</textarea></div>
+      <div class="form-item"><label class="req">改善意见（含具体实施设想）</label><textarea class="ipt">推行 SMED 快速换模法，预置标准化模具小车与快换夹具……</textarea></div>
+      <div class="form-item" style="margin-bottom:0"><label class="req">改善性质（多选）</label>
+        <div class="nature-grid">
+          ${NATURES.map(n=>`<div class="nature-tag ${applyNatures.includes(n)?'on':''}" onclick="toggleNature('${n}')">${n}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t"><span><span class="idx">C</span>改善部门</span></div>
+      <div class="form-item"><label class="req">改善部门</label>
+        <select class="ipt" onchange="onDeptChange(this)">
+          ${Object.keys(DEPT_LEADERS).map(d=>`<option value="${d}" ${d===applyDept?'selected':''} ${DEPT_LEADERS[d]?'':'disabled'}>${d}${DEPT_LEADERS[d]?'':'（未配置负责人）'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="cell"><span class="lab">部门负责人</span><span class="val ro" id="dept-leader">${leader ? leader + '（选完自动带出，用于批准后任务指派）' : '未配置负责人'}</span></div>
+      <div class="banner bn-err" id="dept-tip" style="display:${leader?'none':'flex'};margin:8px 0 0"><span class="bic">!</span><div>该部门未配置负责人，请联系管理员</div></div>
+    </div>
+    <div class="card">
+      <div class="card-t"><span><span class="idx">D</span>现场图片</span><span style="font-size:11px;color:var(--hint)">可选，最多 4 张</span></div>
+      <div class="img-grid">
+        ${applyImgs.map((img,i)=>`<div class="img-slot has">📷 ${img}<span class="rm" onclick="event.stopPropagation();removeApplyImg(${i})">×</span></div>`).join('')}
+        ${applyImgs.length<4?`<div class="img-slot add" onclick="addApplyImg()"><div class="plus">＋</div>添加</div>`:''}
+      </div>
+    </div>`;
+    F.innerHTML = `<button class="btn btn-pri" onclick="goApplyNext()">下一步</button>`;
+  } else {
+    B.innerHTML = `<div class="card">
+      <div class="cell"><span class="lab">提案名称</span><span class="val">产线换模时间过长改善</span></div>
+      <div class="cell"><span class="lab">改善性质</span><span class="val">${applyNatures.join('、')||'-'}</span></div>
+      <div class="cell"><span class="lab">改善部门</span><span class="val">${applyDept}（负责人：${DEPT_LEADERS[applyDept]||'-'}）</span></div>
+      <div class="cell"><span class="lab">现场图片</span><span class="val">${applyImgs.length} 张</span></div>
+    </div>
+    <div class="banner bn-warn"><span class="bic">!</span><div>提交后进入委员会并行审核；待审核中可撤回</div></div>`;
+    F.innerHTML = `<button class="btn btn-plain" onclick="applyStep=1;renderApply()">上一步</button><button class="btn btn-acc" onclick="submitApply()">提交申请</button>`;
+  }
+}
+function goApplyNext(){
+  if(!DEPT_LEADERS[applyDept]){ toast('请选择已配置负责人的改善部门'); return; }
+  if(!applyNatures.length){ toast('请至少选择一项改善性质'); return; }
+  applyStep = 2;
+  renderApply();
+}
+function submitApply(){
+  toast('提交成功！编号 202608240001 已生成');
+  setTimeout(()=>{ applyStep=1; renderApply(); openDetail('202608240001'); }, 900);
+}
+renderApply();
+
+/* ================= 评分计算 ================= */
+const W = [0.30,0.10,0.20,0.10,0.15,0.15];
+function calcScore(i,v){
+  document.getElementById('v'+i).textContent = v;
+  const vals = [1,2,3,4,5,6].map(k=>+document.getElementById('v'+k).textContent);
+  const total = vals.reduce((s,x,k)=>s+x*W[k],0).toFixed(1);
+  const el = document.getElementById('score-total');
+  if(el) el.textContent = total;
+  const side = document.getElementById('score-total-side');
+  if(side) side.textContent = total;
+}
+
+/* ================= 委员审核选项 ================= */
+function pickOpt(el, mode){
+  el.parentElement.querySelectorAll(':scope > .opt').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  const extra = document.getElementById('adopt-extra');
+  if(extra) extra.style.display = (mode==='adopt')?'block':'none';
+}
+
+/* ================= 登录 / 改密 ================= */
+function loginStep(n){
+  ['login-1','login-2'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = (i===n-1?'flex':'none');
+  });
+}
+function doLogin(){
+  const empNo = ((document.getElementById('login-empno')||{}).value || '').trim();
+  const pwd = ((document.getElementById('login-pwd')||{}).value || '');
+  if(!empNo){ toast('请输入工号'); return; }
+  if(!pwd){ toast('请输入密码'); return; }
+  if(empNo !== '100861'){ toast('工号未录入或已离职，请联系管理员'); return; }
+  if(pwd !== accountPassword){ toast('工号或密码错误'); return; }
+  const mustChange = accountPassword === INITIAL_PASSWORD;
+  if(mustChange){
+    toast('首次登录须修改密码');
+    setTimeout(()=>{
+      go('p-settings');
+      const back = document.getElementById('settings-back');
+      if(back) back.style.visibility = 'hidden';
+    }, 700);
+  } else {
+    toast('登录成功');
+    setTimeout(()=>go('p-home'), 700);
+  }
+}
+function changePassword(){
+  const oldPwd = ((document.getElementById('pwd-old')||{}).value || '');
+  const newPwd = ((document.getElementById('pwd-new')||{}).value || '');
+  const confirmPwd = ((document.getElementById('pwd-confirm')||{}).value || '');
+  if(!oldPwd){ toast('请输入当前密码'); return; }
+  if(oldPwd !== accountPassword){ toast('当前密码不正确'); return; }
+  if(newPwd.length < 6){ toast('新密码不少于 6 位'); return; }
+  if(newPwd === INITIAL_PASSWORD){ toast('请勿继续使用初始密码'); return; }
+  if(newPwd === oldPwd){ toast('新密码不能与当前密码相同'); return; }
+  if(newPwd !== confirmPwd){ toast('两次输入的新密码不一致'); return; }
+  accountPassword = newPwd;
+  ['pwd-old','pwd-new','pwd-confirm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const back = document.getElementById('settings-back');
+  if(back) back.style.visibility = '';
+  toast('密码已修改');
+  setTimeout(()=>go('p-home'), 900);
+}
+
+/* ================= 通用 ================= */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+document.querySelectorAll('.opt').forEach(o=>{
+  if(o.getAttribute('onclick')) return;
+  o.addEventListener('click',()=>{
+    o.parentElement.querySelectorAll(':scope > .opt').forEach(s=>s.classList.remove('on'));
+    o.classList.add('on');
+  });
+});
+
+/* ================= 计划书批准 / 统计 ================= */
+function togglePlanReject(isReject){
+  const card = document.querySelector('#p-plan-approve-form .card:last-child');
+  if(card){
+    card.querySelectorAll(':scope > .opt').forEach((o,i)=>o.classList.toggle('on', isReject ? i===1 : i===0));
+  }
+  const lab = document.getElementById('plan-approve-lab');
+  const ta = document.getElementById('plan-approve-comment');
+  if(!lab || !ta) return;
+  if(isReject){
+    lab.innerHTML = '驳回理由 <span style="color:var(--err)">*</span>';
+    ta.placeholder = '驳回理由必填';
+    ta.value = '';
+  } else {
+    lab.textContent = '审核意见';
+    ta.placeholder = '填写审核说明';
+    ta.value = '委员多数认为可行，批准进入实施。';
+  }
+}
+function submitPlanApprove(){
+  const ta = document.getElementById('plan-approve-comment');
+  const isReject = (document.getElementById('plan-approve-lab')||{}).textContent.includes('驳回');
+  if(isReject && (!ta || !ta.value.trim())){ toast('驳回理由必填'); return; }
+  toast(isReject ? '已驳回，退回实施负责人' : '计划书已批准，进入实施');
+  setTimeout(()=>go('p-approve-todo'),900);
+}
+function showStats(pane, el){
+  document.querySelectorAll('#stats-tabs .chip').forEach(c=>c.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.querySelectorAll('.stats-pane').forEach(p=>p.classList.remove('on'));
+  const map = {overview:'stats-overview', me:'stats-me', rank:'stats-rank'};
+  document.getElementById(map[pane]).classList.add('on');
+  if(pane==='rank') renderRank('submit');
+}
+function openMyScore(){
+  go('p-stats');
+  setTimeout(()=>{
+    const chip = document.querySelectorAll('#stats-tabs .chip')[1];
+    showStats('me', chip);
+  }, 30);
+}
+const RANK_DATA = {
+  submit:[
+    ['1','李静','品质部','12'],
+    ['2','张伟','生产一部','6'],
+    ['3','陈晨','生产二部','5'],
+    ['4','刘洋','品质部','5'],
+    ['5','周敏','仓储部','4']
+  ],
+  adopt:[
+    ['1','李静','品质部','9'],
+    ['2','张伟','生产一部','4'],
+    ['3','周敏','仓储部','3'],
+    ['4','陈晨','生产二部','3'],
+    ['5','郑浩','设备部','2']
+  ],
+  impl:[
+    ['1','张伟','生产一部','3'],
+    ['2','马超','生产一部','3'],
+    ['3','吴刚','仓储部','2'],
+    ['4','陈晨','生产二部','2'],
+    ['5','刘洋','品质部','1']
+  ]
+};
+function switchRank(el, key){
+  document.querySelectorAll('#rank-tabs .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderRank(key);
+}
+function renderRank(key){
+  const rows = RANK_DATA[key] || RANK_DATA.submit;
+  document.getElementById('rank-body').innerHTML = rows.map(([no,name,dept,val])=>{
+    const me = name==='张伟' ? ' me' : '';
+    return `<div class="rank-row${me}"><div class="rank-no">${no}</div><div class="rank-name">${name}<div class="rank-meta">${dept}</div></div><div class="rank-val">${val}</div></div>`;
+  }).join('');
+}
+renderRank('submit');
+
+renderHome();
+go('p-login');
+if(location.hash){
+  const h = location.hash.slice(1);
+  if(document.getElementById(h)){
+    if(h==='p-detail'){ openDetail('202608120003'); }
+    else go(h);
+  }
+}
+</script>
+</body>
+</html>
