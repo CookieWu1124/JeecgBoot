@@ -12,6 +12,7 @@ import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.mapper.ProposalMapper;
 import org.jeecg.modules.proposal.service.*;
 import org.jeecg.modules.proposal.util.ProposalAuditHelper;
+import org.jeecg.modules.proposal.vo.ApplicationApprovalRequest;
 import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
@@ -49,9 +50,16 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private IProposalCommitteeMemberService committeeMemberService;
     @Autowired
     private IProposalCommitteeReviewService committeeReviewService;
+    @Autowired
+    private IProposalApproverService approverService;
+    @Autowired
+    private IProposalApprovalRecordService approvalRecordService;
 
     private static final String CONCLUSION_ADOPT = "ADOPT";
     private static final String CONCLUSION_REJECT = "REJECT";
+    private static final String DECISION_APPROVE = "APPROVE";
+    private static final String DECISION_REJECT = "REJECT";
+    private static final String APPROVAL_STAGE_APPLICATION = "APPLICATION";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -191,6 +199,9 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setCommitteeReviews(committeeReviewService.list(new LambdaQueryWrapper<ProposalCommitteeReview>()
                 .eq(ProposalCommitteeReview::getProposalId, id)
                 .orderByAsc(ProposalCommitteeReview::getCreateTime)));
+        vo.setApplicationApproval(approvalRecordService.getOne(new LambdaQueryWrapper<ProposalApproval>()
+                .eq(ProposalApproval::getProposalId, id)
+                .eq(ProposalApproval::getStage, APPROVAL_STAGE_APPLICATION)));
         return vo;
     }
 
@@ -273,6 +284,88 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         committeeReviewService.updateById(row);
 
         refreshReviewProgress(proposal, loginUser);
+    }
+
+    // 【Phase2】批准人待核定与申请决策
+    @Override
+    public IPage<Proposal> listApprovalPending(int pageNo, int pageSize, LoginUser loginUser) {
+        assertActiveApprover(loginUser);
+        LambdaQueryWrapper<Proposal> qw = new LambdaQueryWrapper<>();
+        qw.eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode())
+                .orderByDesc(Proposal::getUpdateTime);
+        return page(new Page<>(pageNo, pageSize), qw);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void submitApplicationApproval(String proposalId, ApplicationApprovalRequest request, LoginUser loginUser) {
+        assertActiveApprover(loginUser);
+        if (request == null || oConvertUtils.isEmpty(request.getDecision())) {
+            throw new JeecgBootBizTipException("请选择批准决策");
+        }
+        String decision = request.getDecision().trim().toUpperCase();
+        if (!DECISION_APPROVE.equals(decision) && !DECISION_REJECT.equals(decision)) {
+            throw new JeecgBootBizTipException("批准决策无效");
+        }
+
+        Proposal proposal = getById(proposalId);
+        if (proposal == null) {
+            throw new JeecgBootBizTipException("提案不存在");
+        }
+        if (!ProposalStatusEnum.PENDING_APPROVAL.getCode().equals(proposal.getStatus())) {
+            throw new JeecgBootBizTipException("仅待批准状态可做申请批准决策");
+        }
+
+        long existed = approvalRecordService.count(new LambdaQueryWrapper<ProposalApproval>()
+                .eq(ProposalApproval::getProposalId, proposalId)
+                .eq(ProposalApproval::getStage, APPROVAL_STAGE_APPLICATION));
+        if (existed > 0) {
+            throw new JeecgBootBizTipException("该提案已完成申请批准决策，不可重复提交");
+        }
+
+        ProposalApproval record = new ProposalApproval();
+        record.setProposalId(proposalId);
+        record.setApproverId(loginUser.getId());
+        record.setStage(APPROVAL_STAGE_APPLICATION);
+        record.setDecision(decision);
+        record.setApproveTime(new Date());
+
+        String fromStatus = proposal.getStatus();
+        if (DECISION_APPROVE.equals(decision)) {
+            if (request.getPlanRequired() == null
+                    || (request.getPlanRequired() != 0 && request.getPlanRequired() != 1)) {
+                throw new JeecgBootBizTipException("请核定是否形成改善计划书");
+            }
+            record.setPlanRequired(request.getPlanRequired());
+            record.setAwardAmount(request.getAwardAmount());
+            record.setComment(trimToNull(request.getComment()));
+
+            proposal.setPlanRequired(request.getPlanRequired());
+            proposal.setAwardAmount(request.getAwardAmount());
+            proposal.setStatus(ProposalStatusEnum.PENDING_ASSIGN.getCode());
+            ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
+            updateById(proposal);
+
+            ProposalAuditHelper.fillOnCreate(loginUser, record);
+            approvalRecordService.save(record);
+            appendStatusLog(proposalId, fromStatus, proposal.getStatus(), "APPROVE", loginUser, "申请批准");
+        } else {
+            String comment = trimToNull(request.getComment());
+            if (oConvertUtils.isEmpty(comment)) {
+                throw new JeecgBootBizTipException("不批准时请填写原因");
+            }
+            record.setPlanRequired(null);
+            record.setAwardAmount(null);
+            record.setComment(comment);
+
+            proposal.setStatus(ProposalStatusEnum.REJECTED_FINAL.getCode());
+            ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
+            updateById(proposal);
+
+            ProposalAuditHelper.fillOnCreate(loginUser, record);
+            approvalRecordService.save(record);
+            appendStatusLog(proposalId, fromStatus, proposal.getStatus(), "REJECT_FINAL", loginUser, comment);
+        }
     }
 
     @Override
@@ -430,8 +523,27 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                 return;
             }
         }
+        // 【Phase2】在任批准人可查看待批准及已决策提案
+        if (isActiveApprover(loginUser.getId())) {
+            return;
+        }
 
         throw new JeecgBootBizTipException("无权查看该提案");
+    }
+
+    private void assertActiveApprover(LoginUser loginUser) {
+        if (!isActiveApprover(loginUser.getId())) {
+            throw new JeecgBootBizTipException("仅在任批准人可操作");
+        }
+    }
+
+    private boolean isActiveApprover(String userId) {
+        if (oConvertUtils.isEmpty(userId)) {
+            return false;
+        }
+        return approverService.count(new LambdaQueryWrapper<ProposalApprover>()
+                .eq(ProposalApprover::getUserId, userId)
+                .eq(ProposalApprover::getApproverStatus, "active")) > 0;
     }
 
     // 【Phase2】委员审核快照与进度汇总

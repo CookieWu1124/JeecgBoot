@@ -16,11 +16,18 @@ const actionLabelMap: Record<string, string> = {
   SUBMIT: '提交申请',
   WITHDRAW: '撤回申请',
   COMMITTEE_DONE: '委员审核完成',
+  APPROVE: '申请批准',
+  REJECT_FINAL: '申请不批准',
 };
 
 const conclusionLabelMap: Record<string, string> = {
   ADOPT: '采用',
   REJECT: '不采用',
+};
+
+const decisionLabelMap: Record<string, string> = {
+  APPROVE: '批准',
+  REJECT: '不批准',
 };
 
 function toSingleId(value: unknown): string | undefined {
@@ -143,11 +150,13 @@ export const getProposalById = async (params: { id: string }) => {
   const application = vo?.application || {};
   const statusLogs = Array.isArray(vo?.statusLogs) ? vo.statusLogs : [];
   const committeeReviews = Array.isArray(vo?.committeeReviews) ? vo.committeeReviews : [];
+  const applicationApproval = vo?.applicationApproval || null;
 
   const [userInfoMap, deptMap] = await Promise.all([
     fetchUserInfoMap([
       proposal.proposerId,
       proposal.deptLeaderId,
+      applicationApproval?.approverId,
       ...statusLogs.map((l) => l.operatorId),
       ...committeeReviews.map((r) => r.reviewerId),
     ]),
@@ -176,6 +185,8 @@ export const getProposalById = async (params: { id: string }) => {
     deptLeaderName: leader?.name || '-',
     improvementTypesLabel: formatImprovementTypes(proposal.improvementTypes),
     awardAmountText: formatAward(proposal.awardAmount),
+    planRequiredLabel:
+      proposal.planRequired === 1 ? '形成' : proposal.planRequired === 0 ? '不形成' : '-',
     reviewProgress: proposal.reviewProgress || '-',
     createTime: proposal.createTime || '-',
     submitTime: application.submitTime || proposal.createTime || '-',
@@ -183,6 +194,22 @@ export const getProposalById = async (params: { id: string }) => {
     improvementSuggestion: application.improvementSuggestion || '-',
     remark: proposal.remark || '',
     attachments: Array.isArray(vo?.attachments) ? vo.attachments : [],
+    applicationApproval: applicationApproval
+      ? {
+          decision: applicationApproval.decision,
+          decisionLabel: decisionLabelMap[applicationApproval.decision] || applicationApproval.decision || '-',
+          planRequiredLabel:
+            applicationApproval.planRequired === 1
+              ? '形成'
+              : applicationApproval.planRequired === 0
+                ? '不形成'
+                : '-',
+          awardAmountText: formatAward(applicationApproval.awardAmount),
+          comment: applicationApproval.comment || '-',
+          approverName: userInfoMap[applicationApproval.approverId]?.name || '-',
+          approveTime: applicationApproval.approveTime || '-',
+        }
+      : null,
     statusLogs: statusLogs.map((log) => ({
       ...log,
       actionLabel: actionLabelMap[log.action] || log.action || '-',

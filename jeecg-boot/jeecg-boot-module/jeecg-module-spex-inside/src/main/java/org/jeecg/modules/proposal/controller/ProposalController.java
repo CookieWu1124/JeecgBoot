@@ -10,6 +10,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.service.IProposalService;
+import org.jeecg.modules.proposal.vo.ApplicationApprovalRequest;
 import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
@@ -92,6 +93,23 @@ public class ProposalController {
                                                 @RequestBody CommitteeReviewRequest request) {
         proposalService.submitCommitteeReview(proposalId, request, currentUser());
         return Result.OK("审核意见已提交");
+    }
+
+    // 【Phase2】批准人待核定/申请决策
+    @Operation(summary = "批准人待办列表")
+    @GetMapping("/approval/pending")
+    public Result<IPage<Proposal>> approvalPending(@RequestParam(defaultValue = "1") Integer pageNo,
+                                                   @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.OK(proposalService.listApprovalPending(pageNo, pageSize, currentUser()));
+    }
+
+    @AutoLog(value = "提案-申请批准决策")
+    @Operation(summary = "申请批准决策")
+    @PostMapping("/approval/application/{proposalId}")
+    public Result<String> submitApplicationApproval(@PathVariable String proposalId,
+                                                    @RequestBody ApplicationApprovalRequest request) {
+        proposalService.submitApplicationApproval(proposalId, request, currentUser());
+        return Result.OK("决策已提交");
     }
 
     private LoginUser currentUser() {

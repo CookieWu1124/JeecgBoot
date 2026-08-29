@@ -127,6 +127,41 @@
               />
             </div>
           </div>
+
+          <div class="pd-section">
+            <div class="pd-section__hd">申请批准决策</div>
+            <div class="pd-section__bd">
+              <template v-if="detail.applicationApproval">
+                <div class="pd-grid pd-grid--3">
+                  <div class="pd-field">
+                    <span class="pd-field__lab">决策</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.decisionLabel }}</span>
+                  </div>
+                  <div class="pd-field">
+                    <span class="pd-field__lab">批准人</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.approverName }}</span>
+                  </div>
+                  <div class="pd-field">
+                    <span class="pd-field__lab">决策时间</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.approveTime }}</span>
+                  </div>
+                  <div class="pd-field">
+                    <span class="pd-field__lab">核定计划书</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.planRequiredLabel }}</span>
+                  </div>
+                  <div class="pd-field">
+                    <span class="pd-field__lab">核定奖励</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.awardAmountText }}</span>
+                  </div>
+                  <div class="pd-field">
+                    <span class="pd-field__lab">说明</span>
+                    <span class="pd-field__val">{{ detail.applicationApproval.comment }}</span>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="pd-empty" style="padding: 12px 0">尚未做出申请批准决策</div>
+            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="plan" tab="计划书">

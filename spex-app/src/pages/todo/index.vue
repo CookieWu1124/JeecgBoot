@@ -40,8 +40,28 @@
           </view>
         </view>
 
-        <view v-if="loading && !sec.reviews?.length" class="todo-s" style="padding: 12px 4px;">加载中…</view>
+        <view
+          v-for="item in sec.approves"
+          :key="`ap-${item.id}`"
+          class="sheet todo-card"
+          hover-class="todo-press"
+          @click="handleApprove(item)"
+        >
+          <view class="todo-ic tint-amber">
+            <text>{{ item.char }}</text>
+          </view>
+          <view class="todo-bd">
+            <text class="todo-t">{{ item.title }}</text>
+            <text class="todo-s">NO. {{ item.no }} · {{ item.dept }}{{ item.progress ? ` · ${item.progress}` : '' }}</text>
+          </view>
+          <view class="stamp" :class="`stamp-${item.stamp}`">
+            <view class="stamp__dot" />
+            <text class="stamp__txt">{{ item.status }}</text>
+          </view>
+        </view>
       </view>
+
+      <view v-if="loading && !sections.length" class="todo-s" style="padding: 12px 4px;">加载中…</view>
 
       <view v-if="!loading && !sections.length" class="todo-empty">
         <view class="todo-empty__ic">
@@ -56,7 +76,7 @@
 
 <script lang="ts" setup>
 import type { ProposalListItem } from '@/api/proposal'
-import { fetchCommitteePending, fetchImprovementDepts } from '@/api/proposal'
+import { fetchApprovalPending, fetchCommitteePending, fetchImprovementDepts } from '@/api/proposal'
 import { statusLabel, statusStamp } from '@/pages/proposal/helpers'
 
 defineOptions({
@@ -74,14 +94,14 @@ definePage({
   },
 })
 
-interface ReviewTodoItem {
+interface TodoItem {
   id: string
   no: string
   title: string
   dept: string
   who: string
   char: string
-  tint: 'blue' | 'teal'
+  tint: 'blue' | 'teal' | 'amber'
   status: string
   stamp: string
   progress?: string
@@ -91,11 +111,13 @@ interface TodoSection {
   key: 'review' | 'approve'
   title: string
   count: number
-  reviews?: ReviewTodoItem[]
+  reviews?: TodoItem[]
+  approves?: TodoItem[]
 }
 
 const loading = ref(false)
-const reviewTodos = ref<ReviewTodoItem[]>([])
+const reviewTodos = ref<TodoItem[]>([])
+const approveTodos = ref<TodoItem[]>([])
 const deptNameMap = ref<Record<string, string>>({})
 
 const sections = computed<TodoSection[]>(() => {
@@ -108,6 +130,14 @@ const sections = computed<TodoSection[]>(() => {
       reviews: reviewTodos.value,
     })
   }
+  if (approveTodos.value.length) {
+    list.push({
+      key: 'approve',
+      title: '待核定',
+      count: approveTodos.value.length,
+      approves: approveTodos.value,
+    })
+  }
   return list
 })
 
@@ -115,54 +145,65 @@ onShow(() => {
   loadPending()
 })
 
+async function ensureDeptMap() {
+  if (Object.keys(deptNameMap.value).length)
+    return
+  try {
+    const depts = await fetchImprovementDepts()
+    const map: Record<string, string> = {}
+    for (const d of depts || []) {
+      if (d.deptId)
+        map[d.deptId] = d.deptName || d.deptId
+    }
+    deptNameMap.value = map
+  }
+  catch {
+    // ignore
+  }
+}
+
 async function loadPending() {
   loading.value = true
   try {
-    if (!Object.keys(deptNameMap.value).length) {
-      try {
-        const depts = await fetchImprovementDepts()
-        const map: Record<string, string> = {}
-        for (const d of depts || []) {
-          if (d.deptId)
-            map[d.deptId] = d.deptName || d.deptId
-        }
-        deptNameMap.value = map
-      }
-      catch {
-        // ignore
-      }
-    }
-    const page = await fetchCommitteePending({ pageNo: 1, pageSize: 50 })
-    const records = page?.records || []
-    reviewTodos.value = records.map(mapReviewTodo)
+    await ensureDeptMap()
+    const [reviewPage, approvePage] = await Promise.all([
+      fetchCommitteePending({ pageNo: 1, pageSize: 50 }).catch(() => null),
+      fetchApprovalPending({ pageNo: 1, pageSize: 50 }).catch(() => null),
+    ])
+    reviewTodos.value = (reviewPage?.records || []).map(item => mapTodo(item, '审', 'blue'))
+    approveTodos.value = (approvePage?.records || []).map(item => mapTodo(item, '批', 'amber'))
   }
   catch (err) {
-    console.error('加载委员待办失败', err)
+    console.error('加载待办失败', err)
     reviewTodos.value = []
+    approveTodos.value = []
   }
   finally {
     loading.value = false
   }
 }
 
-function mapReviewTodo(item: ProposalListItem): ReviewTodoItem {
-  const title = item.title || '未命名提案'
+function mapTodo(item: ProposalListItem, char: string, tint: TodoItem['tint']): TodoItem {
   return {
     id: item.id,
     no: item.proposalNo || '—',
-    title,
+    title: item.title || '未命名提案',
     dept: deptNameMap.value[item.deptId || ''] || item.deptId || '—',
     who: '提案人',
-    char: '审',
-    tint: 'blue',
+    char,
+    tint,
     status: statusLabel(item.status),
     stamp: statusStamp(item.status),
     progress: item.reviewProgress,
   }
 }
 
-function handleReview(item: ReviewTodoItem) {
+function handleReview(item: TodoItem) {
   uni.navigateTo({ url: `/pages/proposal/review?id=${item.id}` })
+}
+
+function handleApprove(item: TodoItem) {
+  uni.navigateTo({ url: `/pages/proposal/approve?id=${item.id}` })
 }
 </script>
 
@@ -296,52 +337,6 @@ function handleReview(item: ReviewTodoItem) {
   white-space: nowrap;
 }
 
-.prop {
-  margin-bottom: 12px;
-  padding: 14px 16px;
-  border-left: 4px solid #1890ff;
-  box-shadow: 0 10px 28px rgba(24, 144, 255, 0.08);
-}
-
-.prop-hd {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.prop-title {
-  flex: 1;
-  min-width: 0;
-  color: #1e2438;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: 0.2px;
-}
-
-.prop-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.prop-hint,
-.prop-ft {
-  color: #6b7390;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  line-height: 1.5;
-}
-
-.prop-ft {
-  display: block;
-  margin-top: 10px;
-}
-
 .stamp {
   --stamp-c: #1890ff;
   --stamp-bg: #e6f4ff;
@@ -385,6 +380,11 @@ function handleReview(item: ReviewTodoItem) {
 .tint-teal {
   color: #13c2c2;
   background: #e6fffb;
+}
+
+.tint-amber {
+  color: #d98f0e;
+  background: #fef4de;
 }
 
 .todo-press {

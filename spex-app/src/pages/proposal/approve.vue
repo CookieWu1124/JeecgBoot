@@ -186,7 +186,13 @@
 </template>
 
 <script lang="ts" setup>
-import { buildDetailView, getCommitteeOpinions } from './mock'
+import type { CommitteeReviewItem, ImprovementDeptOption, ProposalDetailResult } from '@/api/proposal'
+import {
+  fetchImprovementDepts,
+  fetchProposalDetail,
+  submitApplicationApproval,
+} from '@/api/proposal'
+import { formatImprovementTypes, statusLabel, statusStamp } from './helpers'
 
 defineOptions({
   name: 'ProposalApprove',
@@ -218,10 +224,21 @@ const PLAN_OPTS = [
 type Decision = typeof DECISION_OPTS[number]['value']
 type NeedPlan = typeof PLAN_OPTS[number]['value']
 
-const proposalNo = ref('')
+interface OpinionView {
+  name: string
+  adopt: boolean
+  plan: boolean
+  comment: string
+  reward?: number
+}
+
+const proposalId = ref('')
+const loading = ref(false)
+const detail = ref<ProposalDetailResult | null>(null)
+const deptMeta = ref<ImprovementDeptOption | null>(null)
+const reviewerNameMap = ref<Record<string, string>>({})
 const focusField = ref('')
 const submitting = ref(false)
-let leaveTimer: ReturnType<typeof setTimeout> | undefined
 
 const form = reactive({
   decision: 'approve' as Decision,
@@ -232,12 +249,39 @@ const form = reactive({
 
 const isApprove = computed(() => form.decision === 'approve')
 const submitLabel = computed(() => (isApprove.value ? '确认批准' : '确认不批准'))
-const view = computed(() => buildDetailView(proposalNo.value))
-const opinions = computed(() => getCommitteeOpinions(view.value.item.no))
+
+const view = computed(() => {
+  const p = detail.value?.proposal
+  return {
+    item: {
+      title: p?.title || '未命名提案',
+      no: p?.proposalNo || '—',
+      dept: deptMeta.value?.deptName || p?.deptId || '—',
+      who: '提案人',
+      stamp: statusStamp(p?.status),
+      prog: p?.reviewProgress || '',
+    },
+    status: statusLabel(p?.status),
+    nature: formatImprovementTypes(p?.improvementTypes),
+  }
+})
+
+const opinions = computed<OpinionView[]>(() => {
+  const rows = (detail.value?.committeeReviews || []).filter(r => !!r.conclusion)
+  return rows.map((r: CommitteeReviewItem) => ({
+    name: reviewerNameMap.value[r.reviewerId || ''] || r.reviewerId || '委员',
+    adopt: String(r.conclusion).toUpperCase() === 'ADOPT',
+    plan: r.planRequired === 1,
+    comment: r.comment || '—',
+    reward: r.awardSuggestion != null ? Number(r.awardSuggestion) : undefined,
+  }))
+})
+
 const tally = computed(() => {
   const adopt = opinions.value.filter(item => item.adopt).length
   return { adopt, reject: opinions.value.length - adopt, total: opinions.value.length }
 })
+
 const progressText = computed(() => {
   const prog = view.value.item.prog
   if (prog)
@@ -245,10 +289,11 @@ const progressText = computed(() => {
   const n = opinions.value.length
   return n ? `${n}/${n} 已完成` : '暂无意见'
 })
+
 const suggestedReward = computed(() => {
   const nums = opinions.value
     .map(item => item.reward)
-    .filter((n): n is number => typeof n === 'number')
+    .filter((n): n is number => typeof n === 'number' && !Number.isNaN(n))
   if (!nums.length)
     return DEFAULT_REWARD
   const counts = new Map<number, number>()
@@ -256,27 +301,62 @@ const suggestedReward = computed(() => {
     counts.set(n, (counts.get(n) || 0) + 1)
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
 })
+
 const suggestedPlan = computed<NeedPlan>(() => {
   const adopted = opinions.value.filter(item => item.adopt)
   if (!adopted.length)
     return 'yes'
   return adopted.filter(item => item.plan).length >= adopted.length / 2 ? 'yes' : 'no'
 })
+
 const planHint = computed(() => {
   const n = opinions.value.filter(item => item.adopt && item.plan).length
   return n ? `${n} 位委员建议形成` : ''
 })
 
-onLoad((query) => {
-  proposalNo.value = String(query?.no || '')
-  form.reward = String(suggestedReward.value)
-  form.needPlan = suggestedPlan.value
+onLoad(async (query) => {
+  proposalId.value = String(query?.id || '')
+  if (!proposalId.value) {
+    uni.showToast({ title: '缺少提案 ID', icon: 'none' })
+    return
+  }
+  await loadDetail()
 })
 
-onUnload(() => {
-  if (leaveTimer)
-    clearTimeout(leaveTimer)
-})
+async function loadDetail() {
+  loading.value = true
+  try {
+    const res = await fetchProposalDetail(proposalId.value)
+    detail.value = res
+    const deptId = res?.proposal?.deptId
+    if (deptId) {
+      try {
+        const depts = await fetchImprovementDepts()
+        deptMeta.value = (depts || []).find(d => d.deptId === deptId) || null
+      }
+      catch {
+        deptMeta.value = null
+      }
+    }
+    // 委员姓名：详情暂无批量用户接口时先用工号/ID；管理端另有回显
+    const map: Record<string, string> = {}
+    for (const r of res?.committeeReviews || []) {
+      if (r.reviewerId)
+        map[r.reviewerId] = r.updateBy || r.createBy || r.reviewerId
+    }
+    reviewerNameMap.value = map
+
+    form.reward = String(suggestedReward.value)
+    form.needPlan = suggestedPlan.value
+  }
+  catch (err) {
+    console.error('加载批准详情失败', err)
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+  finally {
+    loading.value = false
+  }
+}
 
 function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
@@ -292,7 +372,9 @@ function handleBack() {
 }
 
 function openDetail() {
-  uni.navigateTo({ url: `/pages/proposal/detail?no=${view.value.item.no}` })
+  if (!proposalId.value)
+    return
+  uni.navigateTo({ url: `/pages/proposal/detail?id=${proposalId.value}` })
 }
 
 function setDecision(value: Decision) {
@@ -309,20 +391,41 @@ function validate(): string {
   const reward = String(form.reward ?? '').trim()
   if (!reward)
     return '请核定提案奖金额'
-  if (!/^\d+$/.test(reward))
+  if (!/^\d+(\.\d{1,2})?$/.test(reward))
     return '请输入有效的提案奖额度'
   return ''
 }
 
-function commit() {
-  if (submitting.value)
+async function commit() {
+  if (submitting.value || !proposalId.value)
     return
   submitting.value = true
-  toast(isApprove.value ? '已批准，转入任务分配' : '已不批准')
-  leaveTimer = setTimeout(() => {
+  try {
+    if (isApprove.value) {
+      await submitApplicationApproval(proposalId.value, {
+        decision: 'APPROVE',
+        planRequired: form.needPlan === 'yes' ? 1 : 0,
+        awardAmount: Number(form.reward),
+        comment: form.comment.trim() || undefined,
+      })
+      toast('已批准，转入任务分配')
+    }
+    else {
+      await submitApplicationApproval(proposalId.value, {
+        decision: 'REJECT',
+        comment: form.comment.trim(),
+      })
+      toast('已不批准')
+    }
+    setTimeout(() => handleBack(), 700)
+  }
+  catch (err: any) {
+    console.error('提交批准决策失败', err)
+    toast(err?.message || err?.data?.message || '提交失败')
+  }
+  finally {
     submitting.value = false
-    handleBack()
-  }, 900)
+  }
 }
 
 function handleSubmit() {

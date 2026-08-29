@@ -91,6 +91,33 @@ export interface ProposalDetailResult {
   proposal: ProposalListItem
   application?: ProposalApplication
   attachments?: ProposalAttachment[]
+  committeeReviews?: CommitteeReviewItem[]
+  applicationApproval?: ApplicationApprovalResult
+}
+
+export interface CommitteeReviewItem {
+  id?: string
+  proposalId?: string
+  reviewerId?: string
+  conclusion?: string | null
+  planRequired?: number | null
+  awardSuggestion?: number | null
+  comment?: string | null
+  reviewTime?: string | null
+  [key: string]: any
+}
+
+export interface ApplicationApprovalResult {
+  id?: string
+  proposalId?: string
+  approverId?: string
+  stage?: string
+  decision?: string
+  planRequired?: number | null
+  awardAmount?: number | null
+  comment?: string | null
+  approveTime?: string | null
+  [key: string]: any
 }
 
 /** ---------- 元数据 ---------- */
@@ -150,13 +177,23 @@ export function submitCommitteeReview(proposalId: string, data: CommitteeReviewP
   return http.post<string>(`/proposal/review/committee/${proposalId}`, data)
 }
 
-/** ---------- Phase 2 后续：批准人（尚未实现） ---------- */
+/** ---------- Phase 2：批准人申请决策 ---------- */
 
-export function fetchApprovalPending(query?: { pageNo?: number, pageSize?: number }) {
-  return http.get<ProposalPageResult>('/proposal/approval/pending', query)
+export interface ApplicationApprovalPayload {
+  decision: 'APPROVE' | 'REJECT'
+  planRequired?: number
+  awardAmount?: number | null
+  comment?: string
 }
 
-export function submitApplicationApproval(proposalId: string, data: Record<string, any>) {
+export function fetchApprovalPending(query?: { pageNo?: number, pageSize?: number }) {
+  return http.get<ProposalPageResult>('/proposal/approval/pending', {
+    pageNo: query?.pageNo ?? 1,
+    pageSize: query?.pageSize ?? 20,
+  })
+}
+
+export function submitApplicationApproval(proposalId: string, data: ApplicationApprovalPayload) {
   return http.post<string>(`/proposal/approval/application/${proposalId}`, data)
 }
 

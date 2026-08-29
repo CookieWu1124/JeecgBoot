@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.entity.ProposalApplication;
+import org.jeecg.modules.proposal.entity.ProposalApproval;
 import org.jeecg.modules.proposal.entity.ProposalAttachment;
 import org.jeecg.modules.proposal.entity.ProposalCommitteeReview;
 import org.jeecg.modules.proposal.entity.ProposalStatusLog;
@@ -21,4 +22,6 @@ public class ProposalDetailVo {
     private List<ProposalStatusLog> statusLogs;
     /** 委员审核意见（含未审快照行） */
     private List<ProposalCommitteeReview> committeeReviews;
+    /** 申请阶段批准决策（若已决策） */
+    private ProposalApproval applicationApproval;
 }

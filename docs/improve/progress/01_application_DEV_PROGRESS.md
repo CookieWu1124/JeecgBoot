@@ -7,7 +7,7 @@
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
 | **最后更新** | 2026-08-29 |
-| **本段状态** | 委员并行审核 **已落地（方案1）**；批准人决策仍待做 |
+| **本段状态** | 申请段 Phase2 **已收齐并联调通过**（委员审核 + 批准人决策）；出口待指派 → 02 |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
 
@@ -49,9 +49,9 @@
 | 列表/详情 | GET | `/proposal/list`, `/proposal/{id}` | 共用 | [x] |
 | 委员待审列表 | GET | `/proposal/review/committee/pending` | 共用 | [x] |
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [x] |
-| 批准人待办 | GET | `/proposal/approval/pending` | 共用 | [ ] |
-| 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [ ] |
-| 管理端列表/详情 | * | `/proposal/admin/manage/*` | 管理端 | [x] 列表查询对齐原型；`queryById` 返回申请书+留痕+委员意见；不做新增 |
+| 批准人待办 | GET | `/proposal/approval/pending` | 共用 | [x] |
+| 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [x] |
+| 管理端列表/详情 | * | `/proposal/admin/manage/*` | 管理端 | [x] 列表+详情含申请书/留痕/委员意见/批准决策 |
 | 配置（委员/批准人） | * | `/proposal/admin/config/*` | 管理端 | [x] |
 
 ---
@@ -65,8 +65,8 @@
 | 发起提案（2 步） | 填写申请书 + 附件 + 提交 | [x] `pages/proposal/apply` 已接 create/submit |
 | 申请委员待办 | 委员待审列表 | [x] `pages/todo` 接 pending |
 | 申请委员审核 | 采用/不采用 + 计划书建议 + 奖励建议 | [x] `pages/proposal/review` 已接真实接口 |
-| 批准人待办 | 申请批准入口 | [ ] |
-| 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [ ] |
+| 批准人待办 | 申请批准入口 | [x] pages/todo 待核定 |
+| 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [x] `pages/proposal/approve` 已接真 |
 | 提案列表 Tab | 含待审核进度展示 | [x] `pages/proposal/index` 已接 list |
 | 提案详情 | 申请阶段信息展示 | [x] `pages/proposal/detail` 已接 detail |
 
@@ -92,7 +92,7 @@
 | `proposal_approver` | 1 | [x] | 批准人配置 |
 | `proposal_dept_leader` | 1 | [x] | 提交前校验 |
 | `proposal_committee_review` | 2 | [x] | 委员审核记录 + 提交快照；`inside_dev` 已建表并对 202608290001 补种 |
-| `proposal_approval` | 2 | [ ] | 批准人决策记录 |
+| `proposal_approval` | 2 | [x] | 批准人决策记录；`inside_dev` 已建表 |
 
 ---
 
@@ -104,12 +104,12 @@
 | 2 | 提交校验：部门负责人、委员会非空、申请书必填 | [x] |
 | 3 | 提案编号生成 `proposal_no` | [x] |
 | 4 | 附件上传关联（最多 4 张） | [x] |
-| 5 | `ProposalStatusEnum` + 状态日志 | [~] SUBMIT/WITHDRAW/COMMITTEE_DONE 已写 |
+| 5 | `ProposalStatusEnum` + 状态日志 | [~] SUBMIT/WITHDRAW/COMMITTEE_DONE/APPROVE/REJECT_FINAL 已写 |
 | 6 | `ProposalStateMachine` 统一迁移校验 | [ ] |
 | 7 | `proposal_committee_review` 实体/Mapper/并行审核汇总 | [x] |
 | 8 | 委员全部完成 → `PENDING_APPROVAL` | [x] |
-| 9 | `proposal_approval` + 批准/不批准 + 写 `plan_required` | [ ] |
-| 10 | 待办聚合（委员/批准人） | [~] 委员 pending 已通；批准人待办未做 |
+| 9 | `proposal_approval` + 批准/不批准 + 写 `plan_required` | [x] |
+| 10 | 待办聚合（委员/批准人） | [x] 委员+批准人 pending 已通 |
 | 11 | 站内消息 `SysAnnouncement` | [ ] |
 
 ---
@@ -121,7 +121,7 @@
 | 1 | 发起提案 2 步表单页 | 小程序 | [x] |
 | 2 | 图片上传组件对接 `/sys/common/upload` | 小程序 | [x] 发起页已接 |
 | 3 | 委员审核页 | 小程序 | [x] `review.vue` + 待办入口 |
-| 4 | 批准人申请批准页 | 小程序 | [ ] |
+| 4 | 批准人申请批准页 | 小程序 | [x] `approve.vue` |
 | 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [x] 列表已展示 reviewProgress |
 | 6 | 管理端提案列表（查询对齐原型） | 管理端 | [x] 仅查询+详情；筛选/列/进度条/状态 Tag |
 | 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置四 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
@@ -135,9 +135,9 @@
 ## 8. 验收标准
 
 - [x] 提案人可完成 2 步提交，状态为 `PENDING_REVIEW`，`review_progress` 为 `0/N`（inside_dev 已联调）
-- [x] 在任委员可并行提交独立意见，全部完成后进入 `PENDING_APPROVAL`（代码已落地；贺志龙单 `202608290001` 已补 5 条快照，待重启后端后用委员账号验收）
-- [ ] 批准人「不批准」→ `REJECTED_FINAL`，不可再编辑
-- [ ] 批准人「批准」→ `PENDING_ASSIGN`，并写入 `plan_required`、`award_amount`
+- [x] 在任委员可并行提交独立意见，全部完成后进入 `PENDING_APPROVAL`（`202608290001` 已 5/5 → 待核定，管理端已验）
+- [x] 批准人「不批准」→ `REJECTED_FINAL`，不可再编辑（已联调）
+- [x] 批准人「批准」→ `PENDING_ASSIGN`，并写入 `plan_required`、`award_amount`（已联调）
 - [x] `PENDING_REVIEW` 下提案人可撤回 → `WITHDRAWN`（接口已通；页面入口按需补）
 - [x] 未配置部门负责人或委员会为空时，提交被拒绝并提示
 - [x] 管理端详情可查看申请书正文（目前状况/改善意见）与操作留痕
@@ -155,6 +155,7 @@
 - [x] `spex-app/` 已迁入 monorepo（unibest；登录 AES；发起/列表/详情已对接真实接口）
 - [x] 旧 `jeecg-uniapp/` 已删除（2026-08-29）
 - [x] `proposal_committee_review` 已在 `inside_dev` 建表（`fix/20260829_create_proposal_committee_review.sql`）
+- [x] `proposal_approval` 已在 `inside_dev` 建表（`fix/20260829_create_proposal_approval.sql`）
 
 ---
 
@@ -176,3 +177,5 @@
 | 2026-08-29 | **菜单 component 纠偏**：误写 `mes/proposal/**` 导致空白页；`proposal_menu.sql` 增加固定 id 自愈 UPDATE；规则写入 `proposal-sql-ddl.mdc` |
 | 2026-08-29 | **提案申请（发起/查询）告一段落**：小程序发起+列表+详情、管理端列表+详情已齐；下一里程碑为委员并行审核（Phase 2） |
 | 2026-08-29 | **Phase2 方案1 委员并行审核**：建表 proposal_committee_review；submit 快照 + 在途 ensure；pending/submit 接口；5/5→PENDING_APPROVAL；spex-app 待办+审核页接真；管理端详情展示委员意见；贺志龙单已补 5 条快照；批准人仍待做 |
+| 2026-08-29 | **Phase2 批准人申请决策**：建表 proposal_approval；pending/决策接口；写 plan_required/award_amount；spex-app 待核定+approve 接真；管理端详情展示批准结果；申请段 Phase2 收齐 |
+| 2026-08-29 | **申请段 Phase2 联调归档**：`202608290001` 委员 5/5 → 待核定（管理端已验）；批准人决策链路已验；本段关闭，下一里程碑 02 任务分配 |

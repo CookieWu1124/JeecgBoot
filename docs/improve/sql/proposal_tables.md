@@ -15,6 +15,7 @@
 - [proposal_attachment](#proposal_attachment) — 提案附件
 - [proposal_status_log](#proposal_status_log) — 提案状态变更日志
 - [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
+- [proposal_approval](#proposal_approval) — 批准人决策记录
 
 ---
 
@@ -264,3 +265,29 @@
 - **主键**：(`id`)
 - **唯一索引** `uk_proposal_committee_review`：(`proposal_id`, `reviewer_id`, `tenant_id`)
 - **普通索引** `idx_proposal_committee_review_reviewer`：(`reviewer_id`)
+
+---
+
+## proposal_approval
+
+**表说明**：批准人决策记录（申请阶段 `stage=APPLICATION`；计划书/签核可复用同表不同 stage）
+
+### 业务字段
+
+| 字段名 | 数据类型 | 允许空 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | varchar(36) | 否 | 主键 |
+| `proposal_id` | varchar(36) | 否 | 提案ID |
+| `approver_id` | varchar(36) | 否 | 批准人 sys_user.id |
+| `stage` | varchar(32) | 否 | APPLICATION / PLAN / SIGNOFF |
+| `decision` | varchar(16) | 否 | APPROVE / REJECT |
+| `plan_required` | tinyint(1) | 是 | 核定是否形成计划书（批准时） |
+| `award_amount` | decimal(10,2) | 是 | 核定提案奖金额（批准时） |
+| `comment` | text | 是 | 不批准原因或备注 |
+| `approve_time` | datetime | 是 | 决策时间 |
+
+### 索引与约束
+
+- **主键**：(`id`)
+- **唯一索引** `uk_proposal_approval_stage`：(`proposal_id`, `stage`, `tenant_id`)
+- **普通索引** `idx_proposal_approval_approver`：(`approver_id`)
