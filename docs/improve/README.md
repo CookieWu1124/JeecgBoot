@@ -9,6 +9,8 @@ docs/improve/
 ├── README.md                      # 本文件（入口索引）
 ├── 提案改善系统-实施规划.md         # 主规划文档（V1.8，PRD + 技术方案 + 分阶段计划）
 ├── 移动端本地联调指南.md            # 后端开发者移动端/H5/Apifox 联调教程
+├── api/                           # 对外/跨端接口对接文档
+│   └── 提案小程序-接口对接清单.md   # 申请段：发给 App 前端同事的接口清单
 ├── progress/                      # 四段业务开发进度追踪（状态/API/页面/验收）
 │   ├── README.md                  # 进度索引
 │   ├── 01_application_DEV_PROGRESS.md
@@ -29,19 +31,21 @@ docs/improve/
 
 1. **实施规划** → `提案改善系统-实施规划.md`：业务规则、状态机、角色矩阵、API、分阶段计划
 2. **分段进度** → `progress/README.md`：按申请单/任务分配/计划书/报告书追踪开发
-3. **移动端联调** → `移动端本地联调指南.md`：Apifox / **spex-app H5** / 微信开发者工具联调步骤
-4. **小程序原型** → `prototype/improveSys.html`：23 页页面结构与字段
-5. **管理端原型** → `prototype/index.html`：提案管理 + 提案配置（忽略其他菜单）
-6. **人员导入** → `data/README.md` + `data/员工列表20260822.xls`：组织树与用户字段映射
-7. **建表脚本** → `sql/proposal_init.sql`：提案业务表 + `sys_role` 初始化
+3. **小程序接口对接** → `api/提案小程序-接口对接清单.md`：**发给 App 前端同事**的申请段接口清单（字段/示例/账号）
+4. **移动端联调** → `移动端本地联调指南.md`：Apifox / **spex-app H5** / 微信开发者工具联调步骤
+5. **小程序原型** → `prototype/improveSys.html`：23 页页面结构与字段
+6. **管理端原型** → `prototype/index.html`：提案管理 + 提案配置（忽略其他菜单）
+7. **人员导入** → `data/README.md` + `data/员工列表20260822.xls`：组织树与用户字段映射
+8. **建表脚本** → `sql/proposal_init.sql`：提案业务表 + `sys_role` 初始化
 
 ## 关键约定
 
 | 项 | 说明 |
 |----|------|
-| 登录 | 工号+密码，`POST /sys/login`，`username = work_no` |
+| 登录 | 管理端 `POST /sys/login`；小程序 `POST /sys/mLogin`；`username = workNo`（工号） |
 | 用户/组织 | 复用 Jeecg `sys_user` / `sys_depart`；业务名册用配置表 |
-| API 路径 | 共用 `/proposal/**` · 管理端 `/proposal/admin/**` · 小程序 `/proposal/app/**` |
+| API 路径 | 共用 `/proposal/**` · 管理端 `/proposal/admin/**` · 小程序聚合 `/proposal/app/**` |
+| App 对接清单 | `api/提案小程序-接口对接清单.md`（申请段已齐） |
 | 委员会 | 动态名册；审核全员；评分看 `scoreEnabled` 开关 |
 | 配置 vs 角色 | 方案③：名册管业务；`sys_role` 粗权限可选；不加 `role_id` |
 | 部门负责人 | 按改善部门配置 |
@@ -54,7 +58,7 @@ docs/improve/
 |------|------|
 | 后端（Phase 1 脚手架） | `jeecg-boot/jeecg-boot-module/jeecg-module-spex-inside/`（业务包 `org.jeecg.modules.proposal`） |
 | 管理端 | `jeecgboot-vue3/` |
-| 小程序端 | `spex-app/`（unibest；提案业务 UI 已齐，接口联调进行中） |
+| 小程序端 | `spex-app/`（unibest；申请段接口已接真，见 `api/提案小程序-接口对接清单.md`） |
 | Jeecg 基础库 SQL | `jeecg-boot/db/jeecgboot-mysql-5.7.sql` |
 
 ## 原型访问

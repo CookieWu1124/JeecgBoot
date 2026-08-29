@@ -179,3 +179,4 @@
 | 2026-08-29 | **Phase2 方案1 委员并行审核**：建表 proposal_committee_review；submit 快照 + 在途 ensure；pending/submit 接口；5/5→PENDING_APPROVAL；spex-app 待办+审核页接真；管理端详情展示委员意见；贺志龙单已补 5 条快照；批准人仍待做 |
 | 2026-08-29 | **Phase2 批准人申请决策**：建表 proposal_approval；pending/决策接口；写 plan_required/award_amount；spex-app 待核定+approve 接真；管理端详情展示批准结果；申请段 Phase2 收齐 |
 | 2026-08-29 | **申请段 Phase2 联调归档**：`202608290001` 委员 5/5 → 待核定（管理端已验）；批准人决策链路已验；本段关闭，下一里程碑 02 任务分配 |
+| 2026-08-29 | **App 对接清单**：新增 `docs/improve/api/提案小程序-接口对接清单.md`（申请段接口/字段/示例/联调账号），供小程序前端同事联调 |
