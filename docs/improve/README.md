@@ -29,7 +29,7 @@ docs/improve/
 
 1. **实施规划** → `提案改善系统-实施规划.md`：业务规则、状态机、角色矩阵、API、分阶段计划
 2. **分段进度** → `progress/README.md`：按申请单/任务分配/计划书/报告书追踪开发
-3. **移动端联调** → `移动端本地联调指南.md`：Apifox / JeecgUniapp H5 / 微信开发者工具联调步骤
+3. **移动端联调** → `移动端本地联调指南.md`：Apifox / **spex-app H5** / 微信开发者工具联调步骤
 4. **小程序原型** → `prototype/improveSys.html`：23 页页面结构与字段
 5. **管理端原型** → `prototype/index.html`：提案管理 + 提案配置（忽略其他菜单）
 6. **人员导入** → `data/README.md` + `data/员工列表20260822.xls`：组织树与用户字段映射
@@ -54,7 +54,7 @@ docs/improve/
 |------|------|
 | 后端（Phase 1 脚手架） | `jeecg-boot/jeecg-boot-module/jeecg-module-spex-inside/`（业务包 `org.jeecg.modules.proposal`） |
 | 管理端 | `jeecgboot-vue3/` |
-| 小程序端 | `jeecg-uniapp/`（本仓库 monorepo，基于官方 v3.0.0；提案业务页待建 `src/pages/proposal/`） |
+| 小程序端 | `spex-app/`（unibest；提案业务 UI 已齐，接口联调进行中） |
 | Jeecg 基础库 SQL | `jeecg-boot/db/jeecgboot-mysql-5.7.sql` |
 
 ## 原型访问

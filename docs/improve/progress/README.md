@@ -34,12 +34,13 @@
 |------|------------|------|------|
 | 数据库初始化 | 1 | `proposal_init.sql` @ `inside_dev` | [x] 2026-08-28 |
 | 管理端菜单权限 | 1 | `proposal_menu.sql` + 角色授权 | [x] admin / proposal_admin |
-| 管理端配置（四 Tab） | 1 | 部门负责人 / 委员会（全局跨部门） / 批准人 / 评分维度 | [x] UI 对齐原型；业务数据待配 |
+| 管理端配置（四 Tab） | 1 | 部门负责人 / 委员会（全局跨部门） / 批准人 / 评分维度 | [x] UI 对齐原型；inside_dev 业务配置已维护 |
 | 管理端提案管理 | 1 | 仅查询+详情（发起在小程序）；筛选/列对齐原型 | [x] 2026-08-28 |
 | 统计看板 | 5 | KPI、趋势、排行 | [ ] |
 | HR 导入 / 组织树 | 1 | 复用 Jeecg `sys_user` / `sys_depart`；样例种子见 `sql/proposal_spex_user_seed.sql` | [~] 全量导入未做；斯派科 12 人样例 SQL 已出 |
-| 小程序工程骨架 | 1 | `jeecg-uniapp/` 已纳入 monorepo（官方 v3.0.0，含登录/首页/消息/我的等平台页） | [x] 2026-08-28 |
-| 小程序提案业务页 | 1~2 | `src/pages/proposal/` 二次开发（待建） | [ ] |
+| 小程序工程骨架 | 1 | **`spex-app/`**（unibest） | [x] 2026-08-29 迁入；旧 `jeecg-uniapp/` 已删除 |
+| 小程序提案业务页 | 1~2 | `spex-app/src/pages/proposal/`：UI 齐，业务仍 mock；API 骨架 `src/api/proposal.ts` | [~] 待接真实接口 |
+| 联调配置名册种子 | 1 | `proposal_config_seed.sql` | [x] 已与 inside_dev 管理端实配对齐 |
 
 ## 更新约定
 
@@ -53,6 +54,8 @@
 | `inside_dev` 执行 `proposal_init.sql` | 已完成 | 2026-08-28 |
 | `inside_dev` 执行 `proposal_menu.sql` | 已完成 | 2026-08-28 |
 | `admin` / `proposal_admin` 角色菜单授权 | 已完成 | 2026-08-28 |
-| `jeecg-uniapp/` 工程骨架纳入 monorepo | 已完成 | 2026-08-28 |
+| `jeecg-uniapp/` 工程骨架纳入 monorepo | 已完成 → **2026-08-29 已删除**，改由 `spex-app/` | 2026-08-28 |
+| **`spex-app/` 迁入 monorepo**（环境指向本地 JeecgBoot） | 已完成 | 2026-08-29 |
+| **移除 `jeecg-uniapp/`** | 已完成 | 2026-08-29 |
 | 斯派科样例用户种子 SQL | 已提供（待手工执行） | 2026-08-28 |
 | 管理端提案管理/配置 UI 对齐原型 | 已完成（业务数据仍待配） | 2026-08-28 |

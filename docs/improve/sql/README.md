@@ -7,6 +7,7 @@
 | `proposal_init.sql` | **业务表 DDL** + 角色 + 评分维度种子 | ✅ 必跑 |
 | `proposal_menu.sql` | **管理端菜单/按钮**（`sys_permission`） | ✅ 必跑 |
 | `proposal_spex_user_seed.sql` | 斯派科样例组织 + MES/电气控制员工（`org_code=S01*`） | ⭕ 开发/联调建议跑 |
+| `proposal_config_seed.sql` | 联调配置：部门负责人 / 委员会 / 批准人 | ⭕ 跑完用户种子后执行 |
 | `proposal_spex_elc_user_seed.sql` | 增量：电气控制另 5 人（已跑过旧 seed 时用） | ⭕ 按需 |
 | `fix/*.sql` | 已有库增量修复（勿当全量） | 仅旧库需要时 |
 | `proposal_tables.md` | 表结构文档（与 init 同步） | 文档 |
@@ -28,9 +29,12 @@ mysql -u root -p inside_dev < docs/improve/sql/proposal_menu.sql
 
 # 4.（可选）斯派科联调样例用户/组织 — 开发库建议执行
 mysql -u root -p inside_dev < docs/improve/sql/proposal_spex_user_seed.sql
+
+# 5.（可选）联调配置名册 — 部门负责人/委员会/批准人
+mysql -u root -p inside_dev < docs/improve/sql/proposal_config_seed.sql
 ```
 
-执行后还需：管理端给 `admin` / `proposal_admin` **授权提案菜单**；在「提案配置」中挂委员会/部门负责人/批准人。
+执行后还需：管理端给 `admin` / `proposal_admin` **授权提案菜单**。配置种子执行后也可在「提案配置」中核对/调整。
 
 ## Jeecg `org_code` 优编码约定（重要）
 
@@ -62,6 +66,7 @@ Jeecg 部门编码为 **每级固定 3 位** = `1 个字母 + 2 位数字`（如
 | `inside_dev` | `proposal_init.sql` | 已执行 | 2026-08-28 |
 | `inside_dev` | `proposal_menu.sql` | 已执行 | 2026-08-28 |
 | `inside_dev` | `proposal_spex_user_seed.sql` | 已提供（含 org_code 修正） | 2026-08-28 |
+| `inside_dev` | `proposal_config_seed.sql` | 已与管理端实配对齐（3 负责人 / 5 委员 / 1 批准人） | 2026-08-28 |
 | `inside_dev` | `fix/20260828_fix_spex_org_code.sql` | 旧 SPX* 编码库需执行 | 2026-08-28 |
 
 > 菜单授权：`admin`、`proposal_admin` 角色已在库内授权提案相关菜单（2026-08-28）。
