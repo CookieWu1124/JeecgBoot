@@ -20,6 +20,11 @@ dist
 *.sln
 *.sw?
 .hbuilderx
+.vscode
+.cursor
+.trae
+.agents
+skills-lock.json
 
 .stylelintcache
 .eslintcache
