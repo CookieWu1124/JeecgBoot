@@ -1,5 +1,6 @@
 import { mapJeecgUser, type IAuthLoginRes, type ICaptcha, type IDepartItem, type IDoubleTokenRes, type IJeecgLoginRes, type IJeecgUserInfo, type IUpdateInfo, type IUpdatePassword } from './types/login'
 import { http } from '@/http/http'
+import { encryptAESCBC } from '@/utils/cipher'
 
 /**
  * 登录表单
@@ -35,7 +36,7 @@ interface IJeecgDepartResult {
 export async function getDepartList(loginForm: ILoginForm) {
   const res = await http.post<IJeecgDepartResult>('/sys/loginGetUserDeparts', {
     username: loginForm.username,
-    password: loginForm.password,
+    password: encryptAESCBC(loginForm.password),
     loginType: 'account',
     source: 'APP',
   }, undefined, undefined, { hideErrorToast: true })
@@ -45,11 +46,12 @@ export async function getDepartList(loginForm: ILoginForm) {
 /**
  * 用户登录（移动端）
  * 对齐 Jeecg：POST /sys/mLogin（无图形验证码）
+ * 密码与管理端一致：AES-CBC 加密后再传输
  */
 export function login(loginForm: ILoginForm) {
   return http.post<IJeecgLoginRes>('/sys/mLogin', {
     username: loginForm.username,
-    password: loginForm.password,
+    password: encryptAESCBC(loginForm.password),
     loginOrgCode: loginForm.orgCode,
   }, undefined, undefined, { hideErrorToast: true })
 }
