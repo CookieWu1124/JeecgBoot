@@ -6,7 +6,8 @@
 | **规划 Phase** | Phase 1（骨架）+ Phase 2（审核流） |
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
-| **最后更新** | 2026-08-28 |
+| **最后更新** | 2026-08-29 |
+| **本段状态** | 发起/查询 **告一段落**；委员审核、批准人决策仍待做（Phase 2） |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
 
@@ -50,7 +51,7 @@
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [ ] |
 | 批准人待办 | GET | `/proposal/approval/pending` | 共用 | [ ] |
 | 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [ ] |
-| 管理端列表 CRUD | * | `/proposal/admin/manage/*` | 管理端 | [~] 列表查询已对齐原型；管理端不做新增（小程序发起） |
+| 管理端列表/详情 | * | `/proposal/admin/manage/*` | 管理端 | [x] 列表查询对齐原型；`queryById` 返回申请书+留痕；不做新增 |
 | 配置（委员/批准人） | * | `/proposal/admin/config/*` | 管理端 | [x] |
 
 ---
@@ -61,13 +62,13 @@
 
 | 原型页 | 功能 | 进度 |
 |--------|------|------|
-| 发起提案（2 步） | 填写申请书 + 附件 + 提交 | [x] `pages/proposal/apply` |
+| 发起提案（2 步） | 填写申请书 + 附件 + 提交 | [x] `pages/proposal/apply` 已接 create/submit |
 | 申请委员待办 | 委员待审列表 | [ ] |
 | 申请委员审核 | 采用/不采用 + 计划书建议 + 奖励建议 | [ ] |
 | 批准人待办 | 申请批准入口 | [ ] |
 | 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [ ] |
-| 提案列表 Tab | 含待审核进度展示 | [ ] |
-| 提案详情 | 申请阶段信息展示 | [ ] |
+| 提案列表 Tab | 含待审核进度展示 | [x] `pages/proposal/index` 已接 list |
+| 提案详情 | 申请阶段信息展示 | [x] `pages/proposal/detail` 已接 detail |
 
 ### 4.2 管理端（`jeecgboot-vue3`）
 
@@ -75,7 +76,7 @@
 |------|------|------|
 | 提案管理列表（仅查询+详情） | `views/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
 | 提案配置（四 Tab） | `views/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / 评分维度 |
-| 提案详情（全流程时间线） | — | [ ] Phase 5 |
+| 提案详情弹窗 | `views/proposal/manage/components/ProposalModal` | [x] 对齐原型：摘要卡/四 Tab/申请单分块；计划书·报告书占位；操作留痕已接 status_log |
 
 ---
 
@@ -121,23 +122,25 @@
 | 2 | 图片上传组件对接 `/sys/common/upload` | 小程序 | [x] 发起页已接 |
 | 3 | 委员审核页 | 小程序 | [ ] |
 | 4 | 批准人申请批准页 | 小程序 | [ ] |
-| 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [ ] |
+| 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [x] 列表已展示 reviewProgress |
 | 6 | 管理端提案列表（查询对齐原型） | 管理端 | [x] 仅查询+详情；筛选/列/进度条/状态 Tag |
-| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置四 Tab + 提案管理列表均已回显 |
-| 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] |
+| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置四 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
+| 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] `proposal_menu.sql` 含 component 自愈 UPDATE |
 | 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
 | 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；对接 create/draft/submit |
+| 11 | 管理端详情弹窗对齐原型 | 管理端 | [x] 申请单正文来自 `proposal_application`；留痕来自 `proposal_status_log` |
 
 ---
 
 ## 8. 验收标准
 
-- [ ] 提案人可完成 2 步提交，状态为 `PENDING_REVIEW`，`review_progress` 为 `0/N`
+- [x] 提案人可完成 2 步提交，状态为 `PENDING_REVIEW`，`review_progress` 为 `0/N`（inside_dev 已联调）
 - [ ] 在任委员可并行提交独立意见，全部完成后进入 `PENDING_APPROVAL`
 - [ ] 批准人「不批准」→ `REJECTED_FINAL`，不可再编辑
 - [ ] 批准人「批准」→ `PENDING_ASSIGN`，并写入 `plan_required`、`award_amount`
-- [ ] `PENDING_REVIEW` 下提案人可撤回 → `WITHDRAWN`
-- [ ] 未配置部门负责人或委员会为空时，提交被拒绝并提示
+- [x] `PENDING_REVIEW` 下提案人可撤回 → `WITHDRAWN`（接口已通；页面入口按需补）
+- [x] 未配置部门负责人或委员会为空时，提交被拒绝并提示
+- [x] 管理端详情可查看申请书正文（目前状况/改善意见）与操作留痕
 
 ---
 
@@ -148,8 +151,7 @@
 - [x] `admin`、`proposal_admin` 角色已授权提案相关菜单
 - [x] 委员会名册、部门负责人、批准人已在管理端配置（`inside_dev` 实配）
 - [x] 联调配置种子已与库对齐：`proposal_config_seed.sql`（3 负责人 / 5 委员 / 1 批准人）
-- [~] HR 用户：全量导入未做；斯派科样例见 `../sql/proposal_spex_user_seed.sql`（`username = work_no`）
-- [x] `spex-app/` 已迁入 monorepo（unibest；登录已对接 `/sys/mLogin`；提案页仍 mock）
+- [x] `spex-app/` 已迁入 monorepo（unibest；登录 AES；发起/列表/详情已对接真实接口）
 - [x] 旧 `jeecg-uniapp/` 已删除（2026-08-29）
 
 ---
@@ -167,3 +169,7 @@
 | 2026-08-28 | **配数据+发起提案**：新增 `proposal_config_seed.sql`；共用接口 `GET /proposal/meta/improvementDepts`；小程序发起页曾在旧 uniapp 落地 |
 | 2026-08-28 | **配置种子对齐 inside_dev**：按管理端实配重写 `proposal_config_seed.sql`（MES/自动线/电气 3 负责人；批准人汪秦军；委员 5 席含曾金/陈泽波/刘恋/张小朋/吴浪） |
 | 2026-08-29 | **移动端切换**：迁入 `spex-app/`（unibest），删除 `jeecg-uniapp/`；登录对接 Jeecg；提案 API 骨架就绪、页面仍 mock |
+| 2026-08-29 | **发起联调**：spex-app 发起/列表/详情对接 create+submit+list+detail；密码 AES；审核/批准仍 mock |
+| 2026-08-29 | **管理端详情对齐原型**：`ProposalModal` 摘要卡+四 Tab；`getAdminDetail` 返回申请书/附件/status_log；提案人部门按用户 orgCode 回显 |
+| 2026-08-29 | **菜单 component 纠偏**：误写 `mes/proposal/**` 导致空白页；`proposal_menu.sql` 增加固定 id 自愈 UPDATE；规则写入 `proposal-sql-ddl.mdc` |
+| 2026-08-29 | **提案申请（发起/查询）告一段落**：小程序发起+列表+详情、管理端列表+详情已齐；下一里程碑为委员并行审核（Phase 2） |

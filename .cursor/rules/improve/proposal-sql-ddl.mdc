@@ -1,6 +1,6 @@
 ---
-description: 提案改善 DDL 变更须同步 proposal_init.sql，避免上线建表遗漏
-globs: docs/improve/sql/**,jeecg-boot/**/jeecg-module-spex-inside/**/entity/**,jeecg-boot/**/jeecg-module-spex-inside/**/*.java
+description: 提案改善 DDL/菜单须与 init、views 路径一致；禁止随意改 sys_permission.component
+globs: docs/improve/sql/**,jeecg-boot/**/jeecg-module-spex-inside/**/entity/**,jeecg-boot/**/jeecg-module-spex-inside/**/*.java,jeecgboot-vue3/src/views/proposal/**
 alwaysApply: false
 ---
 
@@ -25,6 +25,28 @@ alwaysApply: false
 
 可选：`docs/improve/sql/fix/` 下增量脚本（**仅用于已有库的迁移**），但 fix 内容最终仍应合并进 `proposal_init.sql` 对应 `CREATE TABLE` 段。
 
+菜单权限以 `docs/improve/sql/proposal_menu.sql` 为准（与业务表 init 分开）。
+
+## 管理端菜单 component 约定（易踩坑）
+
+JeecgBoot 按 `sys_permission.component` 动态加载 `jeecgboot-vue3/src/views/` 下文件。路径不对时页面空白，提示「查看组件引用是否正确」。
+
+| 菜单 | url（权威） | component（权威） | 对应文件 |
+|------|-------------|-------------------|----------|
+| 提案改善（目录） | `/proposal` | `layouts/RouteView` | 布局，非业务页 |
+| 提案管理 | `/proposal/manage` | `proposal/manage/index` | `views/proposal/manage/index.vue` |
+| 提案配置 | `/proposal/config` | `proposal/config/index` | `views/proposal/config/index.vue` |
+
+**硬性规则：**
+
+- `component` = 相对 `src/views/` 的路径，**不要**前缀 `views/`，**不要**后缀 `.vue`
+- **禁止**套用 MES 等其它模块习惯，写成 `mes/proposal/...`（仓库内无 `views/mes/proposal/`）
+- `url` 与 `component` 相互独立：改访问路径时**不得**把 url 段原样拷进 component
+- 在「菜单管理」UI 里改提案菜单后，必须核对上表；改完应回写 `proposal_menu.sql`（含下方自愈 UPDATE）
+- 仅 `INSERT ... WHERE NOT EXISTS` **不会修复**已存在的错误行；依赖脚本末尾对固定 id 的 `UPDATE` 纠偏
+
+症状速查：地址栏出现 `/mes/proposal/...` 或空白页「查看组件引用是否正确」→ 先查 `sys_permission.component` 是否偏离上表。
+
 ## 变更检查清单
 
 完成 DDL 相关改动前，确认：
@@ -36,6 +58,11 @@ alwaysApply: false
 - [ ] 业务状态字段不与 `active` 冲突（如 `member_status`, `approver_status`, `dim_status`）
 - [ ] 角色/种子 INSERT 保持幂等（`WHERE NOT EXISTS`）
 - [ ] `proposal_tables.md` 已同步
+
+涉及菜单时额外确认：
+
+- [ ] `proposal_menu.sql` 中 url/component 与上表及 `views/proposal/**` 一致
+- [ ] 未把 `/mes` 或其它业务前缀写进提案 `component`
 
 ## init 脚本特性（勿破坏）
 
@@ -56,3 +83,4 @@ mysql -u root -p inside_dev < docs/improve/sql/proposal_menu.sql
 - 在 entity 新增字段但 init 未建列
 - 用 Flyway 片段替代 init 的全量定义（本项目约定手工 init）
 - `sys_permission.id` 超过 **32 字符**（JeecgBoot 默认为 `varchar(32)`）
+- 在菜单管理或 SQL 中把提案 `component` 改成 `mes/proposal/**` 或其它不存在于 `views/` 的路径

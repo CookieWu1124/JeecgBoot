@@ -20,6 +20,9 @@ public interface IProposalService extends IService<Proposal> {
 
     ProposalDetailVo getDetail(String id, LoginUser loginUser);
 
+    /** 管理端详情：不校验提案人权限，含申请书/附件/状态日志 */
+    ProposalDetailVo getAdminDetail(String id);
+
     IPage<Proposal> listForUser(String tab, String title, int pageNo, int pageSize, LoginUser loginUser);
 
     ProposalHomeVo buildHome(LoginUser loginUser);

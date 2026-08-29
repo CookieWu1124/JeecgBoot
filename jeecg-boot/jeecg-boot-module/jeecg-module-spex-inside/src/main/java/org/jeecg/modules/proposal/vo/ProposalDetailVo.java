@@ -5,6 +5,7 @@ import lombok.Data;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.entity.ProposalApplication;
 import org.jeecg.modules.proposal.entity.ProposalAttachment;
+import org.jeecg.modules.proposal.entity.ProposalStatusLog;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public class ProposalDetailVo {
     private Proposal proposal;
     private ProposalApplication application;
     private List<ProposalAttachment> attachments;
+    /** 管理端操作留痕；小程序详情可不填 */
+    private List<ProposalStatusLog> statusLogs;
 }

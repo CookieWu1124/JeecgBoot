@@ -120,15 +120,15 @@
             </view>
             <view class="nature-grid">
               <view
-                v-for="item in NATURES"
-                :key="item"
+                v-for="item in IMPROVEMENT_TYPES"
+                :key="item.value"
                 class="nature-tag"
-                :class="{ 'nature-tag--on': form.natures.includes(item) }"
+                :class="{ 'nature-tag--on': form.natures.includes(item.value) }"
                 hover-class="apply-press"
-                @click="toggleNature(item)"
+                @click="toggleNature(item.value)"
               >
-                <text :class="form.natures.includes(item) ? 'nature-tag__on' : 'nature-tag__off'">
-                  {{ item }}
+                <text :class="form.natures.includes(item.value) ? 'nature-tag__on' : 'nature-tag__off'">
+                  {{ item.label }}
                 </text>
               </view>
             </view>
@@ -150,15 +150,40 @@
               </view>
             </view>
             <view class="apply-ipt apply-ipt--select" hover-class="apply-press" @click="openDeptPicker">
-              <text class="apply-ipt__val">{{ form.dept }}</text>
+              <text class="apply-ipt__val" :class="{ 'apply-ipt__ph': !form.deptName }">
+                {{ form.deptName || '请选择改善部门' }}
+              </text>
               <wd-icon name="arrow-down" size="14px" color="#9AA3BD" />
             </view>
           </view>
-          <view class="apply-cell apply-cell--last">
+          <view class="apply-cell">
             <text class="apply-cell__lab">部门负责人</text>
             <text class="apply-cell__val apply-cell__val--ro">{{ leaderText }}</text>
           </view>
-          <view v-if="!currentLeader" class="apply-banner apply-banner--err">
+          <view class="apply-field apply-field--last" style="margin-top: 12px">
+            <view class="apply-label-row">
+              <view class="apply-label-wrap">
+                <text class="apply-req">*</text>
+                <text class="apply-label">通知邮箱</text>
+              </view>
+            </view>
+            <view class="apply-ipt" :class="{ 'apply-ipt--on': focusField === 'email' }">
+              <input
+                v-model="form.email"
+                class="apply-ipt__inner"
+                type="text"
+                maxlength="100"
+                placeholder="用于接收流程通知"
+                placeholder-class="apply-ph"
+                :placeholder-style="PH_STYLE"
+                confirm-type="done"
+                :cursor-spacing="24"
+                @focus="focusField = 'email'"
+                @blur="focusField = ''"
+              >
+            </view>
+          </view>
+          <view v-if="form.deptId && !currentLeader" class="apply-banner apply-banner--err">
             <text class="apply-banner__ic">!</text>
             <text class="apply-banner__txt">该部门未配置负责人，请联系管理员</text>
           </view>
@@ -174,24 +199,27 @@
           </view>
           <view class="img-grid">
             <view
-              v-for="(src, index) in form.images"
-              :key="`${index}-${src}`"
+              v-for="(img, index) in form.images"
+              :key="`${index}-${img.preview}`"
               class="img-slot img-slot--has"
               @click="previewImage(index)"
             >
-              <image class="img-slot__img" :src="src" mode="aspectFill" />
+              <image class="img-slot__img" :src="img.preview" mode="aspectFill" />
               <view class="img-slot__rm" hover-class="apply-press" @click.stop="removeImage(index)">
                 <text class="img-slot__rm-txt">×</text>
               </view>
             </view>
             <view
-              v-if="form.images.length < 4"
+              v-if="form.images.length < 4 && !uploading"
               class="img-slot img-slot--add"
               hover-class="apply-press"
               @click="addImage"
             >
               <text class="img-slot__plus">＋</text>
               <text class="img-slot__add">添加</text>
+            </view>
+            <view v-else-if="uploading" class="img-slot img-slot--add">
+              <text class="img-slot__add">上传中</text>
             </view>
           </view>
         </view>
@@ -206,21 +234,25 @@
           <view class="apply-cell apply-cell--block">
             <text class="apply-cell__lab">改善性质</text>
             <view class="confirm-tags">
-              <text v-for="item in form.natures" :key="item" class="confirm-tag">{{ item }}</text>
+              <text v-for="item in natureLabels" :key="item" class="confirm-tag">{{ item }}</text>
             </view>
           </view>
           <view class="apply-cell">
             <text class="apply-cell__lab">改善部门</text>
             <text class="apply-cell__val">{{ confirmDeptText }}</text>
           </view>
+          <view class="apply-cell">
+            <text class="apply-cell__lab">通知邮箱</text>
+            <text class="apply-cell__val">{{ form.email }}</text>
+          </view>
           <view class="apply-cell apply-cell--last apply-cell--block">
             <text class="apply-cell__lab">现场图片</text>
             <view v-if="form.images.length" class="confirm-imgs">
               <image
-                v-for="(src, index) in form.images"
-                :key="`${index}-${src}`"
+                v-for="(img, index) in form.images"
+                :key="`${index}-${img.preview}`"
                 class="confirm-imgs__item"
-                :src="src"
+                :src="img.preview"
                 mode="aspectFill"
                 @click="previewImage(index)"
               />
@@ -268,23 +300,28 @@
         <text class="apply-sheet__title">选择改善部门</text>
         <view
           v-for="item in deptOptions"
-          :key="item.name"
+          :key="item.deptId"
           class="apply-sheet__item"
           :class="{
-            'apply-sheet__item--on': form.dept === item.name,
-            'apply-sheet__item--off': !item.leader,
+            'apply-sheet__item--on': form.deptId === item.deptId,
+            'apply-sheet__item--off': !item.leaderConfigured,
           }"
           hover-class="apply-press"
           @click="selectDept(item)"
         >
           <view class="apply-sheet__meta">
-            <text :class="item.leader ? 'apply-sheet__name' : 'apply-sheet__name--off'">
-              {{ item.name }}
+            <text :class="item.leaderConfigured ? 'apply-sheet__name' : 'apply-sheet__name--off'">
+              {{ item.deptName }}
             </text>
-            <text v-if="item.leader" class="apply-sheet__sub">{{ item.leader }}</text>
+            <text v-if="item.leaderConfigured" class="apply-sheet__sub">{{ item.leaderName }}</text>
             <text v-else class="apply-sheet__name--off">（未配置负责人）</text>
           </view>
-          <wd-icon v-if="form.dept === item.name && item.leader" name="check" size="16px" color="#1890FF" />
+          <wd-icon
+            v-if="form.deptId === item.deptId && item.leaderConfigured"
+            name="check"
+            size="16px"
+            color="#1890FF"
+          />
         </view>
         <view class="apply-sheet__cancel" hover-class="apply-press" @click="showDeptPicker = false">
           <text class="apply-sheet__cancel-txt">取消</text>
@@ -295,8 +332,15 @@
 </template>
 
 <script lang="ts" setup>
+import type { ImprovementDeptOption, ProposalCreatePayload } from '@/api/proposal'
+import { createProposal, fetchImprovementDepts, fetchProposalDetail, submitProposal } from '@/api/proposal'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store'
+import {
+  IMPROVEMENT_TYPES,
+  toImprovementTypesPayload,
+  uploadProposalImage,
+} from './helpers'
 
 defineOptions({
   name: 'ProposalApply',
@@ -313,20 +357,17 @@ definePage({
   },
 })
 
-const STEPS = ['内容填写', '确认提交'] as const
-const NATURES = ['安全改善', '品质改善', '效率改善', '交付改善', '成本改善'] as const
-const DEPT_LEADERS: Record<string, string> = {
-  生产一部: '赵强',
-  生产二部: '赵强',
-  品质部: '赵强',
-  仓储部: '周敏',
-  设备部: '郑浩',
-  综合部: '',
+interface ImageItem {
+  preview: string
+  fileUrl: string
+  fileName: string
+  fileSize?: number
 }
+
+const STEPS = ['内容填写', '确认提交'] as const
 const PH_STYLE = 'color:#9AA3BD;font-size:14px;'
 const MAX_IMAGES = 4
-
-type DeptOption = { name: string, leader: string }
+const EMAIL_RE = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
 
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
@@ -335,30 +376,32 @@ const step = ref(1)
 const focusField = ref('')
 const showDeptPicker = ref(false)
 const submitting = ref(false)
-
-function readDefaultDept() {
-  const name = String(userInfo.value.departName || '')
-  if (name && DEPT_LEADERS[name])
-    return name
-  return '生产一部'
-}
+const uploading = ref(false)
+const deptOptions = ref<ImprovementDeptOption[]>([])
+const loadingDepts = ref(false)
 
 const form = reactive({
   title: '',
   problem: '',
   idea: '',
   natures: [] as string[],
-  dept: readDefaultDept(),
-  images: [] as string[],
+  deptId: '',
+  deptName: '',
+  email: String(userInfo.value.email || ''),
+  images: [] as ImageItem[],
 })
 
-const deptOptions = computed<DeptOption[]>(() =>
-  Object.entries(DEPT_LEADERS).map(([name, leader]) => ({ name, leader })),
-)
-
-const currentLeader = computed(() => DEPT_LEADERS[form.dept] || '')
+const selectedDept = computed(() => deptOptions.value.find(d => d.deptId === form.deptId))
+const currentLeader = computed(() => {
+  if (!selectedDept.value?.leaderConfigured)
+    return ''
+  return selectedDept.value.leaderName || ''
+})
 const leaderText = computed(() => currentLeader.value || '未配置负责人')
-const confirmDeptText = computed(() => `${form.dept}（负责人：${currentLeader.value || '—'}）`)
+const confirmDeptText = computed(() => `${form.deptName || '—'}（负责人：${currentLeader.value || '—'}）`)
+const natureLabels = computed(() =>
+  IMPROVEMENT_TYPES.filter(i => form.natures.includes(i.value)).map(i => i.label),
+)
 
 const step1Errors = computed(() => {
   if (!form.title.trim())
@@ -369,15 +412,43 @@ const step1Errors = computed(() => {
     return '请填写改善意见'
   if (!form.natures.length)
     return '请至少选择一项改善性质'
-  if (!currentLeader.value)
+  if (!form.deptId || !currentLeader.value)
     return '请选择已配置负责人的改善部门'
+  if (!form.email.trim())
+    return '请填写通知邮箱'
+  if (!EMAIL_RE.test(form.email.trim()))
+    return '请填写正确的邮箱格式'
   return ''
 })
 
 onLoad(() => {
-  if (!DEPT_LEADERS[form.dept])
-    form.dept = readDefaultDept()
+  loadDepts()
 })
+
+async function loadDepts() {
+  loadingDepts.value = true
+  try {
+    const list = await fetchImprovementDepts()
+    deptOptions.value = Array.isArray(list) ? list : []
+    if (!form.deptId) {
+      const preferName = String(userInfo.value.departName || '')
+      const hit = deptOptions.value.find(d =>
+        d.leaderConfigured && preferName && d.deptName === preferName,
+      ) || deptOptions.value.find(d => d.leaderConfigured)
+      if (hit) {
+        form.deptId = hit.deptId
+        form.deptName = hit.deptName
+      }
+    }
+  }
+  catch (err) {
+    console.error('加载改善部门失败', err)
+    toast('改善部门加载失败')
+  }
+  finally {
+    loadingDepts.value = false
+  }
+}
 
 function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
@@ -400,25 +471,28 @@ function handleBack() {
   leavePage()
 }
 
-function toggleNature(name: string) {
-  const idx = form.natures.indexOf(name)
+function toggleNature(code: string) {
+  const idx = form.natures.indexOf(code)
   if (idx >= 0)
     form.natures.splice(idx, 1)
   else
-    form.natures.push(name)
+    form.natures.push(code)
 }
 
 function openDeptPicker() {
   focusField.value = ''
+  if (!deptOptions.value.length && !loadingDepts.value)
+    loadDepts()
   showDeptPicker.value = true
 }
 
-function selectDept(item: DeptOption) {
-  if (!item.leader) {
+function selectDept(item: ImprovementDeptOption) {
+  if (!item.leaderConfigured) {
     toast('请选择已配置负责人的改善部门')
     return
   }
-  form.dept = item.name
+  form.deptId = item.deptId
+  form.deptName = item.deptName
   showDeptPicker.value = false
 }
 
@@ -432,8 +506,28 @@ function addImage() {
     count: remain,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res) => {
-      form.images.push(...(res.tempFilePaths || []).slice(0, remain))
+    success: async (res) => {
+      const paths = (res.tempFilePaths || []).slice(0, remain)
+      if (!paths.length)
+        return
+      uploading.value = true
+      try {
+        for (const path of paths) {
+          const uploaded = await uploadProposalImage(path)
+          form.images.push({
+            preview: path,
+            fileUrl: uploaded.fileUrl,
+            fileName: uploaded.fileName,
+            fileSize: uploaded.fileSize,
+          })
+        }
+      }
+      catch (err: any) {
+        toast(err?.message || '图片上传失败')
+      }
+      finally {
+        uploading.value = false
+      }
     },
   })
 }
@@ -444,8 +538,8 @@ function removeImage(index: number) {
 
 function previewImage(index: number) {
   uni.previewImage({
-    current: form.images[index],
-    urls: form.images,
+    current: form.images[index]?.preview,
+    urls: form.images.map(i => i.preview),
   })
 }
 
@@ -457,6 +551,7 @@ function goNext() {
   form.title = form.title.trim()
   form.problem = form.problem.trim()
   form.idea = form.idea.trim()
+  form.email = form.email.trim()
   step.value = 2
   uni.pageScrollTo({ scrollTop: 0, duration: 200 })
 }
@@ -466,17 +561,25 @@ function goPrev() {
   uni.pageScrollTo({ scrollTop: 0, duration: 200 })
 }
 
-function buildProposalNo() {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  const seq = String(now.getHours() * 60 + now.getMinutes()).padStart(4, '0')
-  return `${y}${m}${d}${seq}`
+function buildPayload(): ProposalCreatePayload {
+  return {
+    title: form.title.trim(),
+    improvementTypes: toImprovementTypesPayload(form.natures),
+    deptId: form.deptId,
+    teamType: 'PERSONAL',
+    currentSituation: form.problem.trim(),
+    improvementSuggestion: form.idea.trim(),
+    email: form.email.trim(),
+    attachments: form.images.map(img => ({
+      fileName: img.fileName,
+      fileUrl: img.fileUrl,
+      fileSize: img.fileSize,
+    })),
+  }
 }
 
 function submitApply() {
-  if (submitting.value)
+  if (submitting.value || uploading.value)
     return
   if (step1Errors.value) {
     toast(step1Errors.value)
@@ -493,31 +596,41 @@ function submitApply() {
     success: (res) => {
       if (!res.confirm)
         return
-      setTimeout(() => {
-        doSubmit()
-      }, 80)
+      doSubmit()
     },
   })
 }
 
-function doSubmit() {
+async function doSubmit() {
   submitting.value = true
-  const no = buildProposalNo()
-  uni.showModal({
-    title: '提交成功',
-    content: `编号 ${no} 已生成，已进入委员会审核`,
-    showCancel: false,
-    confirmText: '知道了',
-    confirmColor: '#13C2C2',
-    success: (res) => {
-      submitting.value = false
-      if (res.confirm)
-        leavePage()
-    },
-    fail: () => {
-      submitting.value = false
-    },
-  })
+  try {
+    const payload = buildPayload()
+    const id = await createProposal(payload)
+    await submitProposal(id)
+    let noText = ''
+    try {
+      const detail = await fetchProposalDetail(id)
+      noText = detail?.proposal?.proposalNo ? `编号 ${detail.proposal.proposalNo}，` : ''
+    }
+    catch {
+      // 编号回显失败不影响成功提示
+    }
+    uni.showModal({
+      title: '提交成功',
+      content: `${noText}已进入委员会审核`,
+      showCancel: false,
+      confirmText: '知道了',
+      confirmColor: '#13C2C2',
+      success: () => leavePage(),
+    })
+  }
+  catch (err: any) {
+    console.error('提交提案失败', err)
+    // http 层已 toast 业务错误
+  }
+  finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -849,6 +962,10 @@ function doSubmit() {
   color: #1e2438;
   font-size: 14px;
   line-height: 1.4;
+}
+
+.apply-ipt__ph {
+  color: #9aa3bd;
 }
 
 .apply-ph {

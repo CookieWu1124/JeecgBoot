@@ -47,7 +47,7 @@
     <view class="proposal-body">
       <view
         v-for="item in displayList"
-        :key="item.no"
+        :key="item.id"
         class="prop"
         :style="{ borderLeftColor: item.band }"
         hover-class="prop-press"
@@ -57,7 +57,7 @@
           <text class="prop-title">{{ item.title }}</text>
           <view class="stamp" :class="`stamp-${item.stamp}`">
             <view class="stamp__dot" />
-            <text class="stamp__txt">{{ item.status }}</text>
+            <text class="stamp__txt">{{ item.statusLabel }}</text>
           </view>
         </view>
 
@@ -79,7 +79,11 @@
         </view>
       </view>
 
-      <view v-if="!displayList.length" class="proposal-empty">
+      <view v-if="loading" class="proposal-empty">
+        <text class="proposal-empty__hint">加载中…</text>
+      </view>
+
+      <view v-else-if="!displayList.length" class="proposal-empty">
         <view class="proposal-empty__ic">
           <wd-icon name="list" size="28px" color="#69C0FF" />
         </view>
@@ -99,8 +103,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { FilterTab, ProposalItem, StampTone } from './mock'
-import { MOCK_LIST } from './mock'
+import type { ImprovementDeptOption, ProposalListItem } from '@/api/proposal'
+import { fetchImprovementDepts, fetchProposalList } from '@/api/proposal'
+import { storeToRefs } from 'pinia'
+import { useUserStore } from '@/store'
+import {
+  improvementTypeLabels,
+  statusLabel,
+  statusStamp,
+  type StampTone,
+} from './helpers'
 
 defineOptions({
   name: 'Proposal',
@@ -117,9 +129,25 @@ definePage({
   },
 })
 
+type FilterTab = 'all' | 'draft' | 'doing' | 'done'
+
 interface ProgressInfo {
   label: string
   width: number
+}
+
+interface DisplayItem {
+  id: string
+  no: string
+  title: string
+  dept: string
+  who: string
+  nature: string[]
+  statusLabel: string
+  stamp: StampTone
+  score?: string
+  band: string
+  progress: ProgressInfo | null
 }
 
 const BAND: Record<StampTone, string> = {
@@ -134,14 +162,20 @@ const BAND: Record<StampTone, string> = {
 
 const FILTER_TABS: { key: FilterTab, label: string }[] = [
   { key: 'all', label: '全部' },
-  { key: 'submit', label: '我提交的' },
-  { key: 'join', label: '我参与的' },
-  { key: 'improve', label: '我改善的' },
+  { key: 'draft', label: '草稿' },
+  { key: 'doing', label: '进行中' },
+  { key: 'done', label: '已完成' },
 ]
+
+const userStore = useUserStore()
+const { userInfo } = storeToRefs(userStore)
 
 const keyword = ref('')
 const activeTab = ref<FilterTab>('all')
 const searchFocused = ref(false)
+const loading = ref(false)
+const rawList = ref<ProposalListItem[]>([])
+const deptNameMap = ref<Record<string, string>>({})
 
 const hasFilter = computed(() => activeTab.value !== 'all' || !!keyword.value.trim())
 
@@ -153,27 +187,42 @@ const emptyHint = computed(() => {
   return '发起提案后会显示在这里'
 })
 
-const displayList = computed(() => {
+const displayList = computed<DisplayItem[]>(() => {
   const q = keyword.value.trim().toLowerCase()
-  return MOCK_LIST
+  const who = userInfo.value.nickname || userInfo.value.username || '我'
+  return rawList.value
     .filter((item) => {
-      if (activeTab.value !== 'all' && !item.tabs.includes(activeTab.value))
-        return false
       if (!q)
         return true
-      return item.title.toLowerCase().includes(q) || item.no.includes(q)
+      const no = String(item.proposalNo || '').toLowerCase()
+      const title = String(item.title || '').toLowerCase()
+      return title.includes(q) || no.includes(q)
     })
-    .map(item => ({
-      ...item,
-      band: BAND[item.stamp],
-      progress: toProgress(item.prog),
-    }))
+    .map((item) => {
+      const stamp = statusStamp(item.status)
+      const score = item.scoreTotal != null
+        ? `${item.scoreTotal}${item.scoreGrade ? ` · ${item.scoreGrade}` : ''}`
+        : undefined
+      return {
+        id: item.id,
+        no: item.proposalNo || '—',
+        title: item.title || '未命名提案',
+        dept: deptNameMap.value[item.deptId || ''] || item.deptId || '—',
+        who,
+        nature: improvementTypeLabels(item.improvementTypes),
+        statusLabel: statusLabel(item.status),
+        stamp,
+        score,
+        band: BAND[stamp],
+        progress: toProgress(item.reviewProgress),
+      }
+    })
 })
 
 function toProgress(prog?: string): ProgressInfo | null {
   if (!prog)
     return null
-  const matched = /^(\d+)\/(\d+)$/.exec(prog)
+  const matched = /^(\d+)\s*\/\s*(\d+)$/.exec(prog)
   if (!matched)
     return { label: prog, width: 60 }
   const current = Number(matched[1])
@@ -184,21 +233,65 @@ function toProgress(prog?: string): ProgressInfo | null {
   }
 }
 
+async function loadDepts() {
+  try {
+    const list = await fetchImprovementDepts()
+    const map: Record<string, string> = {}
+    ;(list || []).forEach((d: ImprovementDeptOption) => {
+      if (d.deptId)
+        map[d.deptId] = d.deptName
+    })
+    deptNameMap.value = map
+  }
+  catch (err) {
+    console.error('加载部门失败', err)
+  }
+}
+
+async function loadList() {
+  loading.value = true
+  try {
+    const res = await fetchProposalList({
+      tab: activeTab.value,
+      pageNo: 1,
+      pageSize: 50,
+    })
+    rawList.value = res?.records || []
+  }
+  catch (err) {
+    console.error('加载提案列表失败', err)
+    rawList.value = []
+  }
+  finally {
+    loading.value = false
+  }
+}
+
 function handleTab(key: FilterTab) {
   if (activeTab.value === key)
     return
   activeTab.value = key
   uni.pageScrollTo({ scrollTop: 0, duration: 180 })
+  loadList()
 }
 
 function resetFilter() {
   keyword.value = ''
   activeTab.value = 'all'
+  loadList()
 }
 
-function handleOpen(item: ProposalItem) {
-  uni.navigateTo({ url: `/pages/proposal/detail?no=${item.no}` })
+function handleOpen(item: DisplayItem) {
+  uni.navigateTo({ url: `/pages/proposal/detail?id=${item.id}` })
 }
+
+onShow(() => {
+  loadList()
+})
+
+onLoad(() => {
+  loadDepts()
+})
 </script>
 
 <style lang="scss" scoped>

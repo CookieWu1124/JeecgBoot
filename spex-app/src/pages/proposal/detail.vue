@@ -13,17 +13,21 @@
       </view>
 
       <view class="detail-hero">
-        <text class="detail-no">NO. {{ view.item.no }}</text>
-        <text class="detail-title">{{ view.item.title }}</text>
+        <text class="detail-no">NO. {{ view.no }}</text>
+        <text class="detail-title">{{ view.title }}</text>
         <view class="detail-meta">
           <text class="detail-pill">{{ view.status }}</text>
           <text class="detail-pill">{{ view.nature }}</text>
-          <text class="detail-who">提案人 {{ view.item.who }} · {{ view.item.dept }}</text>
+          <text class="detail-who">提案人 {{ view.who }} · {{ view.dept }}</text>
         </view>
       </view>
     </view>
 
-    <view class="detail-body">
+    <view v-if="loading" class="detail-body">
+      <text class="meta-val">加载中…</text>
+    </view>
+
+    <view v-else class="detail-body">
       <view class="sheet">
         <view class="sheet-hd">
           <view class="sheet-hd__left">
@@ -94,7 +98,16 @@
 </template>
 
 <script lang="ts" setup>
-import { buildDetailView } from './mock'
+import type { ImprovementDeptOption, ProposalDetailResult } from '@/api/proposal'
+import { fetchImprovementDepts, fetchProposalDetail } from '@/api/proposal'
+import { storeToRefs } from 'pinia'
+import { useUserStore } from '@/store'
+import {
+  formatDateTime,
+  formatImprovementTypes,
+  resolveFileUrl,
+  statusLabel,
+} from './helpers'
 
 defineOptions({
   name: 'ProposalDetail',
@@ -111,28 +124,74 @@ definePage({
   },
 })
 
-const proposalNo = ref('')
-const view = computed(() => buildDetailView(proposalNo.value))
+const userStore = useUserStore()
+const { userInfo } = storeToRefs(userStore)
 
-const apply = computed(() => {
-  const pick = (lab: string) => view.value.rows.find(row => row.lab === lab)?.val || ''
-  const deptRaw = pick('改善部门')
-  const matched = deptRaw.match(/^(.*?)（负责人：([^）]*)）$/)
-  const picRow = view.value.rows.find(row => row.kind === 'pics')
+const proposalId = ref('')
+const loading = ref(false)
+const detail = ref<ProposalDetailResult | null>(null)
+const deptMeta = ref<ImprovementDeptOption | null>(null)
+
+const view = computed(() => {
+  const p = detail.value?.proposal
   return {
-    nature: pick('改善性质'),
-    dept: matched?.[1] || deptRaw,
-    leader: matched?.[2] || '',
-    problem: pick('目前状况'),
-    idea: pick('改善意见'),
-    images: picRow?.images || [],
-    time: pick('提交时间'),
+    no: p?.proposalNo || '—',
+    title: p?.title || '未命名提案',
+    status: statusLabel(p?.status),
+    nature: formatImprovementTypes(p?.improvementTypes),
+    who: userInfo.value.nickname || userInfo.value.username || '我',
+    dept: deptMeta.value?.deptName || p?.deptId || '—',
   }
 })
 
-onLoad((query) => {
-  proposalNo.value = String(query?.no || '')
+const apply = computed(() => {
+  const app = detail.value?.application
+  const images = (detail.value?.attachments || [])
+    .map(a => resolveFileUrl(a.fileUrl))
+    .filter(Boolean)
+  return {
+    nature: view.value.nature,
+    dept: view.value.dept,
+    leader: deptMeta.value?.leaderName || '',
+    problem: app?.currentSituation || '—',
+    idea: app?.improvementSuggestion || '—',
+    images,
+    time: formatDateTime(app?.submitTime || detail.value?.proposal?.createTime),
+  }
 })
+
+onLoad(async (query) => {
+  proposalId.value = String(query?.id || '')
+  if (!proposalId.value) {
+    uni.showToast({ title: '缺少提案 ID', icon: 'none' })
+    return
+  }
+  await loadDetail()
+})
+
+async function loadDetail() {
+  loading.value = true
+  try {
+    const res = await fetchProposalDetail(proposalId.value)
+    detail.value = res
+    const deptId = res?.proposal?.deptId
+    if (deptId) {
+      try {
+        const depts = await fetchImprovementDepts()
+        deptMeta.value = (depts || []).find(d => d.deptId === deptId) || null
+      }
+      catch {
+        deptMeta.value = null
+      }
+    }
+  }
+  catch (err) {
+    console.error('加载提案详情失败', err)
+  }
+  finally {
+    loading.value = false
+  }
+}
 
 function handleBack() {
   const pages = getCurrentPages()

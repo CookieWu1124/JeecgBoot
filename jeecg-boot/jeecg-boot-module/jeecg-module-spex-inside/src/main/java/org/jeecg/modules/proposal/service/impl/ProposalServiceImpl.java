@@ -144,15 +144,36 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             throw new JeecgBootBizTipException("提案不存在");
         }
         assertCanView(proposal, loginUser);
+        return buildDetailVo(proposal, false);
+    }
 
+    //update-begin---author:cursor ---date:2026-08-29  for：【提案管理】管理端详情含申请书与留痕-----------
+    @Override
+    public ProposalDetailVo getAdminDetail(String id) {
+        Proposal proposal = getById(id);
+        if (proposal == null) {
+            throw new JeecgBootBizTipException("提案不存在");
+        }
+        return buildDetailVo(proposal, true);
+    }
+
+    private ProposalDetailVo buildDetailVo(Proposal proposal, boolean withStatusLogs) {
+        String id = proposal.getId();
         ProposalDetailVo vo = new ProposalDetailVo();
         vo.setProposal(proposal);
-        vo.setApplication(getApplication(id));
+        vo.setApplication(applicationService.getOne(new LambdaQueryWrapper<ProposalApplication>()
+                .eq(ProposalApplication::getProposalId, id)));
         vo.setAttachments(attachmentService.list(new LambdaQueryWrapper<ProposalAttachment>()
                 .eq(ProposalAttachment::getProposalId, id)
                 .orderByAsc(ProposalAttachment::getSortNo)));
+        if (withStatusLogs) {
+            vo.setStatusLogs(statusLogService.list(new LambdaQueryWrapper<ProposalStatusLog>()
+                    .eq(ProposalStatusLog::getProposalId, id)
+                    .orderByDesc(ProposalStatusLog::getCreateTime)));
+        }
         return vo;
     }
+    //update-end---author:cursor ---date:2026-08-29  for：【提案管理】管理端详情含申请书与留痕-----------
 
     @Override
     public IPage<Proposal> listForUser(String tab, String title, int pageNo, int pageSize, LoginUser loginUser) {

@@ -7,7 +7,7 @@
 
 | 序号 | 文件 | 业务段 | 规划 Phase | 当前整体进度 |
 |------|------|--------|------------|--------------|
-| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟡 进行中 |
+| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟡 发起/查询告一段落；审核流未开始 |
 | 02 | [02_task_assignment_DEV_PROGRESS.md](./02_task_assignment_DEV_PROGRESS.md) | 任务分配 | 3（前半） | ⚪ 未开始 |
 | 03 | [03_plan_DEV_PROGRESS.md](./03_plan_DEV_PROGRESS.md) | 计划书（条件分支） | 3（后半） | ⚪ 未开始 |
 | 04 | [04_report_DEV_PROGRESS.md](./04_report_DEV_PROGRESS.md) | 报告书 + 六维评分 + 签核结案 | 4 | ⚪ 未开始 |
@@ -35,11 +35,11 @@
 | 数据库初始化 | 1 | `proposal_init.sql` @ `inside_dev` | [x] 2026-08-28 |
 | 管理端菜单权限 | 1 | `proposal_menu.sql` + 角色授权 | [x] admin / proposal_admin |
 | 管理端配置（四 Tab） | 1 | 部门负责人 / 委员会（全局跨部门） / 批准人 / 评分维度 | [x] UI 对齐原型；inside_dev 业务配置已维护 |
-| 管理端提案管理 | 1 | 仅查询+详情（发起在小程序）；筛选/列对齐原型 | [x] 2026-08-28 |
+| 管理端提案管理 | 1 | 仅查询+详情（发起在小程序）；列表/详情弹窗对齐原型 | [x] 2026-08-29 |
 | 统计看板 | 5 | KPI、趋势、排行 | [ ] |
-| HR 导入 / 组织树 | 1 | 复用 Jeecg `sys_user` / `sys_depart`；样例种子见 `sql/proposal_spex_user_seed.sql` | [~] 全量导入未做；斯派科 12 人样例 SQL 已出 |
+| HR 导入 / 组织树 | 1 | 复用 Jeecg `sys_user` / `sys_depart`；样例种子见 `sql/proposal_spex_user_seed.sql` | [~] 全量导入未做；斯派科样例 + 电气组别补种 SQL 已出 |
 | 小程序工程骨架 | 1 | **`spex-app/`**（unibest） | [x] 2026-08-29 迁入；旧 `jeecg-uniapp/` 已删除 |
-| 小程序提案业务页 | 1~2 | `spex-app/src/pages/proposal/`：UI 齐，业务仍 mock；API 骨架 `src/api/proposal.ts` | [~] 待接真实接口 |
+| 小程序提案业务页 | 1~2 | 发起/列表/详情已接真实接口；委员审核/批准仍 mock | [~] 申请发起告一段落 |
 | 联调配置名册种子 | 1 | `proposal_config_seed.sql` | [x] 已与 inside_dev 管理端实配对齐 |
 
 ## 更新约定
@@ -58,4 +58,6 @@
 | **`spex-app/` 迁入 monorepo**（环境指向本地 JeecgBoot） | 已完成 | 2026-08-29 |
 | **移除 `jeecg-uniapp/`** | 已完成 | 2026-08-29 |
 | 斯派科样例用户种子 SQL | 已提供（待手工执行） | 2026-08-28 |
-| 管理端提案管理/配置 UI 对齐原型 | 已完成（业务数据仍待配） | 2026-08-28 |
+| 管理端提案管理/配置 UI 对齐原型 | 已完成 | 2026-08-28 |
+| 提案申请发起/查询联调（小程序+管理端详情） | 已完成，申请段告一段落 | 2026-08-29 |
+| 菜单 component 自愈（防 `mes/proposal/**` 空白页） | 已写入 `proposal_menu.sql` + DDL 规则 | 2026-08-29 |

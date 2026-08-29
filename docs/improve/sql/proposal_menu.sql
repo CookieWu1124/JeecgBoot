@@ -4,9 +4,10 @@
 -- 说明：
 --   1. 页面组件位于 jeecgboot-vue3/src/views/proposal/
 --   2. sys_permission.id 为 varchar(32)，所有 ID 必须 ≤32 字符
---   3. 使用固定 ID + NOT EXISTS，可重复执行（幂等）
---   4. 执行后请在「角色管理」为 admin / proposal_admin 等角色授权菜单
---   5. 若菜单不显示，请退出重新登录或刷新权限缓存
+--   3. 使用固定 ID + NOT EXISTS 插入；文末 UPDATE 纠偏已存在行（可重复执行）
+--   4. component 必须对应 views/ 真实路径（proposal/...），禁止写成 mes/proposal/...
+--   5. 执行后请在「角色管理」为 admin / proposal_admin 等角色授权菜单
+--   6. 若菜单不显示或空白页，请退出重新登录或刷新权限缓存
 -- =============================================================================
 
 SET NAMES utf8mb4;
@@ -123,3 +124,20 @@ FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3001menu000000000000001';
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3002manage00000000000001';
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3003config000000000000001';
+
+-- -----------------------------------------------------------------------------
+-- 自愈：INSERT 幂等不会覆盖已存在行；若曾在「菜单管理」误改成 mes/proposal/**，
+-- 页面会空白提示「查看组件引用是否正确」。固定 id 强制纠回权威路径。
+-- component 必须对应 jeecgboot-vue3/src/views/ 下真实文件（无 mes/ 前缀）。
+-- -----------------------------------------------------------------------------
+UPDATE `sys_permission`
+SET `url` = '/proposal', `component` = 'layouts/RouteView', `name` = '提案改善'
+WHERE `id` = 'pr0p0sa3001menu000000000000001';
+
+UPDATE `sys_permission`
+SET `url` = '/proposal/manage', `component` = 'proposal/manage/index', `name` = '提案管理'
+WHERE `id` = 'pr0p0sa3002manage00000000000001';
+
+UPDATE `sys_permission`
+SET `url` = '/proposal/config', `component` = 'proposal/config/index', `name` = '提案配置'
+WHERE `id` = 'pr0p0sa3003config000000000000001';

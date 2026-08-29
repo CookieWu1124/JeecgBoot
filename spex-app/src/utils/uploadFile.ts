@@ -16,14 +16,11 @@
 
 /**
  * 上传文件的 URL 配置（对接 JeecgBoot）
- * H5 开发开代理时，使用相对路径走 /api 前缀；小程序用完整 baseUrl。
+ * 使用相对路径 `/sys/...`，由 http 拦截器统一加代理前缀或 baseUrl，
+ * 避免 H5 下再次拼接 `/api` 导致变成 `/api/api/sys/...`（后端报「路径不存在」）。
  */
 function resolveUploadUrl(path: string) {
-  // #ifdef H5
-  if (JSON.parse(import.meta.env.VITE_APP_PROXY_ENABLE || 'false'))
-    return `${import.meta.env.VITE_APP_PROXY_PREFIX || ''}${path}`
-  // #endif
-  return `${import.meta.env.VITE_SERVER_BASEURL}${path}`
+  return path
 }
 
 export const uploadFileUrl = {

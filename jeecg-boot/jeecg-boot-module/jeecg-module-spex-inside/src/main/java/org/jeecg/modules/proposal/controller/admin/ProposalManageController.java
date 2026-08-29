@@ -13,6 +13,7 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.service.IProposalService;
+import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -73,11 +74,9 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
 
     @Operation(summary = "查询详情")
     @GetMapping("/queryById")
-    public Result<Proposal> queryById(@RequestParam(name = "id") String id) {
-        Proposal proposal = service.getById(id);
-        if (proposal == null) {
-            return Result.error("未找到对应数据");
-        }
-        return Result.OK(proposal);
+    public Result<ProposalDetailVo> queryById(@RequestParam(name = "id") String id) {
+        //update-begin---author:cursor ---date:2026-08-29  for：【提案管理】详情对齐原型（申请书/留痕）-----------
+        return Result.OK(service.getAdminDetail(id));
+        //update-end---author:cursor ---date:2026-08-29  for：【提案管理】详情对齐原型（申请书/留痕）-----------
     }
 }

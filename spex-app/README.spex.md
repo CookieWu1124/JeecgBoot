@@ -33,15 +33,16 @@ pnpm run dev
 
 「体验登录」仍为前端假 Token，**不会打到后端**，仅用于看 UI。
 
-## 业务页状态（迁入后）
+## 业务页状态
 
 | 模块 | 状态 |
 |------|------|
-| 登录 | 已对接 Jeecg 真实接口 |
-| 发起 / 列表 / 详情 / 审核 / 批准 / 待办 / 统计 | **仍为 mock**，API 骨架见 `src/api/proposal.ts` |
-| 上传 URL | 已指向 `/sys/common/upload`（页面尚未改用） |
+| 登录 | 已对接 Jeecg（密码 AES-CBC，与管理端一致） |
+| 发起提案 | 已对接 `create` + `submit`；部门元数据 `/proposal/meta/improvementDepts`；图片 `/sys/common/upload` |
+| 提案列表 / 详情 | 已对接 `/proposal/list`、`/proposal/{id}` |
+| 委员审核 / 批准 / 待办 / 统计 | 仍为 mock（等 Phase 2 后端） |
 
-确认迁入与登录无误后，再通知接「登录 → 发起 → 列表/详情」真实联调。
+「体验登录」仍为前端假 Token，**不会打到后端**，仅用于看 UI。联调请用工号真实登录。
 
 ## 保留项（暂不砍）
 

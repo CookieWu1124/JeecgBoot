@@ -1,15 +1,13 @@
 /**
- * 提案业务 API（骨架）
- *
- * 当前页面仍使用 mock；待确认迁入无误后，再替换各页 mock 调用。
- * 路径对齐后端：`ProposalController` / Phase 2 规划接口。
+ * 提案业务 API
+ * 路径对齐后端 ProposalController / ProposalMetaController
  */
 import { http } from '@/http/http'
 
 /** 创建/更新草稿请求（对齐 ProposalCreateRequest） */
 export interface ProposalCreatePayload {
   title: string
-  /** 改善性质，多选用逗号拼接或后端约定格式 */
+  /** 改善性质：JSON 数组字符串，如 ["SAFETY","QUALITY"] */
   improvementTypes: string
   deptId: string
   teamType?: string
@@ -25,15 +23,22 @@ export interface ProposalAttachmentPayload {
   fileSize?: number
 }
 
+export interface ImprovementDeptOption {
+  deptId: string
+  deptName: string
+  leaderUserId?: string
+  leaderName?: string
+  leaderConfigured?: boolean
+}
+
 export interface ProposalListQuery {
-  /** mine | all | ... 以后端为准 */
+  /** all | mine | draft | doing | done */
   tab?: string
   title?: string
   pageNo?: number
   pageSize?: number
 }
 
-/** 列表项（字段以后端 Proposal 实体为准，前端可再映射） */
 export interface ProposalListItem {
   id: string
   proposalNo?: string
@@ -41,6 +46,7 @@ export interface ProposalListItem {
   status?: string
   improvementTypes?: string
   deptId?: string
+  deptLeaderId?: string
   proposerId?: string
   reviewProgress?: string
   scoreProgress?: string
@@ -49,6 +55,7 @@ export interface ProposalListItem {
   planRequired?: number
   awardAmount?: number
   createTime?: string
+  updateTime?: string
   [key: string]: any
 }
 
@@ -60,10 +67,36 @@ export interface ProposalPageResult {
   pages?: number
 }
 
+export interface ProposalApplication {
+  id?: string
+  proposalId?: string
+  currentSituation?: string
+  improvementSuggestion?: string
+  email?: string
+  submitTime?: string
+  [key: string]: any
+}
+
+export interface ProposalAttachment {
+  id?: string
+  proposalId?: string
+  fileName?: string
+  fileUrl?: string
+  fileSize?: number
+  sortNo?: number
+  [key: string]: any
+}
+
 export interface ProposalDetailResult {
   proposal: ProposalListItem
-  application?: Record<string, any>
-  attachments?: Array<Record<string, any>>
+  application?: ProposalApplication
+  attachments?: ProposalAttachment[]
+}
+
+/** ---------- 元数据 ---------- */
+
+export function fetchImprovementDepts() {
+  return http.get<ImprovementDeptOption[]>('/proposal/meta/improvementDepts')
 }
 
 /** ---------- Phase 1：已实现 ---------- */
@@ -89,7 +122,7 @@ export function fetchProposalList(query: ProposalListQuery = {}) {
     tab: query.tab ?? 'mine',
     title: query.title,
     pageNo: query.pageNo ?? 1,
-    pageSize: query.pageSize ?? 10,
+    pageSize: query.pageSize ?? 20,
   })
 }
 
