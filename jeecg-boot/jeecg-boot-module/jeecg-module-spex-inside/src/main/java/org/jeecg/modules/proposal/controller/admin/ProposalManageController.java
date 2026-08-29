@@ -18,15 +18,15 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * ??? - ???????
+ * 管理端 - 提案管理控制器
  */
 @Slf4j
-@Tag(name = "???-????")
+@Tag(name = "管理端-提案管理")
 @RestController
 @RequestMapping("/proposal/admin/manage")
 public class ProposalManageController extends JeecgController<Proposal, IProposalService> {
 
-    @Operation(summary = "??????")
+    @Operation(summary = "分页列表查询")
     @GetMapping("/list")
     public Result<IPage<Proposal>> list(Proposal proposal,
                                         @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
@@ -47,36 +47,36 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
         return Result.OK(pageList);
     }
 
-    @AutoLog(value = "???-??-??")
-    @Operation(summary = "????")
+    @AutoLog(value = "管理端-添加-提案")
+    @Operation(summary = "添加提案")
     @PostMapping("/add")
     public Result<String> add(@RequestBody Proposal proposal) {
         service.save(proposal);
-        return Result.OK("????");
+        return Result.OK("添加成功");
     }
 
-    @AutoLog(value = "???-??-??")
-    @Operation(summary = "????")
+    @AutoLog(value = "管理端-编辑-提案")
+    @Operation(summary = "编辑提案")
     @PutMapping("/edit")
     public Result<String> edit(@RequestBody Proposal proposal) {
         service.updateById(proposal);
-        return Result.OK("????");
+        return Result.OK("编辑成功");
     }
 
-    @AutoLog(value = "???-??-??")
-    @Operation(summary = "????")
+    @AutoLog(value = "管理端-删除-提案")
+    @Operation(summary = "删除提案")
     @DeleteMapping("/delete")
     public Result<String> delete(@RequestParam(name = "id") String id) {
         service.removeById(id);
-        return Result.OK("????");
+        return Result.OK("删除成功");
     }
 
-    @Operation(summary = "????")
+    @Operation(summary = "查询详情")
     @GetMapping("/queryById")
     public Result<Proposal> queryById(@RequestParam(name = "id") String id) {
         Proposal proposal = service.getById(id);
         if (proposal == null) {
-            return Result.error("???????");
+            return Result.error("未找到对应数据");
         }
         return Result.OK(proposal);
     }
