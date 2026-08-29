@@ -193,7 +193,13 @@
 </template>
 
 <script lang="ts" setup>
-import { buildDetailView } from './mock'
+import type { ImprovementDeptOption, ProposalDetailResult } from '@/api/proposal'
+import { fetchImprovementDepts, fetchProposalDetail, submitCommitteeReview } from '@/api/proposal'
+import {
+  formatImprovementTypes,
+  resolveFileUrl,
+  statusLabel,
+} from './helpers'
 
 defineOptions({
   name: 'ProposalReview',
@@ -224,43 +230,84 @@ const PLAN_OPTS = [
 type Verdict = typeof VERDICT_OPTS[number]['value']
 type NeedPlan = typeof PLAN_OPTS[number]['value']
 
-const proposalNo = ref('')
+const proposalId = ref('')
+const loading = ref(false)
+const detail = ref<ProposalDetailResult | null>(null)
+const deptMeta = ref<ImprovementDeptOption | null>(null)
 const focusField = ref('')
 const submitting = ref(false)
-let leaveTimer: ReturnType<typeof setTimeout> | undefined
 
 const form = reactive({
   verdict: 'adopt' as Verdict,
   needPlan: 'yes' as NeedPlan,
-  reward: '300',
+  reward: '',
   comment: '',
 })
 
 const isAdopt = computed(() => form.verdict === 'adopt')
-const view = computed(() => buildDetailView(proposalNo.value))
-const apply = computed(() => {
-  const pick = (lab: string) => view.value.rows.find(row => row.lab === lab)?.val || ''
-  const deptRaw = pick('改善部门')
-  const matched = deptRaw.match(/^(.*?)（负责人：([^）]*)）$/)
-  const picRow = view.value.rows.find(row => row.kind === 'pics')
+
+const view = computed(() => {
+  const p = detail.value?.proposal
   return {
-    nature: pick('改善性质') || view.value.nature,
-    dept: matched?.[1] || deptRaw || view.value.item.dept,
-    leader: matched?.[2] || '',
-    problem: pick('目前状况'),
-    idea: pick('改善意见'),
-    images: picRow?.images || [],
+    item: {
+      title: p?.title || '未命名提案',
+      no: p?.proposalNo || '—',
+      who: '提案人',
+    },
   }
 })
 
-onLoad((query) => {
-  proposalNo.value = String(query?.no || '')
+const apply = computed(() => {
+  const p = detail.value?.proposal
+  const app = detail.value?.application
+  const images = (detail.value?.attachments || [])
+    .map(a => resolveFileUrl(a.fileUrl))
+    .filter(Boolean)
+  return {
+    nature: formatImprovementTypes(p?.improvementTypes),
+    dept: deptMeta.value?.deptName || p?.deptId || '—',
+    leader: deptMeta.value?.leaderName || '',
+    problem: app?.currentSituation || '—',
+    idea: app?.improvementSuggestion || '—',
+    images,
+    status: statusLabel(p?.status),
+    progress: p?.reviewProgress || '',
+  }
 })
 
-onUnload(() => {
-  if (leaveTimer)
-    clearTimeout(leaveTimer)
+onLoad(async (query) => {
+  proposalId.value = String(query?.id || '')
+  if (!proposalId.value) {
+    uni.showToast({ title: '缺少提案 ID', icon: 'none' })
+    return
+  }
+  await loadDetail()
 })
+
+async function loadDetail() {
+  loading.value = true
+  try {
+    const res = await fetchProposalDetail(proposalId.value)
+    detail.value = res
+    const deptId = res?.proposal?.deptId
+    if (deptId) {
+      try {
+        const depts = await fetchImprovementDepts()
+        deptMeta.value = (depts || []).find(d => d.deptId === deptId) || null
+      }
+      catch {
+        deptMeta.value = null
+      }
+    }
+  }
+  catch (err) {
+    console.error('加载审核详情失败', err)
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+  finally {
+    loading.value = false
+  }
+}
 
 function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
@@ -276,7 +323,9 @@ function handleBack() {
 }
 
 function openDetail() {
-  uni.navigateTo({ url: `/pages/proposal/detail?no=${view.value.item.no}` })
+  if (!proposalId.value)
+    return
+  uni.navigateTo({ url: `/pages/proposal/detail?id=${proposalId.value}` })
 }
 
 function toPreviewUrl(src: string) {
@@ -302,20 +351,47 @@ function previewPics(index: number) {
 function validate(): string {
   if (!isAdopt.value && !form.comment.trim())
     return '请填写不采用原因'
+  if (isAdopt.value && !form.needPlan)
+    return '请选择是否形成改善计划书'
   if (isAdopt.value && form.reward && Number.isNaN(Number(form.reward)))
     return '请输入有效的提案奖额度'
   return ''
 }
 
-function commit() {
-  if (submitting.value)
+async function commit() {
+  if (submitting.value || !proposalId.value)
     return
   submitting.value = true
-  toast('意见已提交（2/5 位委员已完成）')
-  leaveTimer = setTimeout(() => {
+  try {
+    const conclusion = isAdopt.value ? 'ADOPT' : 'REJECT'
+    await submitCommitteeReview(proposalId.value, {
+      conclusion,
+      planRequired: isAdopt.value ? (form.needPlan === 'yes' ? 1 : 0) : undefined,
+      awardSuggestion: isAdopt.value && form.reward.trim()
+        ? Number(form.reward)
+        : null,
+      comment: form.comment.trim() || undefined,
+    })
+    let progHint = ''
+    try {
+      const latest = await fetchProposalDetail(proposalId.value)
+      progHint = latest?.proposal?.reviewProgress
+        ? `（进度 ${latest.proposal.reviewProgress}）`
+        : ''
+    }
+    catch {
+      // ignore
+    }
+    toast(`意见已提交${progHint}`)
+    setTimeout(() => handleBack(), 700)
+  }
+  catch (err: any) {
+    console.error('提交审核意见失败', err)
+    toast(err?.message || err?.data?.message || '提交失败')
+  }
+  finally {
     submitting.value = false
-    handleBack()
-  }, 900)
+  }
 }
 
 function handleSubmit() {

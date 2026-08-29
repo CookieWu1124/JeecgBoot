@@ -123,7 +123,7 @@
                 :data-source="detail.reviews"
                 :pagination="false"
                 row-key="id"
-                :locale="{ emptyText: '暂无审核记录（委员审核在小程序完成）' }"
+                :locale="{ emptyText: '暂无委员审核快照' }"
               />
             </div>
           </div>

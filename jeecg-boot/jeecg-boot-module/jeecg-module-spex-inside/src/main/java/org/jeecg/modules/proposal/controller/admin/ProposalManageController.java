@@ -35,13 +35,13 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
                                         @RequestParam(name = "proposerName", required = false) String proposerName,
                                         HttpServletRequest req) {
         QueryWrapper<Proposal> queryWrapper = QueryGenerator.initQueryWrapper(proposal, req.getParameterMap());
-        //update-begin---author:cursor ---date:2026-08-28  for：【提案管理】按提案人姓名模糊检索-----------
+        // 【提案管理】按提案人姓名模糊检索
         if (oConvertUtils.isNotEmpty(proposerName)) {
             queryWrapper.apply(
                     "proposer_id in (select id from sys_user where realname like concat('%',{0},'%'))",
                     proposerName.trim());
         }
-        //update-end---author:cursor ---date:2026-08-28  for：【提案管理】按提案人姓名模糊检索-----------
+
         queryWrapper.orderByDesc("create_time");
         Page<Proposal> page = new Page<>(pageNo, pageSize);
         IPage<Proposal> pageList = service.page(page, queryWrapper);
@@ -75,8 +75,8 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
     @Operation(summary = "查询详情")
     @GetMapping("/queryById")
     public Result<ProposalDetailVo> queryById(@RequestParam(name = "id") String id) {
-        //update-begin---author:cursor ---date:2026-08-29  for：【提案管理】详情对齐原型（申请书/留痕）-----------
+        // 【提案管理】详情对齐原型（申请书/留痕）
         return Result.OK(service.getAdminDetail(id));
-        //update-end---author:cursor ---date:2026-08-29  for：【提案管理】详情对齐原型（申请书/留痕）-----------
+
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.proposal.entity.Proposal;
+import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.jeecg.modules.proposal.vo.app.ProposalHomeVo;
@@ -26,4 +27,12 @@ public interface IProposalService extends IService<Proposal> {
     IPage<Proposal> listForUser(String tab, String title, int pageNo, int pageSize, LoginUser loginUser);
 
     ProposalHomeVo buildHome(LoginUser loginUser);
+
+    // 【Phase2】委员并行审核
+    /** 当前委员待审列表（PENDING_REVIEW 且本人未提交） */
+    IPage<Proposal> listCommitteePending(int pageNo, int pageSize, LoginUser loginUser);
+
+    /** 委员提交审核意见；全部完成后进入 PENDING_APPROVAL */
+    void submitCommitteeReview(String proposalId, CommitteeReviewRequest request, LoginUser loginUser);
+
 }

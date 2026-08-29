@@ -14,6 +14,7 @@
 - [proposal_application](#proposal_application) — 提案申请书
 - [proposal_attachment](#proposal_attachment) — 提案附件
 - [proposal_status_log](#proposal_status_log) — 提案状态变更日志
+- [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
 
 ---
 
@@ -238,3 +239,28 @@
 
 - **主键**：(`id`)
 - **普通索引** `idx_proposal_status_log_proposal`：(`proposal_id`)
+
+---
+
+## proposal_committee_review
+
+**表说明**：委员审核记录（申请提交时按在任名册快照；未审时 `conclusion`/`review_time` 为空）
+
+### 业务字段
+
+| 字段名 | 数据类型 | 允许空 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | varchar(36) | 否 | 主键 |
+| `proposal_id` | varchar(36) | 否 | 提案ID |
+| `reviewer_id` | varchar(36) | 否 | 委员 sys_user.id（快照） |
+| `conclusion` | varchar(16) | 是 | ADOPT / REJECT；未审为空 |
+| `plan_required` | tinyint(1) | 是 | 是否形成计划书建议（参考） |
+| `award_suggestion` | decimal(10,2) | 是 | 建议奖励金额 |
+| `comment` | text | 是 | 综合评价 |
+| `review_time` | datetime | 是 | 提交审核时间；未审为空 |
+
+### 索引与约束
+
+- **主键**：(`id`)
+- **唯一索引** `uk_proposal_committee_review`：(`proposal_id`, `reviewer_id`, `tenant_id`)
+- **普通索引** `idx_proposal_committee_review_reviewer`：(`reviewer_id`)

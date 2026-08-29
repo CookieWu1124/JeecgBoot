@@ -12,6 +12,7 @@ import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.mapper.ProposalMapper;
 import org.jeecg.modules.proposal.service.*;
 import org.jeecg.modules.proposal.util.ProposalAuditHelper;
+import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.jeecg.modules.proposal.vo.app.ProposalHomeVo;
@@ -46,6 +47,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private IProposalDeptLeaderService deptLeaderService;
     @Autowired
     private IProposalCommitteeMemberService committeeMemberService;
+    @Autowired
+    private IProposalCommitteeReviewService committeeReviewService;
+
+    private static final String CONCLUSION_ADOPT = "ADOPT";
+    private static final String CONCLUSION_REJECT = "REJECT";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +119,9 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         ProposalAuditHelper.fillOnUpdate(loginUser, application);
         applicationService.updateById(application);
 
+        // 【Phase2】提交时快照委员待办
+        createReviewSnapshot(proposal, loginUser);
+
         appendStatusLog(id, fromStatus, proposal.getStatus(), "SUBMIT", loginUser, "提交申请");
     }
 
@@ -134,6 +143,10 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         proposal.setStatus(ProposalStatusEnum.WITHDRAWN.getCode());
         ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
         updateById(proposal);
+        // 【Phase2】撤回清委员审核快照
+        committeeReviewService.remove(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, id));
+
         appendStatusLog(id, fromStatus, proposal.getStatus(), "WITHDRAW", loginUser, "撤回申请");
     }
 
@@ -147,7 +160,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         return buildDetailVo(proposal, false);
     }
 
-    //update-begin---author:cursor ---date:2026-08-29  for：【提案管理】管理端详情含申请书与留痕-----------
+    // 【提案管理】管理端详情含申请书与留痕
     @Override
     public ProposalDetailVo getAdminDetail(String id) {
         Proposal proposal = getById(id);
@@ -159,6 +172,10 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
 
     private ProposalDetailVo buildDetailVo(Proposal proposal, boolean withStatusLogs) {
         String id = proposal.getId();
+        // 在途单若缺快照则补种，便于详情/管理端展示
+        if (ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
+            ensureReviewSnapshot(proposal, null);
+        }
         ProposalDetailVo vo = new ProposalDetailVo();
         vo.setProposal(proposal);
         vo.setApplication(applicationService.getOne(new LambdaQueryWrapper<ProposalApplication>()
@@ -171,9 +188,92 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                     .eq(ProposalStatusLog::getProposalId, id)
                     .orderByDesc(ProposalStatusLog::getCreateTime)));
         }
+        vo.setCommitteeReviews(committeeReviewService.list(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, id)
+                .orderByAsc(ProposalCommitteeReview::getCreateTime)));
         return vo;
     }
-    //update-end---author:cursor ---date:2026-08-29  for：【提案管理】管理端详情含申请书与留痕-----------
+
+    // 【Phase2】委员待审列表与提交意见
+    @Override
+    public IPage<Proposal> listCommitteePending(int pageNo, int pageSize, LoginUser loginUser) {
+        ensurePendingSnapshots();
+        List<ProposalCommitteeReview> myPending = committeeReviewService.list(
+                new LambdaQueryWrapper<ProposalCommitteeReview>()
+                        .eq(ProposalCommitteeReview::getReviewerId, loginUser.getId())
+                        .isNull(ProposalCommitteeReview::getConclusion));
+        if (myPending.isEmpty()) {
+            return new Page<>(pageNo, pageSize);
+        }
+        List<String> proposalIds = myPending.stream()
+                .map(ProposalCommitteeReview::getProposalId)
+                .distinct()
+                .collect(Collectors.toList());
+        LambdaQueryWrapper<Proposal> qw = new LambdaQueryWrapper<>();
+        qw.in(Proposal::getId, proposalIds)
+                .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode())
+                .orderByDesc(Proposal::getCreateTime);
+        return page(new Page<>(pageNo, pageSize), qw);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void submitCommitteeReview(String proposalId, CommitteeReviewRequest request, LoginUser loginUser) {
+        if (request == null || oConvertUtils.isEmpty(request.getConclusion())) {
+            throw new JeecgBootBizTipException("请选择审核结论");
+        }
+        String conclusion = request.getConclusion().trim().toUpperCase();
+        if (!CONCLUSION_ADOPT.equals(conclusion) && !CONCLUSION_REJECT.equals(conclusion)) {
+            throw new JeecgBootBizTipException("审核结论无效");
+        }
+
+        Proposal proposal = getById(proposalId);
+        if (proposal == null) {
+            throw new JeecgBootBizTipException("提案不存在");
+        }
+        if (!ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
+            throw new JeecgBootBizTipException("仅待审核状态可提交委员意见");
+        }
+
+        ensureReviewSnapshot(proposal, loginUser);
+
+        ProposalCommitteeReview row = committeeReviewService.getOne(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, proposalId)
+                .eq(ProposalCommitteeReview::getReviewerId, loginUser.getId()));
+        if (row == null) {
+            throw new JeecgBootBizTipException("您不在本提案的审核名册中");
+        }
+        if (oConvertUtils.isNotEmpty(row.getConclusion())) {
+            throw new JeecgBootBizTipException("您已提交过审核意见，不可修改");
+        }
+
+        if (CONCLUSION_ADOPT.equals(conclusion)) {
+            if (request.getPlanRequired() == null) {
+                throw new JeecgBootBizTipException("请选择是否形成改善计划书");
+            }
+            if (request.getPlanRequired() != 0 && request.getPlanRequired() != 1) {
+                throw new JeecgBootBizTipException("计划书建议取值无效");
+            }
+            row.setPlanRequired(request.getPlanRequired());
+            row.setAwardSuggestion(request.getAwardSuggestion());
+            row.setComment(trimToNull(request.getComment()));
+        } else {
+            String comment = trimToNull(request.getComment());
+            if (oConvertUtils.isEmpty(comment)) {
+                throw new JeecgBootBizTipException("不采用时请填写综合评价");
+            }
+            row.setPlanRequired(null);
+            row.setAwardSuggestion(null);
+            row.setComment(comment);
+        }
+
+        row.setConclusion(conclusion);
+        row.setReviewTime(new Date());
+        ProposalAuditHelper.fillOnUpdate(loginUser, row);
+        committeeReviewService.updateById(row);
+
+        refreshReviewProgress(proposal, loginUser);
+    }
 
     @Override
     public IPage<Proposal> listForUser(String tab, String title, int pageNo, int pageSize, LoginUser loginUser) {
@@ -314,7 +414,98 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (loginUser.getId().equals(proposal.getImplementLeaderId())) {
             return;
         }
+        // 【Phase2】快照委员可查看详情
+        long asReviewer = committeeReviewService.count(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, proposal.getId())
+                .eq(ProposalCommitteeReview::getReviewerId, loginUser.getId()));
+        if (asReviewer > 0) {
+            return;
+        }
+        // 尚无快照时：当前在任委员也可看（便于补种前打开）
+        if (ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
+            long onRoster = committeeMemberService.count(new LambdaQueryWrapper<ProposalCommitteeMember>()
+                    .eq(ProposalCommitteeMember::getUserId, loginUser.getId())
+                    .eq(ProposalCommitteeMember::getMemberStatus, "active"));
+            if (onRoster > 0) {
+                return;
+            }
+        }
+
         throw new JeecgBootBizTipException("无权查看该提案");
+    }
+
+    // 【Phase2】委员审核快照与进度汇总
+    private void createReviewSnapshot(Proposal proposal, LoginUser loginUser) {
+        List<ProposalCommitteeMember> members = committeeMemberService.list(
+                new LambdaQueryWrapper<ProposalCommitteeMember>()
+                        .eq(ProposalCommitteeMember::getMemberStatus, "active")
+                        .orderByAsc(ProposalCommitteeMember::getSortNo)
+                        .orderByAsc(ProposalCommitteeMember::getSeatNo));
+        if (members.isEmpty()) {
+            throw new JeecgBootBizTipException("委员会名册为空，无法提交");
+        }
+        for (ProposalCommitteeMember member : members) {
+            ProposalCommitteeReview row = new ProposalCommitteeReview();
+            row.setProposalId(proposal.getId());
+            row.setReviewerId(member.getUserId());
+            if (loginUser != null) {
+                ProposalAuditHelper.fillOnCreate(loginUser, row);
+            } else {
+                row.setTenantId(oConvertUtils.isEmpty(proposal.getTenantId()) ? "" : proposal.getTenantId());
+                row.setActive("Y");
+                row.setCreateBy("system");
+                row.setUpdateBy("system");
+            }
+            if (oConvertUtils.isEmpty(row.getTenantId()) && oConvertUtils.isNotEmpty(proposal.getTenantId())) {
+                row.setTenantId(proposal.getTenantId());
+            }
+            committeeReviewService.save(row);
+        }
+    }
+
+    /** 若 PENDING_REVIEW 且无审核行，按当前在任名册补种 */
+    private void ensureReviewSnapshot(Proposal proposal, LoginUser loginUser) {
+        if (proposal == null || !ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
+            return;
+        }
+        long exists = committeeReviewService.count(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, proposal.getId()));
+        if (exists > 0) {
+            return;
+        }
+        createReviewSnapshot(proposal, loginUser);
+        long total = committeeReviewService.count(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getProposalId, proposal.getId()));
+        proposal.setReviewProgress("0/" + total);
+        updateById(proposal);
+    }
+
+    private void ensurePendingSnapshots() {
+        List<Proposal> pending = list(new LambdaQueryWrapper<Proposal>()
+                .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode()));
+        for (Proposal p : pending) {
+            ensureReviewSnapshot(p, null);
+        }
+    }
+
+    private void refreshReviewProgress(Proposal proposal, LoginUser loginUser) {
+        List<ProposalCommitteeReview> rows = committeeReviewService.list(
+                new LambdaQueryWrapper<ProposalCommitteeReview>()
+                        .eq(ProposalCommitteeReview::getProposalId, proposal.getId()));
+        int total = rows.size();
+        int done = (int) rows.stream().filter(r -> oConvertUtils.isNotEmpty(r.getConclusion())).count();
+        proposal.setReviewProgress(done + "/" + total);
+        ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
+
+        if (total > 0 && done >= total) {
+            String fromStatus = proposal.getStatus();
+            proposal.setStatus(ProposalStatusEnum.PENDING_APPROVAL.getCode());
+            updateById(proposal);
+            appendStatusLog(proposal.getId(), fromStatus, proposal.getStatus(),
+                    "COMMITTEE_DONE", loginUser, "委员审核全部完成");
+        } else {
+            updateById(proposal);
+        }
     }
 
     private void applyListTab(LambdaQueryWrapper<Proposal> qw, String tab) {

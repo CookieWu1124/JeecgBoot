@@ -10,6 +10,7 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.service.IProposalService;
+import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +75,23 @@ public class ProposalController {
     @GetMapping("/{id}")
     public Result<ProposalDetailVo> detail(@PathVariable String id) {
         return Result.OK(proposalService.getDetail(id, currentUser()));
+    }
+
+    // 【Phase2】委员待审/提交意见
+    @Operation(summary = "委员待审列表")
+    @GetMapping("/review/committee/pending")
+    public Result<IPage<Proposal>> committeePending(@RequestParam(defaultValue = "1") Integer pageNo,
+                                                    @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.OK(proposalService.listCommitteePending(pageNo, pageSize, currentUser()));
+    }
+
+    @AutoLog(value = "提案-委员提交审核意见")
+    @Operation(summary = "委员提交审核意见")
+    @PostMapping("/review/committee/{proposalId}")
+    public Result<String> submitCommitteeReview(@PathVariable String proposalId,
+                                                @RequestBody CommitteeReviewRequest request) {
+        proposalService.submitCommitteeReview(proposalId, request, currentUser());
+        return Result.OK("审核意见已提交");
     }
 
     private LoginUser currentUser() {

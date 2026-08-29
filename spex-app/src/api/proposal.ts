@@ -130,15 +130,27 @@ export function fetchProposalDetail(id: string) {
   return http.get<ProposalDetailResult>(`/proposal/${id}`)
 }
 
-/** ---------- Phase 2：待后端实现 ---------- */
+/** ---------- Phase 2：委员审核 ---------- */
+
+export interface CommitteeReviewPayload {
+  conclusion: 'ADOPT' | 'REJECT'
+  planRequired?: number
+  awardSuggestion?: number | null
+  comment?: string
+}
 
 export function fetchCommitteePending(query?: { pageNo?: number, pageSize?: number }) {
-  return http.get<ProposalPageResult>('/proposal/review/committee/pending', query)
+  return http.get<ProposalPageResult>('/proposal/review/committee/pending', {
+    pageNo: query?.pageNo ?? 1,
+    pageSize: query?.pageSize ?? 20,
+  })
 }
 
-export function submitCommitteeReview(proposalId: string, data: Record<string, any>) {
+export function submitCommitteeReview(proposalId: string, data: CommitteeReviewPayload) {
   return http.post<string>(`/proposal/review/committee/${proposalId}`, data)
 }
+
+/** ---------- Phase 2 后续：批准人（尚未实现） ---------- */
 
 export function fetchApprovalPending(query?: { pageNo?: number, pageSize?: number }) {
   return http.get<ProposalPageResult>('/proposal/approval/pending', query)

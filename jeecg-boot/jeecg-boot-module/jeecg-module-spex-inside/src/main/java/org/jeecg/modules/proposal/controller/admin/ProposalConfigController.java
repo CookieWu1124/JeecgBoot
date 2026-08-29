@@ -50,7 +50,7 @@ public class ProposalConfigController {
         return Result.OK(deptLeaderService.page(new Page<>(pageNo, pageSize), qw));
     }
 
-    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】部门负责人保存强制单部门+审计字段-----------
+    // 【提案改善】部门负责人保存强制单部门+审计字段
     @AutoLog(value = "管理端-提案配置-部门负责人-保存")
     @Operation(summary = "部门负责人-保存")
     @PostMapping("/deptLeader/save")
@@ -61,7 +61,6 @@ public class ProposalConfigController {
         deptLeaderService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
-    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】部门负责人保存强制单部门+审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-部门负责人-删除")
     @Operation(summary = "部门负责人-删除")
@@ -82,7 +81,7 @@ public class ProposalConfigController {
         return Result.OK(committeeMemberService.page(new Page<>(pageNo, pageSize), qw));
     }
 
-    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
+    // 【提案改善】配置保存补审计字段
     @AutoLog(value = "管理端-提案配置-委员会-保存")
     @Operation(summary = "委员会成员-保存")
     @PostMapping("/committee/save")
@@ -95,7 +94,6 @@ public class ProposalConfigController {
         committeeMemberService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
-    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-委员会-删除")
     @Operation(summary = "委员会成员-删除")
@@ -113,7 +111,7 @@ public class ProposalConfigController {
         return Result.OK(approverService.list(qw));
     }
 
-    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
+    // 【提案改善】配置保存补审计字段
     @AutoLog(value = "管理端-提案配置-批准人-保存")
     @Operation(summary = "批准人-保存")
     @PostMapping("/approver/save")
@@ -126,7 +124,6 @@ public class ProposalConfigController {
         approverService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
-    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-批准人-删除")
     @Operation(summary = "批准人-删除")
@@ -144,7 +141,7 @@ public class ProposalConfigController {
         return Result.OK(scoreDimensionService.list(qw));
     }
 
-    //update-begin---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
+    // 【提案改善】配置保存补审计字段
     @AutoLog(value = "管理端-提案配置-评分维度-保存")
     @Operation(summary = "评分维度-保存")
     @PostMapping("/scoreDimension/save")
@@ -153,7 +150,6 @@ public class ProposalConfigController {
         scoreDimensionService.saveOrUpdate(entity);
         return Result.OK("保存成功");
     }
-    //update-end---author:Auto ---date:2026-08-28  for：【提案改善】配置保存补审计字段-----------
 
     @AutoLog(value = "管理端-提案配置-评分维度-删除")
     @Operation(summary = "评分维度-删除")

@@ -40,7 +40,7 @@ pnpm run dev
 | 登录 | 已对接 Jeecg（密码 AES-CBC，与管理端一致） |
 | 发起提案 | 已对接 `create` + `submit`；部门元数据 `/proposal/meta/improvementDepts`；图片 `/sys/common/upload` |
 | 提案列表 / 详情 | 已对接 `/proposal/list`、`/proposal/{id}` |
-| 委员审核 / 批准 / 待办 / 统计 | 仍为 mock（等 Phase 2 后端） |
+| 委员审核 / 批准 / 待办 / 统计 | 委员待办+审核已接真实接口；批准仍 mock |
 
 「体验登录」仍为前端假 Token，**不会打到后端**，仅用于看 UI。联调请用工号真实登录。
 

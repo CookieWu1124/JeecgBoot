@@ -15,6 +15,12 @@ const statusColorMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.va
 const actionLabelMap: Record<string, string> = {
   SUBMIT: '提交申请',
   WITHDRAW: '撤回申请',
+  COMMITTEE_DONE: '委员审核完成',
+};
+
+const conclusionLabelMap: Record<string, string> = {
+  ADOPT: '采用',
+  REJECT: '不采用',
 };
 
 function toSingleId(value: unknown): string | undefined {
@@ -130,15 +136,21 @@ export const getProposalList = async (params) => {
   return page;
 };
 
-/** 管理端详情：申请书 + 留痕 + 名称回显 */
+/** 管理端详情：申请书 + 留痕 + 委员意见 + 名称回显 */
 export const getProposalById = async (params: { id: string }) => {
   const vo = await defHttp.get({ url: Api.get, params });
   const proposal = vo?.proposal || vo || {};
   const application = vo?.application || {};
   const statusLogs = Array.isArray(vo?.statusLogs) ? vo.statusLogs : [];
+  const committeeReviews = Array.isArray(vo?.committeeReviews) ? vo.committeeReviews : [];
 
   const [userInfoMap, deptMap] = await Promise.all([
-    fetchUserInfoMap([proposal.proposerId, proposal.deptLeaderId, ...statusLogs.map((l) => l.operatorId)]),
+    fetchUserInfoMap([
+      proposal.proposerId,
+      proposal.deptLeaderId,
+      ...statusLogs.map((l) => l.operatorId),
+      ...committeeReviews.map((r) => r.reviewerId),
+    ]),
     fetchDeptNameMap([proposal.deptId]),
   ]);
 
@@ -178,7 +190,17 @@ export const getProposalById = async (params: { id: string }) => {
       toStatusLabel: statusLabelMap[log.toStatus] || log.toStatus || '-',
       operatorName: userInfoMap[log.operatorId]?.name || '-',
     })),
-    /** 委员审核 Phase2 未接；原型保留空表 */
-    reviews: [] as Recordable[],
+    reviews: committeeReviews.map((r, idx) => {
+      const done = !!r.conclusion;
+      return {
+        id: r.id || `${r.reviewerId}-${idx}`,
+        memberName: userInfoMap[r.reviewerId]?.name || r.reviewerId || '-',
+        statusLabel: done ? '已审' : '待审',
+        conclusion: done ? conclusionLabelMap[r.conclusion] || r.conclusion : '-',
+        planRequiredLabel: r.planRequired === 1 ? '形成' : r.planRequired === 0 ? '不形成' : '-',
+        suggestAward: r.awardSuggestion != null ? `¥${r.awardSuggestion}` : '-',
+        comment: r.comment || '-',
+      };
+    }),
   };
 };

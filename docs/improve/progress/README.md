@@ -7,7 +7,7 @@
 
 | 序号 | 文件 | 业务段 | 规划 Phase | 当前整体进度 |
 |------|------|--------|------------|--------------|
-| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟡 发起/查询告一段落；审核流未开始 |
+| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟡 委员审核已落地；批准人决策未开始 |
 | 02 | [02_task_assignment_DEV_PROGRESS.md](./02_task_assignment_DEV_PROGRESS.md) | 任务分配 | 3（前半） | ⚪ 未开始 |
 | 03 | [03_plan_DEV_PROGRESS.md](./03_plan_DEV_PROGRESS.md) | 计划书（条件分支） | 3（后半） | ⚪ 未开始 |
 | 04 | [04_report_DEV_PROGRESS.md](./04_report_DEV_PROGRESS.md) | 报告书 + 六维评分 + 签核结案 | 4 | ⚪ 未开始 |
@@ -39,7 +39,7 @@
 | 统计看板 | 5 | KPI、趋势、排行 | [ ] |
 | HR 导入 / 组织树 | 1 | 复用 Jeecg `sys_user` / `sys_depart`；样例种子见 `sql/proposal_spex_user_seed.sql` | [~] 全量导入未做；斯派科样例 + 电气组别补种 SQL 已出 |
 | 小程序工程骨架 | 1 | **`spex-app/`**（unibest） | [x] 2026-08-29 迁入；旧 `jeecg-uniapp/` 已删除 |
-| 小程序提案业务页 | 1~2 | 发起/列表/详情已接真实接口；委员审核/批准仍 mock | [~] 申请发起告一段落 |
+| 小程序提案业务页 | 1~2 | 发起/列表/详情/委员待办+审核已接真；批准仍 mock | [~] 委员审核方案1已落地 |
 | 联调配置名册种子 | 1 | `proposal_config_seed.sql` | [x] 已与 inside_dev 管理端实配对齐 |
 
 ## 更新约定
@@ -61,3 +61,4 @@
 | 管理端提案管理/配置 UI 对齐原型 | 已完成 | 2026-08-28 |
 | 提案申请发起/查询联调（小程序+管理端详情） | 已完成，申请段告一段落 | 2026-08-29 |
 | 菜单 component 自愈（防 `mes/proposal/**` 空白页） | 已写入 `proposal_menu.sql` + DDL 规则 | 2026-08-29 |
+| Phase2 方案1 委员并行审核 | 表+接口+小程序待办/审核+管理端意见表；`202608290001` 已补快照 | 2026-08-29 |

@@ -22,17 +22,17 @@
 
         <view
           v-for="item in sec.reviews"
-          :key="item.no"
+          :key="item.id"
           class="sheet todo-card"
           hover-class="todo-press"
-          @click="handleReview(item.no)"
+          @click="handleReview(item)"
         >
           <view class="todo-ic" :class="`tint-${item.tint}`">
             <text>{{ item.char }}</text>
           </view>
           <view class="todo-bd">
             <text class="todo-t">{{ item.title }}</text>
-            <text class="todo-s">NO. {{ item.no }} · {{ item.dept }} · {{ item.who }}</text>
+            <text class="todo-s">NO. {{ item.no }} · {{ item.dept }}{{ item.progress ? ` · ${item.progress}` : '' }}</text>
           </view>
           <view class="stamp" :class="`stamp-${item.stamp}`">
             <view class="stamp__dot" />
@@ -40,42 +40,10 @@
           </view>
         </view>
 
-        <view
-          v-for="item in sec.approves"
-          :key="`${item.no}-${item.status}`"
-          class="sheet prop"
-          :style="{ borderLeftColor: BAND[item.band] }"
-          hover-class="todo-press"
-          @click="handleApprove(item)"
-        >
-          <view class="prop-hd">
-            <text class="prop-title">{{ item.title }}</text>
-            <view class="stamp" :class="`stamp-${item.stamp}`">
-              <view class="stamp__dot" />
-              <text class="stamp__txt">{{ item.status }}</text>
-            </view>
-          </view>
-
-          <text class="todo-s">{{ item.sub }}</text>
-
-          <view v-if="item.votes.length || item.hint" class="prop-meta">
-            <view
-              v-for="vote in item.votes"
-              :key="vote.label"
-              class="stamp"
-              :class="`stamp-${vote.tone}`"
-            >
-              <view class="stamp__dot" />
-              <text class="stamp__txt">{{ vote.label }}</text>
-            </view>
-            <text v-if="item.hint" class="prop-hint">{{ item.hint }}</text>
-          </view>
-
-          <text v-if="item.footer" class="prop-ft">{{ item.footer }}</text>
-        </view>
+        <view v-if="loading && !sec.reviews?.length" class="todo-s" style="padding: 12px 4px;">加载中…</view>
       </view>
 
-      <view v-if="!sections.length" class="todo-empty">
+      <view v-if="!loading && !sections.length" class="todo-empty">
         <view class="todo-empty__ic">
           <wd-icon name="list" size="28px" color="#69C0FF" />
         </view>
@@ -87,8 +55,9 @@
 </template>
 
 <script lang="ts" setup>
-import type { ApproveTodo, ReviewTodo } from './mock'
-import { APPROVE_TODOS, BAND, REVIEW_TODOS } from './mock'
+import type { ProposalListItem } from '@/api/proposal'
+import { fetchCommitteePending, fetchImprovementDepts } from '@/api/proposal'
+import { statusLabel, statusStamp } from '@/pages/proposal/helpers'
 
 defineOptions({
   name: 'Todo',
@@ -105,45 +74,95 @@ definePage({
   },
 })
 
+interface ReviewTodoItem {
+  id: string
+  no: string
+  title: string
+  dept: string
+  who: string
+  char: string
+  tint: 'blue' | 'teal'
+  status: string
+  stamp: string
+  progress?: string
+}
+
 interface TodoSection {
   key: 'review' | 'approve'
   title: string
   count: number
-  reviews?: ReviewTodo[]
-  approves?: ApproveTodo[]
+  reviews?: ReviewTodoItem[]
 }
+
+const loading = ref(false)
+const reviewTodos = ref<ReviewTodoItem[]>([])
+const deptNameMap = ref<Record<string, string>>({})
 
 const sections = computed<TodoSection[]>(() => {
   const list: TodoSection[] = []
-  if (REVIEW_TODOS.length) {
+  if (reviewTodos.value.length) {
     list.push({
       key: 'review',
       title: '待出具意见',
-      count: REVIEW_TODOS.length,
-      reviews: REVIEW_TODOS,
-    })
-  }
-  if (APPROVE_TODOS.length) {
-    list.push({
-      key: 'approve',
-      title: '待核定',
-      count: APPROVE_TODOS.length,
-      approves: APPROVE_TODOS,
+      count: reviewTodos.value.length,
+      reviews: reviewTodos.value,
     })
   }
   return list
 })
 
-function handleReview(no: string) {
-  uni.navigateTo({ url: `/pages/proposal/review?no=${no}` })
+onShow(() => {
+  loadPending()
+})
+
+async function loadPending() {
+  loading.value = true
+  try {
+    if (!Object.keys(deptNameMap.value).length) {
+      try {
+        const depts = await fetchImprovementDepts()
+        const map: Record<string, string> = {}
+        for (const d of depts || []) {
+          if (d.deptId)
+            map[d.deptId] = d.deptName || d.deptId
+        }
+        deptNameMap.value = map
+      }
+      catch {
+        // ignore
+      }
+    }
+    const page = await fetchCommitteePending({ pageNo: 1, pageSize: 50 })
+    const records = page?.records || []
+    reviewTodos.value = records.map(mapReviewTodo)
+  }
+  catch (err) {
+    console.error('加载委员待办失败', err)
+    reviewTodos.value = []
+  }
+  finally {
+    loading.value = false
+  }
 }
 
-function handleApprove(item: ApproveTodo) {
-  if (item.status === '待批准') {
-    uni.navigateTo({ url: `/pages/proposal/approve?no=${item.no}` })
-    return
+function mapReviewTodo(item: ProposalListItem): ReviewTodoItem {
+  const title = item.title || '未命名提案'
+  return {
+    id: item.id,
+    no: item.proposalNo || '—',
+    title,
+    dept: deptNameMap.value[item.deptId || ''] || item.deptId || '—',
+    who: '提案人',
+    char: '审',
+    tint: 'blue',
+    status: statusLabel(item.status),
+    stamp: statusStamp(item.status),
+    progress: item.reviewProgress,
   }
-  uni.navigateTo({ url: `/pages/proposal/detail?no=${item.no}` })
+}
+
+function handleReview(item: ReviewTodoItem) {
+  uni.navigateTo({ url: `/pages/proposal/review?id=${item.id}` })
 }
 </script>
 
