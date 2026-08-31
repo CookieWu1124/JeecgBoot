@@ -1,4 +1,4 @@
-import { mapJeecgUser, type IAuthLoginRes, type ICaptcha, type IDepartItem, type IDoubleTokenRes, type IJeecgLoginRes, type IJeecgUserInfo, type IUpdateInfo, type IUpdatePassword } from './types/login'
+import { mapJeecgUser, type ICaptcha, type IDepartItem, type IDoubleTokenRes, type IJeecgLoginRes, type IJeecgUserInfo, type IUpdateInfo, type IUpdatePassword } from './types/login'
 import { http } from '@/http/http'
 import { encryptAESCBC } from '@/utils/cipher'
 
@@ -96,23 +96,41 @@ export function updateUserPassword(data: IUpdatePassword) {
 
 /**
  * 获取微信登录凭证
- * @returns Promise 包含微信登录凭证(code)
  */
 export function getWxCode() {
   return new Promise<UniApp.LoginRes>((resolve, reject) => {
     uni.login({
       provider: 'weixin',
       success: res => resolve(res),
-      fail: err => reject(new Error(err)),
+      fail: err => reject(new Error(typeof err === 'string' ? err : err?.errMsg || '微信登录失败')),
     })
   })
 }
 
+export interface IWxMiniLoginRes {
+  bound?: boolean
+  token?: string
+  userInfo?: IJeecgUserInfo
+  [key: string]: any
+}
+
 /**
- * 微信登录
- * @param params 微信登录参数，包含code
- * @returns Promise 包含登录结果
+ * 小程序静默登录（jsCode 换 OpenID，已绑定则直接签发 Token）
  */
-export function wxLogin(data: { code: string }) {
-  return http.post<IAuthLoginRes>('/auth/wxLogin', data)
+export function silentLogin(jsCode: string) {
+  return http.post<IWxMiniLoginRes>('/sys/wxMini/silentLogin', { jsCode }, undefined, undefined, { hideErrorToast: true })
+}
+
+/**
+ * 小程序首次绑定：工号 + 微信手机号授权 code
+ */
+export function bindWxMini(data: { jsCode: string, workNo: string, phoneCode: string }) {
+  return http.post<IJeecgLoginRes>('/sys/wxMini/bind', data, undefined, undefined, { hideErrorToast: true })
+}
+
+/**
+ * H5 工号 + 手机号登录（不写微信绑定）
+ */
+export function phoneLogin(data: { workNo: string, phone: string }) {
+  return http.post<IJeecgLoginRes>('/sys/wxMini/phoneLogin', data, undefined, undefined, { hideErrorToast: true })
 }

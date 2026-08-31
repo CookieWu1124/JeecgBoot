@@ -66,7 +66,7 @@
   import { useModal } from '/@/components/Modal';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { columns, searchFormSchema } from './user.data';
-  import { listNoCareTenant, deleteUser, batchDeleteUser, getImportUrl, getExportUrl, frozenBatch, resetPassword } from './user.api';
+  import { listNoCareTenant, deleteUser, batchDeleteUser, getImportUrl, getExportUrl, frozenBatch, resetPassword, unbindWxMini } from './user.api';
   import { usePermission } from '/@/hooks/web/usePermission';
   import ImportExcelProgress from './components/ImportExcelProgress.vue';
 
@@ -252,6 +252,12 @@
     }
   }
 
+  async function handleUnbindWx(record) {
+    await unbindWxMini(record.id);
+    createMessage.success('解绑成功');
+    reload();
+  }
+
   /**
    * 操作栏
    */
@@ -299,6 +305,13 @@
         popConfirm: {
           title: '确定解冻吗?',
           confirm: handleFrozen.bind(null, record, 1),
+        },
+      },
+      {
+        label: '解绑微信',
+        popConfirm: {
+          title: '确定解绑该用户的微信吗？解绑后需在小程序重新授权。',
+          confirm: handleUnbindWx.bind(null, record),
         },
       },
     ];

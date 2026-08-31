@@ -19,19 +19,20 @@
       <view class="login-action">
         <view class="login-card">
           <view class="login-field">
-            <text class="login-label">账号</text>
+            <text class="login-label">工号</text>
             <wd-input
               v-model="form.username"
               prefix-icon="user"
               clearable
-              placeholder="请输入账号"
+              placeholder="请输入工号"
               custom-class="login-input"
               @blur="touched.username = true"
             />
             <text v-if="usernameError" class="login-error">{{ usernameError }}</text>
           </view>
 
-          <view class="login-field login-field--gap">
+          <!-- #ifndef MP-WEIXIN -->
+          <view v-if="h5Mode === 'password'" class="login-field login-field--gap">
             <text class="login-label">密码</text>
             <wd-input
               v-model="form.password"
@@ -41,9 +42,24 @@
               placeholder="请输入密码"
               custom-class="login-input"
               @blur="touched.password = true"
-              @confirm="handleLogin"
+              @confirm="handleH5Login"
             />
             <text v-if="passwordError" class="login-error">{{ passwordError }}</text>
+          </view>
+
+          <view v-else class="login-field login-field--gap">
+            <text class="login-label">手机号</text>
+            <wd-input
+              v-model="form.phone"
+              prefix-icon="phone"
+              clearable
+              type="number"
+              placeholder="请输入预留手机号"
+              custom-class="login-input"
+              @blur="touched.phone = true"
+              @confirm="handleH5Login"
+            />
+            <text v-if="phoneError" class="login-error">{{ phoneError }}</text>
           </view>
 
           <wd-button
@@ -52,14 +68,32 @@
             :loading="submitting"
             :disabled="!canSubmit"
             custom-class="login-submit"
-            @click="handleLogin"
+            @click="handleH5Login"
           >
             登录
           </wd-button>
 
-          <view class="login-demo" hover-class="login-hover" @click="handleDemoLogin">
+          <view class="login-switch" hover-class="login-hover" @click="toggleH5Mode">
+            <text class="login-switch__text">{{ h5Mode === 'password' ? '使用工号+手机号登录' : '使用账号密码登录' }}</text>
+          </view>
+
+          <view v-if="h5Mode === 'password'" class="login-demo" hover-class="login-hover" @click="handleDemoLogin">
             <text class="login-demo__text">体验登录</text>
           </view>
+          <!-- #endif -->
+
+          <!-- #ifdef MP-WEIXIN -->
+          <button
+            class="login-wx-btn"
+            :class="{ 'login-wx-btn--disabled': !canSubmit || submitting }"
+            :disabled="!canSubmit || submitting"
+            :loading="submitting"
+            open-type="getPhoneNumber"
+            @getphonenumber="onGetPhoneNumber"
+          >
+            登录
+          </button>
+          <!-- #endif -->
         </view>
       </view>
 
@@ -73,31 +107,12 @@
         <text class="login-footer__tip">白名单邀请制 · 请使用公司预录工号绑定</text>
       </view>
     </view>
-
-    <view v-if="showDepartPicker" class="depart-mask" @click="closeDepartPicker">
-      <view class="depart-sheet" @click.stop>
-        <text class="depart-sheet__title">请选择登录部门</text>
-        <view
-          v-for="item in departList"
-          :key="item.orgCode"
-          class="depart-item"
-          hover-class="login-hover"
-          @click="loginWithDepart(item)"
-        >
-          <text class="depart-item__name">{{ item.departName }}</text>
-          <wd-icon name="arrow-right" size="16px" color="#94a3b8" />
-        </view>
-        <view class="depart-cancel" hover-class="login-hover" @click="closeDepartPicker">
-          <text>取消</text>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { IDepartItem, IUserInfoRes } from '@/api/types/login'
-import { getDepartList } from '@/api/login'
+import type { IUserInfoRes } from '@/api/types/login'
+import { isMpWeixin } from '@uni-helper/uni-env'
 import { useTokenStore, useUserStore } from '@/store'
 import { isPageTabbar } from '@/tabbar/store'
 
@@ -115,7 +130,6 @@ definePage({
     backgroundColorBottom: '#096DD9',
     disableScroll: true,
   },
-  // 白名单：未登录也可访问
   excludeLoginPath: true,
 })
 
@@ -125,23 +139,25 @@ const userStore = useUserStore()
 const form = reactive({
   username: '',
   password: '',
+  phone: '',
 })
 const touched = reactive({
   username: false,
   password: false,
+  phone: false,
 })
 const submitting = ref(false)
 const redirect = ref('')
-const showDepartPicker = ref(false)
-const departList = ref<IDepartItem[]>([])
+const h5Mode = ref<'password' | 'phone'>('password')
+const silentTried = ref(false)
 
 const usernameError = computed(() => {
   if (!touched.username)
     return ''
   if (!form.username.trim())
-    return '请输入账号'
+    return '请输入工号'
   if (form.username.trim().length < 3)
-    return '账号至少 3 个字符'
+    return '工号至少 3 个字符'
   return ''
 })
 
@@ -155,8 +171,27 @@ const passwordError = computed(() => {
   return ''
 })
 
+const phoneError = computed(() => {
+  if (!touched.phone)
+    return ''
+  const phone = form.phone.trim()
+  if (!phone)
+    return '请输入手机号'
+  if (!/^1\d{10}$/.test(phone))
+    return '请输入正确的11位手机号'
+  return ''
+})
+
 const canSubmit = computed(() => {
-  return form.username.trim().length >= 3 && form.password.length >= 6 && !submitting.value
+  if (submitting.value)
+    return false
+  if (form.username.trim().length < 3)
+    return false
+  if (isMpWeixin)
+    return true
+  if (h5Mode.value === 'password')
+    return form.password.length >= 6
+  return /^1\d{10}$/.test(form.phone.trim())
 })
 
 onLoad((query) => {
@@ -165,6 +200,15 @@ onLoad((query) => {
   if (lastUsername)
     form.username = lastUsername
 })
+
+onMounted(() => {
+  if (isMpWeixin)
+    trySilentLogin()
+})
+
+function toggleH5Mode() {
+  h5Mode.value = h5Mode.value === 'password' ? 'phone' : 'password'
+}
 
 function goAfterLogin() {
   const target = redirect.value
@@ -185,52 +229,41 @@ function goAfterLogin() {
   uni.switchTab({ url: '/pages/me/me' })
 }
 
-async function handleLogin() {
+async function trySilentLogin() {
+  if (silentTried.value || submitting.value)
+    return
+  silentTried.value = true
+  try {
+    const res = await tokenStore.wxSilentLogin()
+    if (res?.token)
+      goAfterLogin()
+  }
+  catch (error) {
+    console.error('静默登录失败:', error)
+  }
+}
+
+async function handleH5Login() {
   touched.username = true
-  touched.password = true
+  if (h5Mode.value === 'password')
+    touched.password = true
+  else
+    touched.phone = true
   if (!canSubmit.value)
     return
 
   submitting.value = true
   try {
-    const list = await getDepartList({
-      inputCode: '',
-      username: form.username.trim(),
-      password: form.password,
-    })
-    const depts = Array.isArray(list) ? list : []
-    // 无部门时直接登录（如 admin）；多部门时弹出选择
-    if (!depts.length) {
-      await loginWithDepart({ orgCode: '', departName: '' })
-      return
+    if (h5Mode.value === 'password') {
+      await tokenStore.login({
+        username: form.username.trim(),
+        password: form.password,
+        inputCode: '',
+      })
     }
-    if (depts.length === 1) {
-      await loginWithDepart(depts[0])
-      return
+    else {
+      await tokenStore.phoneLogin(form.username.trim(), form.phone.trim())
     }
-    departList.value = depts
-    showDepartPicker.value = true
-  }
-  catch (error) {
-    console.error('获取部门失败:', error)
-  }
-  finally {
-    if (!showDepartPicker.value)
-      submitting.value = false
-  }
-}
-
-async function loginWithDepart(depart: IDepartItem) {
-  showDepartPicker.value = false
-  submitting.value = true
-  try {
-    await tokenStore.login({
-      username: form.username.trim(),
-      password: form.password,
-      inputCode: '',
-      orgCode: depart.orgCode,
-      departName: depart.departName,
-    })
     uni.setStorageSync('login-username', form.username.trim())
     goAfterLogin()
   }
@@ -242,9 +275,35 @@ async function loginWithDepart(depart: IDepartItem) {
   }
 }
 
-function closeDepartPicker() {
-  showDepartPicker.value = false
-  submitting.value = false
+async function onGetPhoneNumber(e: any) {
+  const detail = e?.detail || {}
+  const errMsg = String(detail.errMsg || '')
+  if (errMsg && !errMsg.includes('ok')) {
+    uni.showToast({ title: '需要授权手机号才能绑定', icon: 'none' })
+    return
+  }
+  const phoneCode = detail.code
+  if (!phoneCode) {
+    uni.showToast({ title: '未获取到手机号授权', icon: 'none' })
+    return
+  }
+  touched.username = true
+  if (form.username.trim().length < 3) {
+    uni.showToast({ title: '请输入工号', icon: 'none' })
+    return
+  }
+  submitting.value = true
+  try {
+    await tokenStore.wxBindLogin(form.username.trim(), phoneCode)
+    uni.setStorageSync('login-username', form.username.trim())
+    goAfterLogin()
+  }
+  catch (error) {
+    console.error('微信绑定失败:', error)
+  }
+  finally {
+    submitting.value = false
+  }
 }
 
 function handleDemoLogin() {
@@ -410,14 +469,16 @@ function handleDemoLogin() {
   font-size: 12px;
 }
 
-.login-demo {
+.login-demo,
+.login-switch {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 1.6vh;
 }
 
-.login-demo__text {
+.login-demo__text,
+.login-switch__text {
   color: #1890ff;
   font-size: 14px;
 }
@@ -438,6 +499,29 @@ function handleDemoLogin() {
   border-radius: 12px !important;
   background: linear-gradient(135deg, #69c0ff, #1890ff 50%, #13c2c2) !important;
   font-weight: 600 !important;
+}
+
+.login-wx-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2.4vh;
+  height: 44px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #69c0ff, #1890ff 50%, #13c2c2);
+  border: none;
+  border-radius: 12px;
+  line-height: 44px;
+}
+
+.login-wx-btn::after {
+  border: none;
+}
+
+.login-wx-btn--disabled {
+  opacity: 0.45;
 }
 
 .login-footer {
@@ -463,51 +547,5 @@ function handleDemoLogin() {
   color: rgba(255, 255, 255, 0.55);
   font-size: 11px;
   line-height: 1.4;
-}
-
-.depart-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  background: rgba(15, 23, 42, 0.45);
-}
-
-.depart-sheet {
-  width: 100%;
-  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-  background: #fff;
-  border-radius: 16px 16px 0 0;
-}
-
-.depart-sheet__title {
-  display: block;
-  margin-bottom: 8px;
-  color: #0f172a;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.depart-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 4px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.depart-item__name {
-  color: #0f172a;
-  font-size: 15px;
-}
-
-.depart-cancel {
-  margin-top: 8px;
-  padding: 14px 0;
-  color: #64748b;
-  font-size: 15px;
-  text-align: center;
 }
 </style>

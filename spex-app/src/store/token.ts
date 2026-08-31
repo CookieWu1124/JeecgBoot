@@ -8,7 +8,9 @@ import {
   login as _login,
   logout as _logout,
   refreshToken as _refreshToken,
-  wxLogin as _wxLogin,
+  silentLogin as _silentLogin,
+  bindWxMini as _bindWxMini,
+  phoneLogin as _phoneLogin,
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes, mapJeecgLoginRes, mapJeecgUser } from '@/api/types/login'
@@ -118,10 +120,7 @@ export const useTokenStore = defineStore(
     }
 
     /**
-     * 用户登录
-     * 先由页面调用 /sys/getDepartList 选择部门，再带着 orgCode 调用 /sys/login
-     * @param loginForm 登录参数
-     * @returns 登录结果
+     * 用户登录（工号+密码），不再选择部门
      */
     const login = async (loginForm: ILoginForm) => {
       try {
@@ -149,30 +148,80 @@ export const useTokenStore = defineStore(
     }
 
     /**
-     * 微信登录
-     * 有的时候后端会用一个接口返回token和用户信息，有的时候会分开2个接口，一个获取token，一个获取用户信息
-     * （各有利弊，看业务场景和系统复杂度），这里使用2个接口返回的来模拟
-     * @returns 登录结果
+     * 小程序静默登录。未绑定返回 { bound: false }，不弹成功 toast。
      */
-    const wxLogin = async () => {
+    const wxSilentLogin = async () => {
       try {
-        // 获取微信小程序登录的code
-        const code = await getWxCode()
-        console.log('微信登录-code: ', code)
-        const res = await _wxLogin(code)
-        console.log('微信登录-res: ', res)
-        await _postLogin(res)
+        const loginRes = await getWxCode()
+        const jsCode = loginRes.code
+        if (!jsCode)
+          throw new Error('未获取到微信登录凭证')
+        const res = await _silentLogin(jsCode)
+        if (!res?.bound || !res.token)
+          return res
+        const user = res.userInfo ? mapJeecgUser(res.userInfo) : undefined
+        await _postLogin(mapJeecgLoginRes({ token: res.token, userInfo: res.userInfo }), user)
+        return res
+      }
+      catch (error: any) {
+        console.error('静默登录失败:', error)
+        throw error
+      }
+      finally {
+        updateNowTime()
+      }
+    }
+
+    /**
+     * 小程序首次绑定：工号 + getPhoneNumber 的 phoneCode
+     */
+    const wxBindLogin = async (workNo: string, phoneCode: string) => {
+      try {
+        const loginRes = await getWxCode()
+        const jsCode = loginRes.code
+        if (!jsCode)
+          throw new Error('未获取到微信登录凭证')
+        const res = await _bindWxMini({ jsCode, workNo, phoneCode })
+        const user = res.userInfo ? mapJeecgUser(res.userInfo) : undefined
+        await _postLogin(mapJeecgLoginRes(res), user)
         uni.showToast({
           title: '登录成功',
           icon: 'success',
         })
         return res
       }
-      catch (error) {
-        console.error('微信登录失败:', error)
+      catch (error: any) {
+        console.error('微信绑定失败:', error)
         uni.showToast({
-          title: '微信登录失败，请重试',
-          icon: 'error',
+          title: error?.message || '绑定失败，请重试',
+          icon: 'none',
+        })
+        throw error
+      }
+      finally {
+        updateNowTime()
+      }
+    }
+
+    /**
+     * H5 工号 + 手机号登录
+     */
+    const phoneLogin = async (workNo: string, phone: string) => {
+      try {
+        const res = await _phoneLogin({ workNo, phone })
+        const user = res.userInfo ? mapJeecgUser(res.userInfo) : undefined
+        await _postLogin(mapJeecgLoginRes(res), user)
+        uni.showToast({
+          title: '登录成功',
+          icon: 'success',
+        })
+        return res
+      }
+      catch (error: any) {
+        console.error('工号手机号登录失败:', error)
+        uni.showToast({
+          title: error?.message || '登录失败，请重试',
+          icon: 'none',
         })
         throw error
       }
@@ -304,7 +353,9 @@ export const useTokenStore = defineStore(
     return {
       // 核心API方法
       login,
-      wxLogin,
+      wxSilentLogin,
+      wxBindLogin,
+      phoneLogin,
       logout,
 
       // 认证状态判断（最常用的）

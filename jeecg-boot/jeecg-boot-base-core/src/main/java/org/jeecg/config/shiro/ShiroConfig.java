@@ -89,6 +89,11 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/sys/smsCheckCaptcha", "anon"); //短信次数发送太多验证码排除
         filterChainDefinitionMap.put("/sys/login", "anon"); //登录接口排除
         filterChainDefinitionMap.put("/sys/mLogin", "anon"); //登录接口排除
+        //update-begin---author:spex ---date:2026-08-31  for：【提案App】微信小程序/H5工号手机号登录放行-----------
+        filterChainDefinitionMap.put("/sys/wxMini/silentLogin", "anon");
+        filterChainDefinitionMap.put("/sys/wxMini/bind", "anon");
+        filterChainDefinitionMap.put("/sys/wxMini/phoneLogin", "anon");
+        //update-end---author:spex ---date:2026-08-31  for：【提案App】微信小程序/H5工号手机号登录放行-----------
         filterChainDefinitionMap.put("/sys/logout", "anon"); //登出接口排除
         filterChainDefinitionMap.put("/sys/thirdLogin/**", "anon"); //第三方登录
         filterChainDefinitionMap.put("/sys/getEncryptedString", "anon"); //获取加密串

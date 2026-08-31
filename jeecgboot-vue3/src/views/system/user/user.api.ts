@@ -30,6 +30,7 @@ enum Api {
   updateUserTenantStatus='/sys/tenant/updateUserTenantStatus',
   getUserTenantPageList='/sys/tenant/getUserTenantPageList',
   getDepPostIdByDepId = '/sys/sysDepart/getDepPostIdByDepId',
+  unbindWxMini = '/sys/wxMini/unbind',
 }
 /**
  * 导出api
@@ -246,4 +247,11 @@ export const updateUserTenantStatus = (params) => {
  */
 export const getDepPostIdByDepId = (params) => {
   return defHttp.get({ url: Api.getDepPostIdByDepId, params },{ isTransformResponse: false });
+};
+
+/**
+ * 解绑用户微信小程序
+ */
+export const unbindWxMini = (userId: string) => {
+  return defHttp.post({ url: Api.unbindWxMini, data: { userId } });
 };
