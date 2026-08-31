@@ -49,8 +49,8 @@ export const getDeptLeaderList = async (params) => {
 
 export const saveDeptLeader = (params) => {
   const data = { ...params };
-  data.deptId = toSingleId(data.deptId);
-  data.leaderUserId = toSingleId(data.leaderUserId);
+  data.deptId = toSingleId(data.deptId) || toSingleId(data.dept?.id);
+  data.leaderUserId = toSingleId(data.leaderUserId) || toSingleId(data.leader?.id);
   delete data.dept;
   delete data.leader;
   return defHttp.post({ url: Api.deptLeaderSave, params: data });

@@ -1,7 +1,6 @@
-import { BasicColumn, FormSchema } from '/@/components/Table';
+import { BasicColumn } from '/@/components/Table';
 import { h } from 'vue';
 import { Tag } from 'ant-design-vue';
-import { defHttp } from '/@/utils/http/axios';
 
 export const memberStatusOptions = [
   { label: '在任', value: 'active' },
@@ -17,28 +16,6 @@ export const dimStatusOptions = [
   { label: '启用', value: 'active' },
   { label: '禁用', value: 'disabled' },
 ];
-
-/** 按改善部门过滤可选负责人（仅本部门及下级成员） */
-function createDeptScopedUserSelectProps(formModel: Recordable) {
-  return {
-    rowKey: 'id',
-    labelKey: 'realname',
-    showButton: true,
-    modalTitle: '选择本部门负责人',
-    isRadioSelection: true,
-    params: { departId: formModel.deptId || '' },
-    customListApi: (params) => {
-      const departId = formModel.deptId;
-      if (!departId) {
-        return Promise.resolve({ records: [], total: 0 });
-      }
-      return defHttp.get({
-        url: '/sys/user/queryUserComponentData',
-        params: { ...params, departId },
-      });
-    },
-  };
-}
 
 /** 对齐原型：改善部门 | 负责人姓名 | 负责人工号 | 职位 | 更新人 | 更新时间 */
 export const deptLeaderColumns: BasicColumn[] = [
@@ -73,42 +50,6 @@ export const deptLeaderColumns: BasicColumn[] = [
   },
   { title: '更新人', dataIndex: 'updateBy', width: 100 },
   { title: '更新时间', dataIndex: 'updateTime', width: 170 },
-];
-
-export const deptLeaderFormSchema: FormSchema[] = [
-  { field: 'id', component: 'Input', show: false },
-  {
-    field: 'deptId',
-    label: '改善部门',
-    component: 'JSelectDept',
-    required: true,
-    dynamicDisabled: ({ values }) => !!values.id,
-    componentProps: ({ formModel }) => ({
-      multiple: false,
-      sync: false,
-      checkStrictly: true,
-      showButton: true,
-      modalTitle: '选择改善部门',
-      onChange: () => {
-        formModel.leaderUserId = undefined;
-      },
-    }),
-  },
-  {
-    field: 'leaderUserId',
-    label: '部门负责人',
-    component: 'JSelectUser',
-    required: true,
-    dynamicDisabled: ({ values }) => !values.deptId,
-    componentProps: ({ formModel }) => createDeptScopedUserSelectProps(formModel),
-    dynamicRules: ({ values }) => [
-      {
-        required: true,
-        message: values.deptId ? '请选择本部门负责人' : '请先选择改善部门',
-      },
-    ],
-  },
-  { field: 'remark', label: '备注', component: 'InputTextArea', componentProps: { rows: 2 } },
 ];
 
 /** 对齐原型：成员姓名 | 工号 | 部门 | 职位 | 评分职责 | 更新人 | 更新时间 */
@@ -150,32 +91,6 @@ export const committeeColumns: BasicColumn[] = [
   },
   { title: '更新人', dataIndex: 'updateBy', width: 100 },
   { title: '更新时间', dataIndex: 'updateTime', width: 170 },
-];
-
-export const approverFormSchema: FormSchema[] = [
-  { field: 'id', component: 'Input', show: false },
-  {
-    field: 'userId',
-    label: '批准人',
-    component: 'JSelectUser',
-    required: true,
-    componentProps: {
-      rowKey: 'id',
-      labelKey: 'realname',
-      showButton: true,
-      modalTitle: '选择批准人',
-      isRadioSelection: true,
-    },
-  },
-  {
-    field: 'approverStatus',
-    label: '状态',
-    component: 'Select',
-    defaultValue: 'active',
-    show: false,
-    componentProps: { options: approverStatusOptions },
-  },
-  { field: 'remark', label: '备注', component: 'InputTextArea', componentProps: { rows: 2 } },
 ];
 
 /** 对齐原型：排序 | 维度编码 | 评分维度(名+说明) | 权重 | 状态 | 更新人 | 更新时间 */

@@ -1,5 +1,6 @@
 <template>
-  <BasicModal
+  <div style="display: contents">
+    <BasicModal
     v-bind="$attrs"
     @register="registerModal"
     :title="title"
@@ -17,16 +18,11 @@
               name="userId"
               :rules="[{ required: true, message: '请选择员工' }]"
             >
-              <JSelectUser
-                v-model:value="formState.userId"
-                row-key="id"
-                label-key="realname"
-                :show-button="true"
-                modal-title="选择员工"
-                :is-radio-selection="true"
+              <ProposalPickInput
+                :label="selectedUser?.realname || ''"
                 placeholder="请选择员工"
                 :disabled="isUpdate"
-                @change="onUserChange"
+                @open="openUserModal(true)"
               />
             </a-form-item>
             <a-form-item label=" " :colon="false">
@@ -74,13 +70,25 @@
       <div class="required-hint">* 带「*」为必填项</div>
     </div>
   </BasicModal>
+  <UserSelectModal
+    @register="registerUserModal"
+    :is-radio-selection="true"
+    row-key="id"
+    label-key="realname"
+    :max-select-count="1"
+    modal-title="选择员工"
+    @getSelectResult="onUserSelected"
+  />
+  </div>
 </template>
 <script lang="ts" setup>
   import { computed, reactive, ref, unref } from 'vue';
   import type { FormInstance } from 'ant-design-vue';
-  import { BasicModal, useModalInner } from '/@/components/Modal';
-  import JSelectUser from '/@/components/Form/src/jeecg/components/JSelectUser.vue';
+  import { BasicModal, useModal, useModalInner } from '/@/components/Modal';
+  import UserSelectModal from '/@/components/Form/src/jeecg/components/modal/UserSelectModal.vue';
   import { getUserProfile, saveCommittee, UserProfile } from '../config.api';
+  import { pickSingleSelection } from '../pickSingle';
+  import ProposalPickInput from './ProposalPickInput.vue';
 
   const emit = defineEmits(['success', 'register']);
   const formRef = ref<FormInstance>();
@@ -151,8 +159,13 @@
     selectedUser.value = null;
   }
 
-  function onUserChange(val) {
-    loadUserPreview(val);
+  const [registerUserModal, { openModal: openUserModal }] = useModal();
+
+  function onUserSelected(options, values) {
+    const { id } = pickSingleSelection(options, values);
+    formState.userId = id;
+    loadUserPreview(id);
+    formRef.value?.validateFields(['userId']);
   }
 
   const [registerModal, { setModalProps, closeModal }] = useModalInner(async (data) => {

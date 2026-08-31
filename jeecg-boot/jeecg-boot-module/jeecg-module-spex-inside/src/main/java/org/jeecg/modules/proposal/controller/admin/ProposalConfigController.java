@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.exception.JeecgBootBizTipException;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
@@ -58,13 +59,41 @@ public class ProposalConfigController {
         return Result.OK(page);
     }
 
-    // 【提案改善】部门负责人保存强制单部门+审计字段
+    // 【提案改善】部门负责人保存：主键校验 + 缺 id 时按部门 upsert
     @AutoLog(value = "管理端-提案配置-部门负责人-保存")
     @Operation(summary = "部门负责人-保存")
     @PostMapping("/deptLeader/save")
     public Result<String> deptLeaderSave(@RequestBody ProposalDeptLeader entity) {
         entity.setDeptId(firstId(entity.getDeptId()));
         entity.setLeaderUserId(firstId(entity.getLeaderUserId()));
+        if (oConvertUtils.isEmpty(entity.getDeptId()) && entity.getDept() != null) {
+            entity.setDeptId(firstId(entity.getDept().getId()));
+        }
+        if (oConvertUtils.isEmpty(entity.getLeaderUserId()) && entity.getLeader() != null) {
+            entity.setLeaderUserId(firstId(entity.getLeader().getId()));
+        }
+        if (oConvertUtils.isEmpty(entity.getDeptId())) {
+            throw new JeecgBootBizTipException("deptId 必填，须为 sys_depart.id（不要传部门名称或路径）");
+        }
+        if (!orgFillHelper.deptExists(entity.getDeptId())) {
+            throw new JeecgBootBizTipException("deptId 在部门表中不存在，须为 sys_depart.id，不能传部门名称、路径或 orgCode");
+        }
+        if (oConvertUtils.isNotEmpty(entity.getLeaderUserId()) && !orgFillHelper.userExists(entity.getLeaderUserId())) {
+            throw new JeecgBootBizTipException("leaderUserId 在用户表中不存在，须为 sys_user.id，不能传工号、姓名或 username");
+        }
+        if (oConvertUtils.isEmpty(entity.getTenantId())) {
+            entity.setTenantId(null);
+        }
+        if (oConvertUtils.isEmpty(entity.getActive())) {
+            entity.setActive(null);
+        }
+        if (oConvertUtils.isEmpty(entity.getId())) {
+            ProposalDeptLeader existing = deptLeaderService.getOne(
+                    new QueryWrapper<ProposalDeptLeader>().eq("dept_id", entity.getDeptId()).last("limit 1"), false);
+            if (existing != null) {
+                entity.setId(existing.getId());
+            }
+        }
         fillAudit(entity);
         deptLeaderService.saveOrUpdate(entity);
         return Result.OK("保存成功");

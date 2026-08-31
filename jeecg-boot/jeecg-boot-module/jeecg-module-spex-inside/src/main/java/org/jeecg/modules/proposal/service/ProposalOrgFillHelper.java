@@ -127,6 +127,22 @@ public class ProposalOrgFillHelper {
         }
     }
 
+    public boolean userExists(String userId) {
+        if (oConvertUtils.isEmpty(userId)) {
+            return false;
+        }
+        Integer n = jdbcTemplate.queryForObject("select count(1) from sys_user where id = ?", Integer.class, userId);
+        return n != null && n > 0;
+    }
+
+    public boolean deptExists(String deptId) {
+        if (oConvertUtils.isEmpty(deptId)) {
+            return false;
+        }
+        Integer n = jdbcTemplate.queryForObject("select count(1) from sys_depart where id = ?", Integer.class, deptId);
+        return n != null && n > 0;
+    }
+
     public Map<String, UserBriefVo> loadUsers(Collection<String> userIds) {
         List<String> ids = distinctIds(userIds);
         if (ids.isEmpty()) {
