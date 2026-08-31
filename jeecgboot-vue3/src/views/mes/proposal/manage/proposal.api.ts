@@ -8,7 +8,6 @@ enum Api {
 
 const actionLabelMap: Record<string, string> = {
   SUBMIT: '提交申请',
-  WITHDRAW: '撤回申请',
   COMMITTEE_DONE: '委员审核完成',
   APPROVE: '申请批准',
   REJECT_FINAL: '申请不批准',

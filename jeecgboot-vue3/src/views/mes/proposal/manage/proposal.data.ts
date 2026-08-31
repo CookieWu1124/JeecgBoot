@@ -5,12 +5,10 @@ import { defHttp } from '/@/utils/http/axios';
 
 /** 状态色仅前端展示用；文案以接口 /proposal/meta/statuses 及行内 statusLabel 为准 */
 const STATUS_TAG_COLOR: Record<string, string> = {
-  DRAFT: 'default',
   PENDING_REVIEW: 'gold',
   PENDING_APPROVAL: 'blue',
   APPROVED: 'success',
   REJECTED_FINAL: 'error',
-  WITHDRAWN: 'default',
   PENDING_ASSIGN: 'processing',
   PENDING_CLAIM: 'processing',
   IN_PROGRESS: 'processing',

@@ -10,21 +10,17 @@ import org.jeecg.modules.proposal.entity.Proposal;
  * {@link #APPROVED}、{@link #REJECTED_FINAL}。{@link #APPROVED} 与后续 {@link #PENDING_ASSIGN}
  * 不得合并——阶段 2/3/4 是否做尚未定，批准后停在已批准。
  * <p>
- * {@link #DRAFT} / {@link #WITHDRAWN} 仅历史兼容；申请段无暂存、无撤回。
+ * 申请段无暂存、无撤回；发起直接写入 {@link #PENDING_REVIEW}。
  * 合法跳转见 {@code ProposalStateMachine}，不要在 Service 里拼字符串改 status。
  */
 @Getter
 public enum ProposalStatusEnum {
 
-    /** 历史兼容；新单不停留，发起接口同一事务内立刻 SUBMIT。 */
-    DRAFT("DRAFT", "草稿"),
     PENDING_REVIEW("PENDING_REVIEW", "审核中"),
     PENDING_APPROVAL("PENDING_APPROVAL", "待批准"),
     /** 申请段通过。不要写成待指派；阶段 2 入口待定。 */
     APPROVED("APPROVED", "已批准"),
     REJECTED_FINAL("REJECTED_FINAL", "不批准"),
-    /** 历史单据兼容；新单不再进入。 */
-    WITHDRAWN("WITHDRAWN", "已撤回"),
     PENDING_ASSIGN("PENDING_ASSIGN", "待指派"),
     PENDING_CLAIM("PENDING_CLAIM", "待领取"),
     /** 任务已分配。下一步交计划书还是交报告书，看 plan_required，不单看本状态。 */
@@ -65,9 +61,9 @@ public enum ProposalStatusEnum {
         return item == null ? code : item.getLabel();
     }
 
-    /** 全流程不再迁出：不批准 / 已撤回 / 已完成。已批准不是全流程终态（阶段 2 可能再往下）。 */
+    /** 全流程不再迁出：不批准 / 已完成。已批准不是全流程终态（阶段 2 可能再往下）。 */
     public boolean terminal() {
-        return this == REJECTED_FINAL || this == WITHDRAWN || this == COMPLETED;
+        return this == REJECTED_FINAL || this == COMPLETED;
     }
 
     /** 当前交付的申请段四档。 */

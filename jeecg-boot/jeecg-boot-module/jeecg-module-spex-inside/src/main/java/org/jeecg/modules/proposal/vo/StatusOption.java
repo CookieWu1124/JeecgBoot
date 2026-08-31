@@ -13,6 +13,6 @@ public class StatusOption implements Serializable {
 
     private String code;
     private String label;
-    /** 申请段接口默认：已批准 / 不批准为闭环；全量时为不批准 / 已撤回 / 已完成 */
+    /** 申请段接口默认：已批准 / 不批准为闭环；全量时为不批准 / 已完成 */
     private Boolean terminal;
 }

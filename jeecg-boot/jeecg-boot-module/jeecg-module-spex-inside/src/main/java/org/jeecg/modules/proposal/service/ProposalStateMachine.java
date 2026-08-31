@@ -25,7 +25,7 @@ import java.util.Map;
  *   <li>日常用四参数 {@link #transit(Proposal, ProposalAction, LoginUser, String)}，内部把 {@code context} 填成 null。</li>
  *   <li>仅「plan_required=1 且提交报告书」时用五参数，传入 {@link Context#planApproved()}。</li>
  *   <li>不要自己实现 Guard：路线和守卫在本类 static 块里注册死，Service 只选 {@link ProposalAction}。</li>
- *   <li>未注册的跳转会直接拒绝。发起时同事务内 DRAFT→SUBMIT，对外无暂存。</li>
+ *   <li>未注册的跳转会直接拒绝。发起直接写入审核中，用 {@link #recordEnter} 记一条 from 为空的提交留痕。</li>
  *   <li>申请段批准后停在 {@code APPROVED}，不要接到 {@code PENDING_ASSIGN}（阶段 2 待定）。</li>
  * </ul>
  */
@@ -41,8 +41,7 @@ public class ProposalStateMachine {
     private static final Map<ProposalStatusEnum, Map<ProposalAction, Route>> ROUTES = new EnumMap<>(ProposalStatusEnum.class);
 
     static {
-        // 01 申请段：发起同事务 DRAFT→SUBMIT，对外只有审核中/待批准/已批准/不批准。已取消暂存与撤回。
-        add(ProposalStatusEnum.DRAFT, ProposalAction.SUBMIT, ProposalStatusEnum.PENDING_REVIEW);
+        // 01 申请段：发起即审核中（无草稿跳板）。对外只有审核中/待批准/已批准/不批准。
         add(ProposalStatusEnum.PENDING_REVIEW, ProposalAction.COMMITTEE_DONE, ProposalStatusEnum.PENDING_APPROVAL);
         add(ProposalStatusEnum.PENDING_APPROVAL, ProposalAction.APPROVE, ProposalStatusEnum.APPROVED);
         add(ProposalStatusEnum.PENDING_APPROVAL, ProposalAction.REJECT_FINAL, ProposalStatusEnum.REJECTED_FINAL);
@@ -78,7 +77,7 @@ public class ProposalStateMachine {
 
     /**
      * 日常入口。内部调用五参数并把 {@code context} 置为 null。
-     * 申请提交/撤回/批准、任务指派/入池/领取、交计划书等都不需要 Context。
+     * 申请提交/批准、任务指派/入池/领取、交计划书等都不需要 Context。
      */
     public void transit(Proposal proposal, ProposalAction action, LoginUser loginUser, String remark) {
         transit(proposal, action, loginUser, remark, null);
@@ -125,6 +124,26 @@ public class ProposalStateMachine {
             throw new JeecgBootBizTipException("提案状态更新失败，请刷新后重试");
         }
         appendStatusLog(proposal.getId(), fromCode, toCode, action.getCode(), loginUser, remark);
+    }
+
+    /**
+     * 新建即进入当前状态：不改 status（调用方已写好），只写一条 from 为空的留痕。
+     * 申请段发起用 {@link ProposalAction#SUBMIT}，to 为审核中。
+     */
+    public void recordEnter(Proposal proposal, ProposalAction action, LoginUser loginUser, String remark) {
+        if (proposal == null || oConvertUtils.isEmpty(proposal.getId())) {
+            throw new JeecgBootBizTipException("提案不存在");
+        }
+        if (action == null) {
+            throw new JeecgBootBizTipException("状态动作不能为空");
+        }
+        if (loginUser == null) {
+            throw new JeecgBootBizTipException("操作人不能为空");
+        }
+        if (oConvertUtils.isEmpty(proposal.getStatus())) {
+            throw new JeecgBootBizTipException("提案状态不能为空");
+        }
+        appendStatusLog(proposal.getId(), null, proposal.getStatus(), action.getCode(), loginUser, remark);
     }
 
     /**

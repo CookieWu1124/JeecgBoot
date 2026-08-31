@@ -34,32 +34,16 @@ public class ProposalController {
     @PostMapping("/create")
     public Result<String> create(@RequestBody ProposalCreateRequest request) {
         LoginUser loginUser = currentUser();
-        String id = proposalService.createDraft(request, loginUser);
+        String id = proposalService.create(request, loginUser);
         return Result.OK(id);
     }
 
-    @AutoLog(value = "提案-更新草稿")
-    @Operation(summary = "更新草稿（申请段已取消暂存，调用将失败）")
-    @PutMapping("/{id}/draft")
-    public Result<String> updateDraft(@PathVariable String id, @RequestBody ProposalCreateRequest request) {
-        proposalService.updateDraft(id, request, currentUser());
-        return Result.OK("保存成功");
-    }
-
     @AutoLog(value = "提案-提交申请")
-    @Operation(summary = "提交申请（已并入发起；仅兼容历史草稿或重复提交）")
+    @Operation(summary = "提交申请（已并入发起；已是审核中则幂等成功）")
     @PutMapping("/{id}/submit")
     public Result<String> submit(@PathVariable String id) {
         proposalService.submit(id, currentUser());
         return Result.OK("提交成功");
-    }
-
-    @AutoLog(value = "提案-撤回")
-    @Operation(summary = "撤回申请（申请段已取消，调用将失败）")
-    @PostMapping("/{id}/withdraw")
-    public Result<String> withdraw(@PathVariable String id) {
-        proposalService.withdraw(id, currentUser());
-        return Result.OK("撤回成功");
     }
 
     @Operation(summary = "提案列表")

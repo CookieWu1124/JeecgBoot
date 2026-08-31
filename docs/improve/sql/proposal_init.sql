@@ -394,7 +394,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =============================================================================
 -- 状态枚举参考（应用层 ProposalStatusEnum + ProposalStateMachine，非 sys_dict、非库约束）：
 -- 申请段：PENDING_REVIEW(审核中), PENDING_APPROVAL(待批准), APPROVED(已批准), REJECTED_FINAL(不批准)
--- 历史兼容（新单不写入）：DRAFT、WITHDRAWN
+-- 无草稿、无撤回
 -- 后续阶段待定：PENDING_ASSIGN, PENDING_CLAIM, IN_PROGRESS, PLAN_*, PENDING_EVALUATION, PENDING_SIGNOFF, COMPLETED
 -- 主表 status 无库默认值，须由状态机写入
 --

@@ -37,12 +37,10 @@ export type StampTone = 'amber' | 'blue' | 'teal' | 'purple' | 'green' | 'red' |
 
 /** 印章颜色只属于展示，不参与文案真相。文案优先用接口 statusLabel / meta/statuses。 */
 const STATUS_STAMP: Record<string, StampTone> = {
-  DRAFT: 'gray',
   PENDING_REVIEW: 'blue',
   PENDING_APPROVAL: 'amber',
   APPROVED: 'green',
   REJECTED_FINAL: 'gray',
-  WITHDRAWN: 'gray',
   PENDING_ASSIGN: 'amber',
   PENDING_CLAIM: 'amber',
   IN_PROGRESS: 'teal',

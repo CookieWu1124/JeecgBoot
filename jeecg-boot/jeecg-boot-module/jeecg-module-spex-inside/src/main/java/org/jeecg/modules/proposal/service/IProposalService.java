@@ -12,15 +12,11 @@ import org.jeecg.modules.proposal.vo.app.ProposalHomeVo;
 
 public interface IProposalService extends IService<Proposal> {
 
-    String createDraft(ProposalCreateRequest request, LoginUser loginUser);
+    /** 一次提交，主表直接为审核中。 */
+    String create(ProposalCreateRequest request, LoginUser loginUser);
 
-    /** 申请段已取消暂存，调用将失败。 */
-    void updateDraft(String id, ProposalCreateRequest request, LoginUser loginUser);
-
-    /** 已并入发起；历史草稿仍可走此方法，已是审核中则幂等成功。 */
+    /** 已并入发起；已是审核中则幂等成功，其它状态拒绝。 */
     void submit(String id, LoginUser loginUser);
-
-    void withdraw(String id, LoginUser loginUser);
 
     ProposalDetailVo getDetail(String id, LoginUser loginUser);
 

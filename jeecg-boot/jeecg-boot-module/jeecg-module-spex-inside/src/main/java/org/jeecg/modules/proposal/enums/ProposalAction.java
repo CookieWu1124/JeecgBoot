@@ -14,8 +14,6 @@ public enum ProposalAction {
 
     // —— 01 申请单 ——
     SUBMIT("SUBMIT", "提交申请"),
-    /** 历史日志可能仍有此动作；申请段已取消撤回，状态机不再注册。 */
-    WITHDRAW("WITHDRAW", "撤回申请"),
     /** 委员全部提交后由系统触发，不是委员点的按钮。 */
     COMMITTEE_DONE("COMMITTEE_DONE", "委员审核完成"),
     APPROVE("APPROVE", "申请批准"),

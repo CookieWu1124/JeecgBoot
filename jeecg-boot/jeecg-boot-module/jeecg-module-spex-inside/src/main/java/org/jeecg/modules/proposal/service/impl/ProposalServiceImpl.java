@@ -38,8 +38,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private static final Set<String> TERMINAL_STATUSES = Set.of(
             ProposalStatusEnum.COMPLETED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
-            ProposalStatusEnum.APPROVED.getCode(),
-            ProposalStatusEnum.WITHDRAWN.getCode()
+            ProposalStatusEnum.APPROVED.getCode()
     );
 
     @Autowired
@@ -73,30 +72,41 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String createDraft(ProposalCreateRequest request, LoginUser loginUser) {
+    public String create(ProposalCreateRequest request, LoginUser loginUser) {
         Proposal proposal = new Proposal();
         proposal.setTitle(trimToNull(request.getTitle()));
         proposal.setImprovementTypes(normalizeImprovementTypes(request.getImprovementTypes()));
         proposal.setDeptId(request.getDeptId());
         proposal.setTeamType(defaultTeamType(request.getTeamType()));
         proposal.setProposerId(loginUser.getId());
-        // 同事务内先落库再 SUBMIT；提交完成后状态为审核中，对外无暂存。
-        proposal.setStatus(ProposalStatusEnum.DRAFT.getCode());
+        proposal.setStatus(ProposalStatusEnum.PENDING_REVIEW.getCode());
         proposal.setPlanRound(0);
         applyDeptLeader(proposal);
+        if (oConvertUtils.isEmpty(proposal.getDeptLeaderId())) {
+            throw new JeecgBootBizTipException("该改善部门尚未配置负责人，无法提交");
+        }
+
+        long committeeTotal = committeeMemberService.count(new LambdaQueryWrapper<ProposalCommitteeMember>()
+                .eq(ProposalCommitteeMember::getMemberStatus, "active"));
+        if (committeeTotal <= 0) {
+            throw new JeecgBootBizTipException("委员会名册为空，无法提交");
+        }
+        proposal.setProposalNo(generateProposalNo());
+        proposal.setReviewProgress("0/" + committeeTotal);
         ProposalAuditHelper.fillOnCreate(loginUser, proposal);
         save(proposal);
 
         saveOrUpdateApplication(proposal.getId(), request, loginUser, true);
-        replaceAttachments(proposal.getId(), request.getAttachments(), loginUser);
-        submit(proposal.getId(), loginUser);
-        return proposal.getId();
-    }
+        ProposalApplication application = getApplication(proposal.getId());
+        validateSubmit(proposal, application);
+        application.setSubmitTime(new Date());
+        ProposalAuditHelper.fillOnUpdate(loginUser, application);
+        applicationService.updateById(application);
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateDraft(String id, ProposalCreateRequest request, LoginUser loginUser) {
-        throw new JeecgBootBizTipException("申请段已取消暂存");
+        replaceAttachments(proposal.getId(), request.getAttachments(), loginUser);
+        createReviewSnapshot(proposal, loginUser);
+        stateMachine.recordEnter(proposal, ProposalAction.SUBMIT, loginUser, "提交申请");
+        return proposal.getId();
     }
 
     @Override
@@ -109,42 +119,10 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (!loginUser.getId().equals(existing.getProposerId())) {
             throw new JeecgBootBizTipException("仅提案人可提交");
         }
-        // 新发起已在 create 一次提交；旧客户端再调 submit 时直接成功。
         if (ProposalStatusEnum.PENDING_REVIEW.getCode().equals(existing.getStatus())) {
             return;
         }
-
-        Proposal proposal = getOwnedDraft(id, loginUser);
-        ProposalApplication application = getApplication(id);
-        validateSubmit(proposal, application);
-
-        if (oConvertUtils.isEmpty(proposal.getDeptLeaderId())) {
-            throw new JeecgBootBizTipException("该改善部门尚未配置负责人，无法提交");
-        }
-
-        long committeeTotal = committeeMemberService.count(new LambdaQueryWrapper<ProposalCommitteeMember>()
-                .eq(ProposalCommitteeMember::getMemberStatus, "active"));
-        if (committeeTotal <= 0) {
-            throw new JeecgBootBizTipException("委员会名册为空，无法提交");
-        }
-
-        if (oConvertUtils.isEmpty(proposal.getProposalNo())) {
-            proposal.setProposalNo(generateProposalNo());
-        }
-        proposal.setReviewProgress("0/" + committeeTotal);
-        stateMachine.transit(proposal, ProposalAction.SUBMIT, loginUser, "提交申请");
-
-        application.setSubmitTime(new Date());
-        ProposalAuditHelper.fillOnUpdate(loginUser, application);
-        applicationService.updateById(application);
-
-        createReviewSnapshot(proposal, loginUser);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void withdraw(String id, LoginUser loginUser) {
-        throw new JeecgBootBizTipException("申请段已取消撤回");
+        throw new JeecgBootBizTipException("申请段已取消暂存，请通过发起接口提交");
     }
 
     @Override
@@ -369,26 +347,12 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setDeptDesc(buildDeptDesc(loginUser));
 
         String userId = loginUser.getId();
-        vo.setTodoCount(countDrafts(userId));
+        vo.setTodoCount(0);
         vo.setDoingCount(countDoing(userId));
         vo.setDoneCount(countDone(userId));
-        vo.setTodoItems(buildTodoItems(userId));
+        vo.setTodoItems(Collections.emptyList());
         vo.setFeeds(buildFeeds(userId));
         return vo;
-    }
-
-    private Proposal getOwnedDraft(String id, LoginUser loginUser) {
-        Proposal proposal = getById(id);
-        if (proposal == null) {
-            throw new JeecgBootBizTipException("提案不存在");
-        }
-        if (!loginUser.getId().equals(proposal.getProposerId())) {
-            throw new JeecgBootBizTipException("仅提案人可编辑草稿");
-        }
-        if (!ProposalStatusEnum.DRAFT.getCode().equals(proposal.getStatus())) {
-            throw new JeecgBootBizTipException("仅草稿状态可编辑");
-        }
-        return proposal;
     }
 
     private ProposalApplication getApplication(String proposalId) {
@@ -598,20 +562,14 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (oConvertUtils.isEmpty(tab) || "all".equalsIgnoreCase(tab) || "mine".equalsIgnoreCase(tab)) {
             return;
         }
-        if ("draft".equalsIgnoreCase(tab)) {
-            qw.eq(Proposal::getStatus, ProposalStatusEnum.DRAFT.getCode());
-            return;
-        }
         if ("doing".equalsIgnoreCase(tab)) {
             qw.notIn(Proposal::getStatus, TERMINAL_STATUSES);
-            qw.ne(Proposal::getStatus, ProposalStatusEnum.DRAFT.getCode());
             return;
         }
         if ("done".equalsIgnoreCase(tab)) {
             qw.in(Proposal::getStatus, ProposalStatusEnum.COMPLETED.getCode(),
                     ProposalStatusEnum.REJECTED_FINAL.getCode(),
-                    ProposalStatusEnum.APPROVED.getCode(),
-                    ProposalStatusEnum.WITHDRAWN.getCode());
+                    ProposalStatusEnum.APPROVED.getCode());
         }
     }
 
@@ -722,41 +680,16 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         return prefix + String.format("%04d", next);
     }
 
-    private long countDrafts(String userId) {
-        return count(new LambdaQueryWrapper<Proposal>()
-                .eq(Proposal::getProposerId, userId)
-                .eq(Proposal::getStatus, ProposalStatusEnum.DRAFT.getCode()));
-    }
-
     private long countDoing(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
-                .notIn(Proposal::getStatus, TERMINAL_STATUSES)
-                .ne(Proposal::getStatus, ProposalStatusEnum.DRAFT.getCode()));
+                .notIn(Proposal::getStatus, TERMINAL_STATUSES));
     }
 
     private long countDone(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
                 .eq(Proposal::getStatus, ProposalStatusEnum.COMPLETED.getCode()));
-    }
-
-    private List<ProposalHomeVo.TodoItem> buildTodoItems(String userId) {
-        List<Proposal> drafts = list(new LambdaQueryWrapper<Proposal>()
-                .eq(Proposal::getProposerId, userId)
-                .eq(Proposal::getStatus, ProposalStatusEnum.DRAFT.getCode())
-                .orderByDesc(Proposal::getUpdateTime)
-                .last("LIMIT 3"));
-        return drafts.stream().map(p -> {
-            ProposalHomeVo.TodoItem item = new ProposalHomeVo.TodoItem();
-            item.setProposalId(p.getId());
-            item.setProposalNo(p.getProposalNo());
-            item.setTitle(p.getTitle());
-            item.setStatus(p.getStatus());
-            item.setStatusLabel(ProposalStatusEnum.labelOf(p.getStatus()));
-            item.setActionHint("继续编辑并提交");
-            return item;
-        }).collect(Collectors.toList());
     }
 
     private List<ProposalHomeVo.FeedItem> buildFeeds(String userId) {

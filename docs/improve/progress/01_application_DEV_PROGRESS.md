@@ -31,8 +31,6 @@
 | `PENDING_APPROVAL` | 待批准 | ✓ |
 | `APPROVED` | 已批准 | ✓ 申请段通过（阶段 2 待定） |
 | `REJECTED_FINAL` | 不批准 | ✓ 终态 |
-| `DRAFT` | 草稿 | 历史兼容；新单不停留 |
-| `WITHDRAWN` | 已撤回 | 历史兼容；申请段已取消撤回 |
 
 ---
 
@@ -41,9 +39,7 @@
 | 状态/动作 | 方法 | 路径 | 端 | 进度 |
 |-----------|------|------|-----|------|
 | 发起提案 | POST | `/proposal/create` | 共用 | [x] 一次提交，进入审核中 |
-| 更新草稿 | PUT | `/proposal/{id}/draft` | 共用 | [x] **已取消** |
 | 单独提交 | PUT | `/proposal/{id}/submit` | 共用 | [x] **已并入发起**；重复调用幂等 |
-| 撤回 | POST | `/proposal/{id}/withdraw` | 共用 | [x] **已取消**，调用失败 |
 | 列表/详情 | GET | `/proposal/list`, `/proposal/{id}` | 共用 | [x] |
 | 委员待审列表 | GET | `/proposal/review/committee/pending` | 共用 | [x] |
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [x] |
@@ -85,7 +81,7 @@
 | `proposal` | 1 | [x] | 主表 |
 | `proposal_application` | 1 | [x] | 申请书正文 |
 | `proposal_attachment` | 1 | [x] | 现场图片等 |
-| `proposal_status_log` | 1 | [x] | 提交/撤回已写日志 |
+| `proposal_status_log` | 1 | [x] | 提交/委员齐/批准等由状态机写日志 |
 | `proposal_committee_member` | 1 | [x] | 审核名册 |
 | `proposal_approver` | 1 | [x] | 批准人配置 |
 | `proposal_dept_leader` | 1 | [x] | 提交前校验 |
@@ -99,7 +95,7 @@
 
 | # | 任务 | 进度 |
 |---|------|------|
-| 1 | `ProposalController` 创建/草稿/提交/撤回/列表/详情 | [x] |
+| 1 | `ProposalController` 创建/列表/详情 | [x] |
 | 2 | 提交校验：部门负责人、委员会非空、申请书必填 | [x] |
 | 3 | 提案编号生成 `proposal_no` | [x] |
 | 4 | 附件上传关联（最多 4 张） | [x] |
@@ -137,7 +133,7 @@
 - [x] 在任委员可并行提交独立意见，全部完成后进入 `PENDING_APPROVAL`（`202608290001` 已 5/5 → 待核定，管理端已验）
 - [x] 批准人「不批准」→ `REJECTED_FINAL`，不可再编辑（已联调）
 - [x] 批准人「批准」→ `APPROVED`，并写入 `plan_required`、`award_amount`（**不进入** `PENDING_ASSIGN`）
-- [x] 申请段已取消撤回；`POST /withdraw` 返回失败提示
+- [x] 申请段无撤回、无草稿接口
 - [x] 未配置部门负责人或委员会为空时，提交被拒绝并提示
 - [x] 管理端详情可查看申请书正文（目前状况/改善意见）与操作留痕
 - [x] 管理端详情可查看委员审核意见列表（含未审快照行）
@@ -187,3 +183,5 @@
 | 2026-08-31 | **列表/详情嵌套回显**：配置与提案管理 list/detail 一次返回人员部门摘要，去掉前端 N+1 |
 | 2026-08-31 | **申请段状态精简**：四档 审核中/待批准/已批准/不批准；新增 `APPROVED`；批准不再进入待指派；取消撤回 |
 | 2026-08-31 | **取消暂存**：`POST /proposal/create` 一次进入审核中；更新草稿失败；列表去掉草稿 Tab |
+| 2026-08-31 | **去掉 DRAFT**：枚举与状态机不再有草稿；发起直接写 `PENDING_REVIEW`；流转 `from_status` 为空；存量见 `20260831_purge_proposal_draft.sql` |
+| 2026-08-31 | **去掉草稿/撤回接口**：删除 `PUT /{id}/draft`、`POST /{id}/withdraw`；枚举去掉 `WITHDRAWN`；存量见 `20260831_purge_proposal_withdrawn.sql` |
