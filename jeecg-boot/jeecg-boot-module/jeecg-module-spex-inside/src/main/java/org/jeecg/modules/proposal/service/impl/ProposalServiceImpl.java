@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.*;
+import org.jeecg.modules.proposal.enums.ProposalAction;
 import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.mapper.ProposalMapper;
 import org.jeecg.modules.proposal.service.*;
@@ -54,6 +55,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private IProposalApproverService approverService;
     @Autowired
     private IProposalApprovalRecordService approvalRecordService;
+    @Autowired
+    private ProposalStateMachine stateMachine;
 
     private static final String CONCLUSION_ADOPT = "ADOPT";
     private static final String CONCLUSION_REJECT = "REJECT";
@@ -70,6 +73,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         proposal.setDeptId(request.getDeptId());
         proposal.setTeamType(defaultTeamType(request.getTeamType()));
         proposal.setProposerId(loginUser.getId());
+        // 新建单据赋初态，不是跳转，不走状态机。
         proposal.setStatus(ProposalStatusEnum.DRAFT.getCode());
         proposal.setPlanRound(0);
         applyDeptLeader(proposal);
@@ -114,14 +118,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             throw new JeecgBootBizTipException("委员会名册为空，无法提交");
         }
 
-        String fromStatus = proposal.getStatus();
         if (oConvertUtils.isEmpty(proposal.getProposalNo())) {
             proposal.setProposalNo(generateProposalNo());
         }
-        proposal.setStatus(ProposalStatusEnum.PENDING_REVIEW.getCode());
         proposal.setReviewProgress("0/" + committeeTotal);
-        ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
-        updateById(proposal);
+        stateMachine.transit(proposal, ProposalAction.SUBMIT, loginUser, "提交申请");
 
         application.setSubmitTime(new Date());
         ProposalAuditHelper.fillOnUpdate(loginUser, application);
@@ -129,8 +130,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
 
         // 【Phase2】提交时快照委员待办
         createReviewSnapshot(proposal, loginUser);
-
-        appendStatusLog(id, fromStatus, proposal.getStatus(), "SUBMIT", loginUser, "提交申请");
     }
 
     @Override
@@ -143,19 +142,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (!loginUser.getId().equals(proposal.getProposerId())) {
             throw new JeecgBootBizTipException("仅提案人可撤回");
         }
-        if (!ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
-            throw new JeecgBootBizTipException("仅待审核状态可撤回");
-        }
 
-        String fromStatus = proposal.getStatus();
-        proposal.setStatus(ProposalStatusEnum.WITHDRAWN.getCode());
-        ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
-        updateById(proposal);
+        stateMachine.transit(proposal, ProposalAction.WITHDRAW, loginUser, "撤回申请");
         // 【Phase2】撤回清委员审核快照
         committeeReviewService.remove(new LambdaQueryWrapper<ProposalCommitteeReview>()
                 .eq(ProposalCommitteeReview::getProposalId, id));
-
-        appendStatusLog(id, fromStatus, proposal.getStatus(), "WITHDRAW", loginUser, "撤回申请");
     }
 
     @Override
@@ -242,9 +233,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (proposal == null) {
             throw new JeecgBootBizTipException("提案不存在");
         }
-        if (!ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
-            throw new JeecgBootBizTipException("仅待审核状态可提交委员意见");
-        }
+        // 委员逐条填意见不改 status，不能走 transit。
+        stateMachine.assertStatus(proposal, ProposalStatusEnum.PENDING_REVIEW, "仅待审核状态可提交委员意见");
 
         ensureReviewSnapshot(proposal, loginUser);
 
@@ -312,10 +302,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (proposal == null) {
             throw new JeecgBootBizTipException("提案不存在");
         }
-        if (!ProposalStatusEnum.PENDING_APPROVAL.getCode().equals(proposal.getStatus())) {
-            throw new JeecgBootBizTipException("仅待批准状态可做申请批准决策");
-        }
-
         long existed = approvalRecordService.count(new LambdaQueryWrapper<ProposalApproval>()
                 .eq(ProposalApproval::getProposalId, proposalId)
                 .eq(ProposalApproval::getStage, APPROVAL_STAGE_APPLICATION));
@@ -330,7 +316,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         record.setDecision(decision);
         record.setApproveTime(new Date());
 
-        String fromStatus = proposal.getStatus();
         if (DECISION_APPROVE.equals(decision)) {
             if (request.getPlanRequired() == null
                     || (request.getPlanRequired() != 0 && request.getPlanRequired() != 1)) {
@@ -342,13 +327,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
 
             proposal.setPlanRequired(request.getPlanRequired());
             proposal.setAwardAmount(request.getAwardAmount());
-            proposal.setStatus(ProposalStatusEnum.PENDING_ASSIGN.getCode());
-            ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
-            updateById(proposal);
-
-            ProposalAuditHelper.fillOnCreate(loginUser, record);
-            approvalRecordService.save(record);
-            appendStatusLog(proposalId, fromStatus, proposal.getStatus(), "APPROVE", loginUser, "申请批准");
+            stateMachine.transit(proposal, ProposalAction.APPROVE, loginUser, "申请批准");
         } else {
             String comment = trimToNull(request.getComment());
             if (oConvertUtils.isEmpty(comment)) {
@@ -358,14 +337,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             record.setAwardAmount(null);
             record.setComment(comment);
 
-            proposal.setStatus(ProposalStatusEnum.REJECTED_FINAL.getCode());
-            ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
-            updateById(proposal);
-
-            ProposalAuditHelper.fillOnCreate(loginUser, record);
-            approvalRecordService.save(record);
-            appendStatusLog(proposalId, fromStatus, proposal.getStatus(), "REJECT_FINAL", loginUser, comment);
+            stateMachine.transit(proposal, ProposalAction.REJECT_FINAL, loginUser, comment);
         }
+
+        ProposalAuditHelper.fillOnCreate(loginUser, record);
+        approvalRecordService.save(record);
     }
 
     @Override
@@ -610,11 +586,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
 
         if (total > 0 && done >= total) {
-            String fromStatus = proposal.getStatus();
-            proposal.setStatus(ProposalStatusEnum.PENDING_APPROVAL.getCode());
-            updateById(proposal);
-            appendStatusLog(proposal.getId(), fromStatus, proposal.getStatus(),
-                    "COMMITTEE_DONE", loginUser, "委员审核全部完成");
+            stateMachine.transit(proposal, ProposalAction.COMMITTEE_DONE, loginUser, "委员审核全部完成");
         } else {
             updateById(proposal);
         }
@@ -659,19 +631,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             throw new JeecgBootBizTipException("当日提案编号已达上限");
         }
         return prefix + String.format("%04d", next);
-    }
-
-    private void appendStatusLog(String proposalId, String fromStatus, String toStatus,
-                                 String action, LoginUser loginUser, String remark) {
-        ProposalStatusLog log = new ProposalStatusLog();
-        log.setProposalId(proposalId);
-        log.setFromStatus(fromStatus);
-        log.setToStatus(toStatus);
-        log.setAction(action);
-        log.setOperatorId(loginUser.getId());
-        log.setRemark(remark);
-        ProposalAuditHelper.fillOnCreate(loginUser, log);
-        statusLogService.save(log);
     }
 
     private long countDrafts(String userId) {

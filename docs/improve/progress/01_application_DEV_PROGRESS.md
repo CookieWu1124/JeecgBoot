@@ -6,7 +6,7 @@
 | **规划 Phase** | Phase 1（骨架）+ Phase 2（审核流） |
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
-| **最后更新** | 2026-08-29 |
+| **最后更新** | 2026-08-31 |
 | **本段状态** | 申请段 Phase2 **已收齐并联调通过**（委员审核 + 批准人决策）；出口待指派 → 02 |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
@@ -104,8 +104,8 @@
 | 2 | 提交校验：部门负责人、委员会非空、申请书必填 | [x] |
 | 3 | 提案编号生成 `proposal_no` | [x] |
 | 4 | 附件上传关联（最多 4 张） | [x] |
-| 5 | `ProposalStatusEnum` + 状态日志 | [~] SUBMIT/WITHDRAW/COMMITTEE_DONE/APPROVE/REJECT_FINAL 已写 |
-| 6 | `ProposalStateMachine` 统一迁移校验 | [ ] |
+| 5 | `ProposalStatusEnum` + 状态日志 | [x] 改状态统一由 StateMachine 写日志 |
+| 6 | `ProposalStateMachine` 统一迁移校验 | [x] 申请段已接入；02/03/04 路线已预注册 |
 | 7 | `proposal_committee_review` 实体/Mapper/并行审核汇总 | [x] |
 | 8 | 委员全部完成 → `PENDING_APPROVAL` | [x] |
 | 9 | `proposal_approval` + 批准/不批准 + 写 `plan_required` | [x] |
@@ -180,3 +180,4 @@
 | 2026-08-29 | **Phase2 批准人申请决策**：建表 proposal_approval；pending/决策接口；写 plan_required/award_amount；spex-app 待核定+approve 接真；管理端详情展示批准结果；申请段 Phase2 收齐 |
 | 2026-08-29 | **申请段 Phase2 联调归档**：`202608290001` 委员 5/5 → 待核定（管理端已验）；批准人决策链路已验；本段关闭，下一里程碑 02 任务分配 |
 | 2026-08-29 | **App 对接清单**：新增 `docs/improve/api/提案小程序-接口对接清单.md`（申请段接口/字段/示例/联调账号），供小程序前端同事联调 |
+| 2026-08-31 | **状态机提前落地**：`ProposalStateMachine` + `ProposalAction`；提交/撤回/委员齐/批准/不批准改走 `transit()`；02/03/04 合法跳转已预注册 |

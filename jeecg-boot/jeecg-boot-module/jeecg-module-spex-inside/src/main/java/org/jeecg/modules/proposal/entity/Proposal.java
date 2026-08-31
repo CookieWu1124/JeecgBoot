@@ -22,6 +22,7 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
 
     private String proposalNo;
     private String title;
+    /** 当前环节，取值见 {@link org.jeecg.modules.proposal.enums.ProposalStatusEnum}。改状态须走 ProposalStateMachine。 */
     private String status;
     private String improvementTypes;
     private String deptId;
@@ -29,9 +30,12 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
     private String proposerId;
     private String implementLeaderId;
     private String teamType;
+    /** 批准人核定：1 走计划书，0 任务分配后直接交报告书。委员审核里的同名字段只是建议。 */
     private Integer planRequired;
     private BigDecimal awardAmount;
+    /** 计划书轮次，驳回重提时递增。 */
     private Integer planRound;
+    /** 申请/计划书委员进度，如 3/7。 */
     private String reviewProgress;
     private String scoreProgress;
     private BigDecimal scoreTotal;
@@ -39,6 +43,7 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
     private Date filedDate;
     private Date closedDate;
 
+    /** 乐观锁。状态机 updateById 影响 0 行时提示刷新后重试。 */
     @Version
     private Integer version;
 }

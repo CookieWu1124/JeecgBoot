@@ -90,7 +90,7 @@
 | 5 | 任务池 API：→ `PENDING_CLAIM` | [ ] |
 | 6 | 领取 API：校验同部门、→ `IN_PROGRESS` | [ ] |
 | 7 | 转团队：成员列表 + 指定 leader | [ ] |
-| 8 | 状态机迁移 + `proposal_status_log` | [ ] |
+| 8 | 状态机迁移 + `proposal_status_log` | [~] `ASSIGN`/`PUT_POOL`/`CLAIM` 已预注册；业务 API 接 `stateMachine.transit()` |
 | 9 | 待办项：部门负责人「待指派」 | [ ] |
 
 ---
@@ -119,7 +119,7 @@
 
 ## 9. 依赖与前置
 
-- [ ] [01 申请单](./01_application_DEV_PROGRESS.md) 批准人决策完成（`PENDING_ASSIGN`）
+- [x] [01 申请单](./01_application_DEV_PROGRESS.md) 批准人决策完成（`PENDING_ASSIGN`）
 - [x] `proposal_dept_leader` 配置表已建（`inside_dev` 2026-08-28）
 - [ ] 部门树 / 用户部门关系正确（`sys_user_depart`）
 
@@ -131,3 +131,4 @@
 |------|------|
 | 2026-08-28 | 初版进度文档 |
 | 2026-08-28 | `inside_dev` 已执行 init SQL，主表及配置表就绪 |
+| 2026-08-31 | 状态机预注册 `ASSIGN`/`PUT_POOL`/`CLAIM`；实现 API 时走 `ProposalStateMachine.transit()` |

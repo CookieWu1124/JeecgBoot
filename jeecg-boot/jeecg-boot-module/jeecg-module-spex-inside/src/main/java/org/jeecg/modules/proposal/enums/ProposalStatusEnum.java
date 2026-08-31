@@ -2,29 +2,51 @@ package org.jeecg.modules.proposal.enums;
 
 import lombok.Getter;
 
+/**
+ * 提案主表 {@code proposal.status} 的合法取值。{@link #code} 落库，{@link #label} 给前端/提示。
+ * <p>
+ * 合法跳转见 {@code ProposalStateMachine}，不要在 Service 里拼字符串改 status。
+ * 终态（不再迁出）：{@link #REJECTED_FINAL}、{@link #WITHDRAWN}、{@link #COMPLETED}。
+ */
 @Getter
 public enum ProposalStatusEnum {
 
-    DRAFT("DRAFT", "\u8349\u7a3f"),
-    PENDING_REVIEW("PENDING_REVIEW", "\u5f85\u5ba1\u6838"),
-    PENDING_APPROVAL("PENDING_APPROVAL", "\u5f85\u6279\u51c6"),
-    REJECTED_FINAL("REJECTED_FINAL", "\u4e0d\u6279\u51c6"),
-    WITHDRAWN("WITHDRAWN", "\u5df2\u64a4\u56de"),
-    PENDING_ASSIGN("PENDING_ASSIGN", "\u5f85\u6307\u6d3e"),
-    PENDING_CLAIM("PENDING_CLAIM", "\u5f85\u9886\u53d6"),
-    IN_PROGRESS("IN_PROGRESS", "\u8fdb\u884c\u4e2d"),
-    PLAN_PENDING_REVIEW("PLAN_PENDING_REVIEW", "\u8ba1\u5212\u4e66\u5f85\u5ba1"),
-    PLAN_PENDING_APPROVAL("PLAN_PENDING_APPROVAL", "\u8ba1\u5212\u4e66\u5f85\u6279"),
-    PLAN_REJECTED("PLAN_REJECTED", "\u5df2\u9a73\u56de"),
-    PENDING_EVALUATION("PENDING_EVALUATION", "\u5f85\u8bc4\u5b9a"),
-    PENDING_SIGNOFF("PENDING_SIGNOFF", "\u5f85\u7b7e\u6838"),
-    COMPLETED("COMPLETED", "\u5df2\u5b8c\u6210");
+    DRAFT("DRAFT", "草稿"),
+    PENDING_REVIEW("PENDING_REVIEW", "待审核"),
+    PENDING_APPROVAL("PENDING_APPROVAL", "待批准"),
+    REJECTED_FINAL("REJECTED_FINAL", "不批准"),
+    WITHDRAWN("WITHDRAWN", "已撤回"),
+    PENDING_ASSIGN("PENDING_ASSIGN", "待指派"),
+    PENDING_CLAIM("PENDING_CLAIM", "待领取"),
+    /** 任务已分配。下一步交计划书还是交报告书，看 plan_required，不单看本状态。 */
+    IN_PROGRESS("IN_PROGRESS", "进行中"),
+    PLAN_PENDING_REVIEW("PLAN_PENDING_REVIEW", "计划书待审"),
+    PLAN_PENDING_APPROVAL("PLAN_PENDING_APPROVAL", "计划书待批"),
+    PLAN_REJECTED("PLAN_REJECTED", "已驳回"),
+    PENDING_EVALUATION("PENDING_EVALUATION", "待评定"),
+    PENDING_SIGNOFF("PENDING_SIGNOFF", "待签核"),
+    COMPLETED("COMPLETED", "已完成");
 
+    /** 写入 proposal.status / status_log.from_status / to_status。 */
     private final String code;
+    /** 界面显示名。 */
     private final String label;
 
     ProposalStatusEnum(String code, String label) {
         this.code = code;
         this.label = label;
+    }
+
+    /** 库里读出的 status 字符串转枚举；未知值返回 null，由状态机报「未知提案状态」。 */
+    public static ProposalStatusEnum fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        for (ProposalStatusEnum item : values()) {
+            if (item.code.equals(code)) {
+                return item;
+            }
+        }
+        return null;
     }
 }

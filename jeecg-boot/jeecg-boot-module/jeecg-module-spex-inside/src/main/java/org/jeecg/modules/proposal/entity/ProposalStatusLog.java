@@ -17,9 +17,17 @@ public class ProposalStatusLog extends ProposalBaseEntity implements Serializabl
 
     private static final long serialVersionUID = 1L;
 
+    @Schema(description = "提案ID")
     private String proposalId;
+    /** 跳转前状态，对应 {@link org.jeecg.modules.proposal.enums.ProposalStatusEnum#getCode()}。 */
+    @Schema(description = "变更前状态")
     private String fromStatus;
+    /** 跳转后状态。 */
+    @Schema(description = "变更后状态")
     private String toStatus;
+    /** 动作码，对应 {@link org.jeecg.modules.proposal.enums.ProposalAction#getCode()}。 */
+    @Schema(description = "动作")
     private String action;
+    @Schema(description = "操作人用户ID")
     private String operatorId;
 }

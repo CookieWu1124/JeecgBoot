@@ -96,7 +96,7 @@
 | 6 | 等级 `score_grade` 规则 | [ ] |
 | 7 | 全部评分完成 → `PENDING_SIGNOFF` | [ ] |
 | 8 | 批准人签核 → `COMPLETED` + `closed_date` | [ ] |
-| 9 | 状态机 + 日志 + 待办 + 消息 | [ ] |
+| 9 | 状态机 + 日志 + 待办 + 消息 | [~] `SUBMIT_REPORT`/`SCORE_DONE`/`SIGNOFF` 已预注册；`plan_required=1` 须带 `Context.planApproved()` |
 
 ---
 
@@ -138,3 +138,4 @@
 |------|------|
 | 2026-08-28 | 初版进度文档 |
 | 2026-08-28 | `inside_dev` 已执行 init SQL，评分维度种子及主表评分字段就绪 |
+| 2026-08-31 | 状态机预注册报告书/评分/签核跳转；`plan_required=1` 交报告书须 `Context.planApproved()` |
