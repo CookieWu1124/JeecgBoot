@@ -40,6 +40,7 @@ const STATUS_STAMP: Record<string, StampTone> = {
   DRAFT: 'gray',
   PENDING_REVIEW: 'blue',
   PENDING_APPROVAL: 'amber',
+  APPROVED: 'green',
   REJECTED_FINAL: 'gray',
   WITHDRAWN: 'gray',
   PENDING_ASSIGN: 'amber',

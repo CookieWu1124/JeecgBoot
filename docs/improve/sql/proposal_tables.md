@@ -172,7 +172,7 @@
 | `id` | varchar(36) | 否 | 主键 |
 | `proposal_no` | varchar(20) | 是 | 提案编号（提交时生成） |
 | `title` | varchar(100) | 否 | 提案名称 |
-| `status` | varchar(32) | 否 | 状态枚举 |
+| `status` | varchar(32) | 否 | 申请环节码（`ProposalStatusEnum`）。**不是** `sys_dict`。改状态须走 `ProposalStateMachine`。无库默认值。申请段：PENDING_REVIEW / PENDING_APPROVAL / APPROVED / REJECTED_FINAL |
 | `improvement_types` | varchar(200) | 是 | 改善性质 JSON 数组（码对应 `proposal_improvement_type.type_code`） |
 | `dept_id` | varchar(36) | 是 | 改善部门 |
 | `dept_leader_id` | varchar(36) | 是 | 部门负责人 |
@@ -251,9 +251,9 @@
 | :--- | :--- | :--- | :--- |
 | `id` | varchar(36) | 否 | 主键 |
 | `proposal_id` | varchar(36) | 否 | 提案ID |
-| `from_status` | varchar(32) | 是 | 原状态 |
-| `to_status` | varchar(32) | 否 | 新状态 |
-| `action` | varchar(64) | 是 | 动作编码 SUBMIT/WITHDRAW 等 |
+| `from_status` | varchar(32) | 是 | 跳转前状态码（同 `proposal.status`，非字典） |
+| `to_status` | varchar(32) | 否 | 跳转后状态码（同 `proposal.status`，非字典） |
+| `action` | varchar(64) | 是 | 动作编码（`ProposalAction`，非字典） |
 | `operator_id` | varchar(36) | 是 | 操作人 sys_user.id |
 
 > 状态变更说明写入通用字段 `remark`。

@@ -4,7 +4,7 @@
  */
 import { http } from '@/http/http'
 
-/** 创建/更新草稿请求（对齐 ProposalCreateRequest） */
+/** 发起提案请求（对齐 ProposalCreateRequest） */
 export interface ProposalCreatePayload {
   title: string
   /** 改善性质：JSON 数组字符串，如 ["SAFETY","QUALITY"] */
@@ -37,11 +37,25 @@ export interface StatusOption {
 }
 
 export interface ProposalListQuery {
-  /** all | mine | draft | doing | done */
+  /** all | mine | doing | done */
   tab?: string
   title?: string
   pageNo?: number
   pageSize?: number
+}
+
+export interface ProposalUserBrief {
+  id?: string
+  realname?: string
+  workNo?: string
+  username?: string
+  deptName?: string
+}
+
+export interface ProposalDeptBrief {
+  id?: string
+  departName?: string
+  orgCode?: string
 }
 
 export interface ProposalListItem {
@@ -55,7 +69,17 @@ export interface ProposalListItem {
   deptId?: string
   deptLeaderId?: string
   proposerId?: string
+  dept?: ProposalDeptBrief
+  proposer?: ProposalUserBrief
   reviewProgress?: string
+  /** 委员采用人数（列表汇总，不落库） */
+  adoptCount?: number
+  /** 委员不采用人数 */
+  rejectCount?: number
+  /** 委员采用票多数建议是否形成计划书 0/1 */
+  planRequiredSuggest?: number
+  /** 委员采用票奖励建议众数 */
+  awardSuggestAmount?: number
   scoreProgress?: string
   scoreTotal?: number
   scoreGrade?: string
@@ -150,22 +174,11 @@ export function fetchImprovementTypes(enabledOnly = true) {
   })
 }
 
-/** ---------- Phase 1：已实现 ---------- */
+/** ---------- 申请段：已实现 ---------- */
 
+/** 发起提案（一次提交，进入审核中；无暂存） */
 export function createProposal(data: ProposalCreatePayload) {
   return http.post<string>('/proposal/create', data)
-}
-
-export function updateProposalDraft(id: string, data: ProposalCreatePayload) {
-  return http.put<string>(`/proposal/${id}/draft`, data)
-}
-
-export function submitProposal(id: string) {
-  return http.put<string>(`/proposal/${id}/submit`)
-}
-
-export function withdrawProposal(id: string) {
-  return http.post<string>(`/proposal/${id}/withdraw`)
 }
 
 export function fetchProposalList(query: ProposalListQuery = {}) {

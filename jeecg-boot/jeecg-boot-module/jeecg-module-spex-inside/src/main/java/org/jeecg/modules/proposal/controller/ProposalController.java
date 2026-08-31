@@ -29,8 +29,8 @@ public class ProposalController {
     @Autowired
     private IProposalService proposalService;
 
-    @AutoLog(value = "提案-创建草稿")
-    @Operation(summary = "创建提案（草稿）")
+    @AutoLog(value = "提案-发起")
+    @Operation(summary = "发起提案（一次提交，进入审核中；无暂存）")
     @PostMapping("/create")
     public Result<String> create(@RequestBody ProposalCreateRequest request) {
         LoginUser loginUser = currentUser();
@@ -39,7 +39,7 @@ public class ProposalController {
     }
 
     @AutoLog(value = "提案-更新草稿")
-    @Operation(summary = "更新草稿")
+    @Operation(summary = "更新草稿（申请段已取消暂存，调用将失败）")
     @PutMapping("/{id}/draft")
     public Result<String> updateDraft(@PathVariable String id, @RequestBody ProposalCreateRequest request) {
         proposalService.updateDraft(id, request, currentUser());
@@ -47,7 +47,7 @@ public class ProposalController {
     }
 
     @AutoLog(value = "提案-提交申请")
-    @Operation(summary = "提交申请")
+    @Operation(summary = "提交申请（已并入发起；仅兼容历史草稿或重复提交）")
     @PutMapping("/{id}/submit")
     public Result<String> submit(@PathVariable String id) {
         proposalService.submit(id, currentUser());
@@ -55,7 +55,7 @@ public class ProposalController {
     }
 
     @AutoLog(value = "提案-撤回")
-    @Operation(summary = "撤回申请")
+    @Operation(summary = "撤回申请（申请段已取消，调用将失败）")
     @PostMapping("/{id}/withdraw")
     public Result<String> withdraw(@PathVariable String id) {
         proposalService.withdraw(id, currentUser());

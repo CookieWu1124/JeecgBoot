@@ -16,7 +16,7 @@
           <view class="rev-sum__aside">
             <view class="stamp">
               <view class="stamp__dot" />
-              <text class="stamp__txt">待审核</text>
+              <text class="stamp__txt">审核中</text>
             </view>
             <wd-icon name="arrow-right" size="14px" color="#C2C8DC" />
           </view>

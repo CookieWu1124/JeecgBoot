@@ -81,15 +81,19 @@ public class ProposalMetaController {
         return Result.OK(options);
     }
 
-    @Operation(summary = "提案状态选项（枚举，非字典）")
+    @Operation(summary = "提案状态选项（枚举，非字典；默认仅申请段四档）")
     @GetMapping("/statuses")
-    public Result<List<StatusOption>> statuses() {
+    public Result<List<StatusOption>> statuses(
+            @RequestParam(name = "applicationOnly", defaultValue = "true") boolean applicationOnly) {
         List<StatusOption> options = new ArrayList<>();
         for (ProposalStatusEnum item : ProposalStatusEnum.values()) {
+            if (applicationOnly && !item.applicationStage()) {
+                continue;
+            }
             StatusOption opt = new StatusOption();
             opt.setCode(item.getCode());
             opt.setLabel(item.getLabel());
-            opt.setTerminal(item.terminal());
+            opt.setTerminal(applicationOnly ? item.applicationClosed() : item.terminal());
             options.add(opt);
         }
         return Result.OK(options);

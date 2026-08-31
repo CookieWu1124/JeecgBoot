@@ -14,8 +14,10 @@ public interface IProposalService extends IService<Proposal> {
 
     String createDraft(ProposalCreateRequest request, LoginUser loginUser);
 
+    /** 申请段已取消暂存，调用将失败。 */
     void updateDraft(String id, ProposalCreateRequest request, LoginUser loginUser);
 
+    /** 已并入发起；历史草稿仍可走此方法，已是审核中则幂等成功。 */
     void submit(String id, LoginUser loginUser);
 
     void withdraw(String id, LoginUser loginUser);
@@ -40,6 +42,6 @@ public interface IProposalService extends IService<Proposal> {
     /** 批准人待核定列表（PENDING_APPROVAL） */
     IPage<Proposal> listApprovalPending(int pageNo, int pageSize, LoginUser loginUser);
 
-    /** 申请批准决策：批准→PENDING_ASSIGN；不批准→REJECTED_FINAL */
+    /** 申请批准决策：批准→APPROVED；不批准→REJECTED_FINAL。不进入待指派。 */
     void submitApplicationApproval(String proposalId, ApplicationApprovalRequest request, LoginUser loginUser);
 }

@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +38,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private static final Set<String> TERMINAL_STATUSES = Set.of(
             ProposalStatusEnum.COMPLETED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
+            ProposalStatusEnum.APPROVED.getCode(),
             ProposalStatusEnum.WITHDRAWN.getCode()
     );
 
@@ -77,7 +80,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         proposal.setDeptId(request.getDeptId());
         proposal.setTeamType(defaultTeamType(request.getTeamType()));
         proposal.setProposerId(loginUser.getId());
-        // 新建单据赋初态，不是跳转，不走状态机。
+        // 同事务内先落库再 SUBMIT；提交完成后状态为审核中，对外无暂存。
         proposal.setStatus(ProposalStatusEnum.DRAFT.getCode());
         proposal.setPlanRound(0);
         applyDeptLeader(proposal);
@@ -86,28 +89,31 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
 
         saveOrUpdateApplication(proposal.getId(), request, loginUser, true);
         replaceAttachments(proposal.getId(), request.getAttachments(), loginUser);
+        submit(proposal.getId(), loginUser);
         return proposal.getId();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDraft(String id, ProposalCreateRequest request, LoginUser loginUser) {
-        Proposal proposal = getOwnedDraft(id, loginUser);
-        proposal.setTitle(trimToNull(request.getTitle()));
-        proposal.setImprovementTypes(normalizeImprovementTypes(request.getImprovementTypes()));
-        proposal.setDeptId(request.getDeptId());
-        proposal.setTeamType(defaultTeamType(request.getTeamType()));
-        applyDeptLeader(proposal);
-        ProposalAuditHelper.fillOnUpdate(loginUser, proposal);
-        updateById(proposal);
-
-        saveOrUpdateApplication(id, request, loginUser, false);
-        replaceAttachments(id, request.getAttachments(), loginUser);
+        throw new JeecgBootBizTipException("申请段已取消暂存");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void submit(String id, LoginUser loginUser) {
+        Proposal existing = getById(id);
+        if (existing == null) {
+            throw new JeecgBootBizTipException("提案不存在");
+        }
+        if (!loginUser.getId().equals(existing.getProposerId())) {
+            throw new JeecgBootBizTipException("仅提案人可提交");
+        }
+        // 新发起已在 create 一次提交；旧客户端再调 submit 时直接成功。
+        if (ProposalStatusEnum.PENDING_REVIEW.getCode().equals(existing.getStatus())) {
+            return;
+        }
+
         Proposal proposal = getOwnedDraft(id, loginUser);
         ProposalApplication application = getApplication(id);
         validateSubmit(proposal, application);
@@ -132,25 +138,13 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         ProposalAuditHelper.fillOnUpdate(loginUser, application);
         applicationService.updateById(application);
 
-        // 【Phase2】提交时快照委员待办
         createReviewSnapshot(proposal, loginUser);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void withdraw(String id, LoginUser loginUser) {
-        Proposal proposal = getById(id);
-        if (proposal == null) {
-            throw new JeecgBootBizTipException("提案不存在");
-        }
-        if (!loginUser.getId().equals(proposal.getProposerId())) {
-            throw new JeecgBootBizTipException("仅提案人可撤回");
-        }
-
-        stateMachine.transit(proposal, ProposalAction.WITHDRAW, loginUser, "撤回申请");
-        // 【Phase2】撤回清委员审核快照
-        committeeReviewService.remove(new LambdaQueryWrapper<ProposalCommitteeReview>()
-                .eq(ProposalCommitteeReview::getProposalId, id));
+        throw new JeecgBootBizTipException("申请段已取消撤回");
     }
 
     @Override
@@ -245,7 +239,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             throw new JeecgBootBizTipException("提案不存在");
         }
         // 委员逐条填意见不改 status，不能走 transit。
-        stateMachine.assertStatus(proposal, ProposalStatusEnum.PENDING_REVIEW, "仅待审核状态可提交委员意见");
+        stateMachine.assertStatus(proposal, ProposalStatusEnum.PENDING_REVIEW, "仅审核中状态可提交委员意见");
 
         ensureReviewSnapshot(proposal, loginUser);
 
@@ -616,16 +610,86 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if ("done".equalsIgnoreCase(tab)) {
             qw.in(Proposal::getStatus, ProposalStatusEnum.COMPLETED.getCode(),
                     ProposalStatusEnum.REJECTED_FINAL.getCode(),
+                    ProposalStatusEnum.APPROVED.getCode(),
                     ProposalStatusEnum.WITHDRAWN.getCode());
         }
     }
 
     private IPage<Proposal> withStatusLabels(IPage<Proposal> page) {
-        if (page != null && page.getRecords() != null) {
+        if (page != null && page.getRecords() != null && !page.getRecords().isEmpty()) {
             page.getRecords().forEach(ProposalStatusEnum::attachLabel);
             improvementTypeService.attachTypeLabels(page.getRecords());
+            //update-begin---author:spex ---date:2026-08-31  for：【待办卡片】嵌套人员部门与委员汇总-----------
+            orgFillHelper.fillProposals(page.getRecords());
+            fillCommitteeSummary(page.getRecords());
+            //update-end---author:spex ---date:2026-08-31  for：【待办卡片】嵌套人员部门与委员汇总-----------
         }
         return page;
+    }
+
+    /**
+     * 按委员已提交意见汇总：采用/不采用人数、计划书建议（采用票过半）、奖励建议众数。
+     * 与批准页前端统计口径一致，供待办卡片直接展示。
+     */
+    private void fillCommitteeSummary(List<Proposal> records) {
+        List<String> ids = records.stream()
+                .map(Proposal::getId)
+                .filter(oConvertUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return;
+        }
+        List<ProposalCommitteeReview> reviews = committeeReviewService.list(
+                new LambdaQueryWrapper<ProposalCommitteeReview>()
+                        .in(ProposalCommitteeReview::getProposalId, ids));
+        Map<String, List<ProposalCommitteeReview>> grouped = reviews.stream()
+                .collect(Collectors.groupingBy(ProposalCommitteeReview::getProposalId));
+        for (Proposal proposal : records) {
+            List<ProposalCommitteeReview> rows = grouped.getOrDefault(proposal.getId(), Collections.emptyList());
+            int adopt = 0;
+            int reject = 0;
+            int planYes = 0;
+            Map<BigDecimal, Integer> awardFreq = new HashMap<>();
+            for (ProposalCommitteeReview row : rows) {
+                String conclusion = row.getConclusion() == null ? "" : row.getConclusion().trim().toUpperCase();
+                if (CONCLUSION_ADOPT.equals(conclusion)) {
+                    adopt++;
+                    if (Integer.valueOf(1).equals(row.getPlanRequired())) {
+                        planYes++;
+                    }
+                    if (row.getAwardSuggestion() != null) {
+                        BigDecimal key = row.getAwardSuggestion().setScale(2, RoundingMode.HALF_UP);
+                        awardFreq.merge(key, 1, Integer::sum);
+                    }
+                } else if (CONCLUSION_REJECT.equals(conclusion)) {
+                    reject++;
+                }
+            }
+            proposal.setAdoptCount(adopt);
+            proposal.setRejectCount(reject);
+            if (adopt > 0) {
+                proposal.setPlanRequiredSuggest(planYes * 2 >= adopt ? 1 : 0);
+            }
+            if (!awardFreq.isEmpty()) {
+                proposal.setAwardSuggestAmount(pickModeAmount(awardFreq));
+            }
+        }
+    }
+
+    /** 众数；票数相同取较大金额。 */
+    private static BigDecimal pickModeAmount(Map<BigDecimal, Integer> awardFreq) {
+        BigDecimal best = null;
+        int bestN = -1;
+        for (Map.Entry<BigDecimal, Integer> entry : awardFreq.entrySet()) {
+            int n = entry.getValue();
+            BigDecimal amount = entry.getKey();
+            if (n > bestN || (n == bestN && best != null && amount.compareTo(best) > 0)) {
+                bestN = n;
+                best = amount;
+            }
+        }
+        return best;
     }
 
     private void fillStatusLogLabels(ProposalStatusLog log) {

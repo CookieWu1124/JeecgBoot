@@ -57,6 +57,20 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
     private Integer planRound;
     /** 申请/计划书委员进度，如 3/7。 */
     private String reviewProgress;
+    //update-begin---author:spex ---date:2026-08-31  for：【待办卡片】委员意见汇总（不落库）-----------
+    @TableField(exist = false)
+    @Schema(description = "委员采用人数")
+    private Integer adoptCount;
+    @TableField(exist = false)
+    @Schema(description = "委员不采用人数")
+    private Integer rejectCount;
+    @TableField(exist = false)
+    @Schema(description = "委员采用票多数建议是否形成计划书 0/1")
+    private Integer planRequiredSuggest;
+    @TableField(exist = false)
+    @Schema(description = "委员采用票奖励建议众数")
+    private BigDecimal awardSuggestAmount;
+    //update-end---author:spex ---date:2026-08-31  for：【待办卡片】委员意见汇总（不落库）-----------
     private String scoreProgress;
     private BigDecimal scoreTotal;
     private String scoreGrade;

@@ -131,7 +131,7 @@ definePage({
   },
 })
 
-type FilterTab = 'all' | 'draft' | 'doing' | 'done'
+type FilterTab = 'all' | 'doing' | 'done'
 
 interface ProgressInfo {
   label: string
@@ -164,7 +164,6 @@ const BAND: Record<StampTone, string> = {
 
 const FILTER_TABS: { key: FilterTab, label: string }[] = [
   { key: 'all', label: '全部' },
-  { key: 'draft', label: '草稿' },
   { key: 'doing', label: '进行中' },
   { key: 'done', label: '已完成' },
 ]

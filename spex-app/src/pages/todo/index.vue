@@ -21,38 +21,30 @@
         </view>
 
         <view
-          v-for="item in sec.reviews"
+          v-for="item in sec.items"
           :key="item.id"
           class="sheet todo-card"
           hover-class="todo-press"
-          @click="handleReview(item)"
+          @click="handleOpen(item)"
         >
           <view class="todo-ic" :class="`tint-${item.tint}`">
             <text>{{ item.char }}</text>
           </view>
           <view class="todo-bd">
             <text class="todo-t">{{ item.title }}</text>
-            <text class="todo-s">NO. {{ item.no }} · {{ item.dept }}{{ item.progress ? ` · ${item.progress}` : '' }}</text>
-          </view>
-          <view class="stamp" :class="`stamp-${item.stamp}`">
-            <view class="stamp__dot" />
-            <text class="stamp__txt">{{ item.status }}</text>
-          </view>
-        </view>
-
-        <view
-          v-for="item in sec.approves"
-          :key="`ap-${item.id}`"
-          class="sheet todo-card"
-          hover-class="todo-press"
-          @click="handleApprove(item)"
-        >
-          <view class="todo-ic tint-amber">
-            <text>{{ item.char }}</text>
-          </view>
-          <view class="todo-bd">
-            <text class="todo-t">{{ item.title }}</text>
-            <text class="todo-s">NO. {{ item.no }} · {{ item.dept }}{{ item.progress ? ` · ${item.progress}` : '' }}</text>
+            <text class="todo-s">{{ item.sub }}</text>
+            <view v-if="item.votes.length" class="todo-pills">
+              <view
+                v-for="vote in item.votes"
+                :key="vote.label"
+                class="todo-pill"
+                :class="`stamp-${vote.tone}`"
+              >
+                <view class="stamp__dot" />
+                <text class="stamp__txt">{{ vote.label }}</text>
+              </view>
+            </view>
+            <text v-if="item.footer" class="todo-ft">{{ item.footer }}</text>
           </view>
           <view class="stamp" :class="`stamp-${item.stamp}`">
             <view class="stamp__dot" />
@@ -94,25 +86,30 @@ definePage({
   },
 })
 
+interface TodoVote {
+  label: string
+  tone: 'green' | 'gray'
+}
+
 interface TodoItem {
   id: string
+  kind: 'review' | 'approve'
   no: string
   title: string
-  dept: string
-  who: string
+  sub: string
+  votes: TodoVote[]
+  footer: string
   char: string
   tint: 'blue' | 'teal' | 'amber'
   status: string
   stamp: string
-  progress?: string
 }
 
 interface TodoSection {
   key: 'review' | 'approve'
   title: string
   count: number
-  reviews?: TodoItem[]
-  approves?: TodoItem[]
+  items: TodoItem[]
 }
 
 const loading = ref(false)
@@ -127,7 +124,7 @@ const sections = computed<TodoSection[]>(() => {
       key: 'review',
       title: '待出具意见',
       count: reviewTodos.value.length,
-      reviews: reviewTodos.value,
+      items: reviewTodos.value,
     })
   }
   if (approveTodos.value.length) {
@@ -135,7 +132,7 @@ const sections = computed<TodoSection[]>(() => {
       key: 'approve',
       title: '待核定',
       count: approveTodos.value.length,
-      approves: approveTodos.value,
+      items: approveTodos.value,
     })
   }
   return list
@@ -170,8 +167,8 @@ async function loadPending() {
       fetchCommitteePending({ pageNo: 1, pageSize: 50 }).catch(() => null),
       fetchApprovalPending({ pageNo: 1, pageSize: 50 }).catch(() => null),
     ])
-    reviewTodos.value = (reviewPage?.records || []).map(item => mapTodo(item, '审', 'blue'))
-    approveTodos.value = (approvePage?.records || []).map(item => mapTodo(item, '批', 'amber'))
+    reviewTodos.value = (reviewPage?.records || []).map(item => mapTodo(item, 'review', '审', 'blue'))
+    approveTodos.value = (approvePage?.records || []).map(item => mapTodo(item, 'approve', '批', 'amber'))
   }
   catch (err) {
     console.error('加载待办失败', err)
@@ -183,27 +180,60 @@ async function loadPending() {
   }
 }
 
-function mapTodo(item: ProposalListItem, char: string, tint: TodoItem['tint']): TodoItem {
+function mapTodo(
+  item: ProposalListItem,
+  kind: TodoItem['kind'],
+  char: string,
+  tint: TodoItem['tint'],
+): TodoItem {
+  const no = item.proposalNo || '—'
+  const dept = item.dept?.departName
+    || deptNameMap.value[item.deptId || '']
+    || item.deptId
+    || '—'
+  const who = item.proposer?.realname || ''
+  const adopt = item.adoptCount ?? 0
+  const reject = item.rejectCount ?? 0
+  const votes: TodoVote[] = adopt + reject > 0
+    ? [
+        { label: `采用 ${adopt}`, tone: 'green' },
+        { label: `不采用 ${reject}`, tone: 'gray' },
+      ]
+    : []
+  const footerParts: string[] = []
+  if (item.reviewProgress)
+    footerParts.push(`委员会 ${item.reviewProgress}`)
+  if (item.planRequiredSuggest === 1)
+    footerParts.push('建议形成计划书')
+  else if (item.planRequiredSuggest === 0)
+    footerParts.push('建议不形成计划书')
+  if (item.awardSuggestAmount != null)
+    footerParts.push(`奖励 ¥${formatYuan(item.awardSuggestAmount)}`)
   return {
     id: item.id,
-    no: item.proposalNo || '—',
+    kind,
+    no,
     title: item.title || '未命名提案',
-    dept: deptNameMap.value[item.deptId || ''] || item.deptId || '—',
-    who: '提案人',
+    sub: [`NO. ${no}`, dept, who].filter(Boolean).join(' · '),
+    votes,
+    footer: footerParts.join(' · '),
     char,
     tint,
     status: item.statusLabel || statusLabel(item.status),
     stamp: statusStamp(item.status),
-    progress: item.reviewProgress,
   }
 }
 
-function handleReview(item: TodoItem) {
-  uni.navigateTo({ url: `/pages/proposal/review?id=${item.id}` })
+function formatYuan(value: number | string) {
+  const num = Number(value)
+  if (Number.isNaN(num))
+    return String(value)
+  return Number.isInteger(num) ? String(num) : String(Math.round(num * 100) / 100)
 }
 
-function handleApprove(item: TodoItem) {
-  uni.navigateTo({ url: `/pages/proposal/approve?id=${item.id}` })
+function handleOpen(item: TodoItem) {
+  const path = item.kind === 'review' ? '/pages/proposal/review' : '/pages/proposal/approve'
+  uni.navigateTo({ url: `${path}?id=${item.id}` })
 }
 </script>
 
@@ -289,7 +319,7 @@ function handleApprove(item: TodoItem) {
 
 .todo-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   min-height: 68px;
   padding: 13px 14px;
@@ -303,6 +333,7 @@ function handleApprove(item: TodoItem) {
   justify-content: center;
   width: 42px;
   height: 42px;
+  margin-top: 1px;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
@@ -316,6 +347,7 @@ function handleApprove(item: TodoItem) {
 .todo-t {
   display: block;
   overflow: hidden;
+  padding-right: 4px;
   color: #1e2438;
   font-size: 14px;
   font-weight: 700;
@@ -337,6 +369,40 @@ function handleApprove(item: TodoItem) {
   white-space: nowrap;
 }
 
+.todo-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.todo-pill {
+  --stamp-c: #8a92ac;
+  --stamp-bg: #eff2f9;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  color: var(--stamp-c);
+  background: var(--stamp-bg);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.todo-ft {
+  display: block;
+  overflow: hidden;
+  margin-top: 6px;
+  color: #8a92ac;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stamp {
   --stamp-c: #1890ff;
   --stamp-bg: #e6f4ff;
@@ -344,6 +410,7 @@ function handleApprove(item: TodoItem) {
   flex-shrink: 0;
   align-items: center;
   gap: 5px;
+  margin-top: 2px;
   padding: 3px 9px;
   border-radius: 9999px;
   color: var(--stamp-c);

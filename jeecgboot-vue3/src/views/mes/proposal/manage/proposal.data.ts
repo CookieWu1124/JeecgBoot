@@ -8,6 +8,7 @@ const STATUS_TAG_COLOR: Record<string, string> = {
   DRAFT: 'default',
   PENDING_REVIEW: 'gold',
   PENDING_APPROVAL: 'blue',
+  APPROVED: 'success',
   REJECTED_FINAL: 'error',
   WITHDRAWN: 'default',
   PENDING_ASSIGN: 'processing',

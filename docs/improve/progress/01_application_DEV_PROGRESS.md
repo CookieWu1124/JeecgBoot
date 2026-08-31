@@ -7,7 +7,7 @@
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
 | **最后更新** | 2026-08-31 |
-| **本段状态** | 申请段 Phase2 **已收齐并联调通过**（委员审核 + 批准人决策）；出口待指派 → 02 |
+| **本段状态** | 申请段四档：**审核中 / 待批准 / 已批准 / 不批准**；出口停在 `APPROVED`（阶段 2 待定，不进入待指派） |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
 
@@ -17,11 +17,9 @@
 
 | 子环节 | 说明 | 终态/出口 |
 |--------|------|-----------|
-| 草稿/填写 | 2 步发起：内容 + 确认提交 | `DRAFT` |
-| 提交申请 | 校验部门负责人、委员会名册；生成编号 | → `PENDING_REVIEW` |
-| 委员审核 | 在任委员并行独立意见；进度 `review_progress` | → `PENDING_APPROVAL` |
-| 批准人决策 | 批准/不批准；写入 `plan_required`、`award_amount` | 批准 → `PENDING_ASSIGN`；不批准 → `REJECTED_FINAL` |
-| 撤回 | 仅 `PENDING_REVIEW` 且提案人 | → `WITHDRAWN` |
+| 填写并提交 | 2 步确认：内容 + 确认提交（**不落草稿**） | → `PENDING_REVIEW`（审核中） |
+| 委员审核 | 在任委员并行独立意见；进度 `review_progress` | → `PENDING_APPROVAL`（待批准） |
+| 批准人决策 | 批准/不批准；写入 `plan_required`、`award_amount` | 批准 → `APPROVED`；不批准 → `REJECTED_FINAL` |
 
 ---
 
@@ -29,12 +27,12 @@
 
 | 状态码 | 显示名 | 本段 |
 |--------|--------|------|
-| `DRAFT` | 草稿 | ✓ |
-| `PENDING_REVIEW` | 待审核 | ✓ |
+| `PENDING_REVIEW` | 审核中 | ✓ |
 | `PENDING_APPROVAL` | 待批准 | ✓ |
+| `APPROVED` | 已批准 | ✓ 申请段通过（阶段 2 待定） |
 | `REJECTED_FINAL` | 不批准 | ✓ 终态 |
-| `WITHDRAWN` | 已撤回 | ✓ 终态 |
-| `PENDING_ASSIGN` | 待指派 | 出口 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md) |
+| `DRAFT` | 草稿 | 历史兼容；新单不停留 |
+| `WITHDRAWN` | 已撤回 | 历史兼容；申请段已取消撤回 |
 
 ---
 
@@ -42,10 +40,10 @@
 
 | 状态/动作 | 方法 | 路径 | 端 | 进度 |
 |-----------|------|------|-----|------|
-| 创建草稿 | POST | `/proposal/create` | 共用 | [x] |
-| 更新草稿 | PUT | `/proposal/{id}/draft` | 共用 | [x] |
-| 提交申请 | PUT | `/proposal/{id}/submit` | 共用 | [x] |
-| 撤回 | POST | `/proposal/{id}/withdraw` | 共用 | [x] |
+| 发起提案 | POST | `/proposal/create` | 共用 | [x] 一次提交，进入审核中 |
+| 更新草稿 | PUT | `/proposal/{id}/draft` | 共用 | [x] **已取消** |
+| 单独提交 | PUT | `/proposal/{id}/submit` | 共用 | [x] **已并入发起**；重复调用幂等 |
+| 撤回 | POST | `/proposal/{id}/withdraw` | 共用 | [x] **已取消**，调用失败 |
 | 列表/详情 | GET | `/proposal/list`, `/proposal/{id}` | 共用 | [x] |
 | 委员待审列表 | GET | `/proposal/review/committee/pending` | 共用 | [x] |
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [x] |
@@ -128,7 +126,7 @@
 | 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置五 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
 | 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] `proposal_menu.sql` 含 component 自愈 UPDATE |
 | 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
-| 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；对接 create/draft/submit |
+| 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；确认后只调 create（一次进审核中） |
 | 11 | 管理端详情弹窗对齐原型 | 管理端 | [x] 申请单正文来自 `proposal_application`；留痕来自 `proposal_status_log`；委员意见来自 `committeeReviews` |
 
 ---
@@ -138,8 +136,8 @@
 - [x] 提案人可完成 2 步提交，状态为 `PENDING_REVIEW`，`review_progress` 为 `0/N`（inside_dev 已联调）
 - [x] 在任委员可并行提交独立意见，全部完成后进入 `PENDING_APPROVAL`（`202608290001` 已 5/5 → 待核定，管理端已验）
 - [x] 批准人「不批准」→ `REJECTED_FINAL`，不可再编辑（已联调）
-- [x] 批准人「批准」→ `PENDING_ASSIGN`，并写入 `plan_required`、`award_amount`（已联调）
-- [x] `PENDING_REVIEW` 下提案人可撤回 → `WITHDRAWN`（接口已通；页面入口按需补）
+- [x] 批准人「批准」→ `APPROVED`，并写入 `plan_required`、`award_amount`（**不进入** `PENDING_ASSIGN`）
+- [x] 申请段已取消撤回；`POST /withdraw` 返回失败提示
 - [x] 未配置部门负责人或委员会为空时，提交被拒绝并提示
 - [x] 管理端详情可查看申请书正文（目前状况/改善意见）与操作留痕
 - [x] 管理端详情可查看委员审核意见列表（含未审快照行）
@@ -187,3 +185,5 @@
 | 2026-08-31 | **管理端页面迁目录**：`views/proposal` → `views/mes/proposal`；菜单 `component` 改为 `mes/proposal/**`，访问 url 仍为 `/proposal/**` |
 | 2026-08-31 | **管理端对接清单补系统选人/选部门**：S5 `/sys/user/list`、S6 部门树及 S1–S4 字段；`SysUser`/`SysDepart` 补 `@Operation` 以便 Knife4j 可见 |
 | 2026-08-31 | **列表/详情嵌套回显**：配置与提案管理 list/detail 一次返回人员部门摘要，去掉前端 N+1 |
+| 2026-08-31 | **申请段状态精简**：四档 审核中/待批准/已批准/不批准；新增 `APPROVED`；批准不再进入待指派；取消撤回 |
+| 2026-08-31 | **取消暂存**：`POST /proposal/create` 一次进入审核中；更新草稿失败；列表去掉草稿 Tab |

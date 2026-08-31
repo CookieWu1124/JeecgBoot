@@ -25,7 +25,8 @@ import java.util.Map;
  *   <li>日常用四参数 {@link #transit(Proposal, ProposalAction, LoginUser, String)}，内部把 {@code context} 填成 null。</li>
  *   <li>仅「plan_required=1 且提交报告书」时用五参数，传入 {@link Context#planApproved()}。</li>
  *   <li>不要自己实现 Guard：路线和守卫在本类 static 块里注册死，Service 只选 {@link ProposalAction}。</li>
- *   <li>未注册的跳转会直接拒绝。草稿新建写 {@code DRAFT} 不是跳转，不走本类。</li>
+ *   <li>未注册的跳转会直接拒绝。发起时同事务内 DRAFT→SUBMIT，对外无暂存。</li>
+ *   <li>申请段批准后停在 {@code APPROVED}，不要接到 {@code PENDING_ASSIGN}（阶段 2 待定）。</li>
  * </ul>
  */
 @Component
@@ -40,14 +41,13 @@ public class ProposalStateMachine {
     private static final Map<ProposalStatusEnum, Map<ProposalAction, Route>> ROUTES = new EnumMap<>(ProposalStatusEnum.class);
 
     static {
-        // 01 申请单：三参数 add，Guard=null。状态对了即可，无 plan_required 之类的额外条件。
+        // 01 申请段：发起同事务 DRAFT→SUBMIT，对外只有审核中/待批准/已批准/不批准。已取消暂存与撤回。
         add(ProposalStatusEnum.DRAFT, ProposalAction.SUBMIT, ProposalStatusEnum.PENDING_REVIEW);
-        add(ProposalStatusEnum.PENDING_REVIEW, ProposalAction.WITHDRAW, ProposalStatusEnum.WITHDRAWN);
         add(ProposalStatusEnum.PENDING_REVIEW, ProposalAction.COMMITTEE_DONE, ProposalStatusEnum.PENDING_APPROVAL);
-        add(ProposalStatusEnum.PENDING_APPROVAL, ProposalAction.APPROVE, ProposalStatusEnum.PENDING_ASSIGN);
+        add(ProposalStatusEnum.PENDING_APPROVAL, ProposalAction.APPROVE, ProposalStatusEnum.APPROVED);
         add(ProposalStatusEnum.PENDING_APPROVAL, ProposalAction.REJECT_FINAL, ProposalStatusEnum.REJECTED_FINAL);
 
-        // 02 任务分配（预注册）：同样只看状态。转团队不改 status，不注册。
+        // 02 任务分配（预注册，业务未接）。入口不再是批准动作；阶段 2 若做，应从 APPROVED 另挂路线，不要和已批准合并。
         add(ProposalStatusEnum.PENDING_ASSIGN, ProposalAction.ASSIGN, ProposalStatusEnum.IN_PROGRESS);
         add(ProposalStatusEnum.PENDING_ASSIGN, ProposalAction.PUT_POOL, ProposalStatusEnum.PENDING_CLAIM);
         add(ProposalStatusEnum.PENDING_CLAIM, ProposalAction.CLAIM, ProposalStatusEnum.IN_PROGRESS);

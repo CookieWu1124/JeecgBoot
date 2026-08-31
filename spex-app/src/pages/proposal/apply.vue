@@ -243,7 +243,7 @@
 
         <view class="apply-banner apply-banner--warn">
           <text class="apply-banner__ic apply-banner__ic--warn">!</text>
-          <text class="apply-banner__txt apply-banner__txt--warn">提交后进入委员会并行审核；待审核中可撤回</text>
+          <text class="apply-banner__txt apply-banner__txt--warn">提交后进入委员会审核，不可撤回</text>
         </view>
       </template>
     </view>
@@ -306,7 +306,7 @@
 
 <script lang="ts" setup>
 import type { ImprovementDeptOption, ProposalCreatePayload } from '@/api/proposal'
-import { createProposal, fetchImprovementDepts, fetchProposalDetail, submitProposal } from '@/api/proposal'
+import { createProposal, fetchImprovementDepts, fetchProposalDetail } from '@/api/proposal'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store'
 import {
@@ -569,7 +569,7 @@ function submitApply() {
 
   uni.showModal({
     title: '确认提交',
-    content: `提交后将进入委员会并行审核，待审核中可撤回。确定提交「${form.title}」吗？`,
+    content: `提交后将进入委员会审核，不可撤回。确定提交「${form.title}」吗？`,
     cancelText: '再看看',
     confirmText: '确认提交',
     confirmColor: '#13C2C2',
@@ -586,7 +586,6 @@ async function doSubmit() {
   try {
     const payload = buildPayload()
     const id = await createProposal(payload)
-    await submitProposal(id)
     let noText = ''
     try {
       const detail = await fetchProposalDetail(id)

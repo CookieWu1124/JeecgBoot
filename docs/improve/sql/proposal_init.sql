@@ -1,6 +1,6 @@
 -- =============================================================================
 -- 提案改善系统 — Phase 1 数据库初始化脚本
--- 版本：V1.4
+-- 版本：V1.5
 -- 日期：2026-08-31
 -- 说明：
 --   1. 用户/角色/组织复用 JeecgBoot sys_* 表，本脚本建提案配置表 + 业务表
@@ -209,7 +209,7 @@ CREATE TABLE `proposal` (
   `id` varchar(36) NOT NULL COMMENT '主键',
   `proposal_no` varchar(20) DEFAULT NULL COMMENT '提案编号 YYYYMMDD+4位流水',
   `title` varchar(100) NOT NULL COMMENT '提案名称',
-  `status` varchar(32) NOT NULL DEFAULT 'DRAFT' COMMENT '状态枚举',
+  `status` varchar(32) NOT NULL COMMENT '申请环节码，由 Java ProposalStatusEnum + ProposalStateMachine 维护；禁止用 sys_dict 字典映射，文案走 /proposal/meta/statuses 或行内 statusLabel',
   `improvement_types` varchar(200) DEFAULT NULL COMMENT '改善性质 JSON 数组',
   `dept_id` varchar(36) DEFAULT NULL COMMENT '改善部门 sys_depart.id',
   `dept_leader_id` varchar(36) DEFAULT NULL COMMENT '部门负责人 sys_user.id',
@@ -307,9 +307,9 @@ DROP TABLE IF EXISTS `proposal_status_log`;
 CREATE TABLE `proposal_status_log` (
   `id` varchar(36) NOT NULL COMMENT '主键',
   `proposal_id` varchar(36) NOT NULL COMMENT '提案ID',
-  `from_status` varchar(32) DEFAULT NULL COMMENT '原状态',
-  `to_status` varchar(32) NOT NULL COMMENT '新状态',
-  `action` varchar(64) DEFAULT NULL COMMENT '动作编码',
+  `from_status` varchar(32) DEFAULT NULL COMMENT '跳转前状态码，同 proposal.status，非字典',
+  `to_status` varchar(32) NOT NULL COMMENT '跳转后状态码，同 proposal.status，非字典',
+  `action` varchar(64) DEFAULT NULL COMMENT '动作编码，见 Java ProposalAction，非字典',
   `operator_id` varchar(36) DEFAULT NULL COMMENT '操作人 sys_user.id',
   `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
   `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',
@@ -392,11 +392,11 @@ CREATE TABLE `proposal_approval` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =============================================================================
--- 状态枚举参考（应用层 ProposalStatusEnum，非数据库约束）：
--- DRAFT, PENDING_REVIEW, PENDING_APPROVAL, REJECTED_FINAL, WITHDRAWN,
--- PENDING_ASSIGN, PENDING_CLAIM, IN_PROGRESS, PLAN_PENDING_REVIEW,
--- PLAN_PENDING_APPROVAL, PLAN_REJECTED, PENDING_EVALUATION,
--- PENDING_SIGNOFF, COMPLETED
+-- 状态枚举参考（应用层 ProposalStatusEnum + ProposalStateMachine，非 sys_dict、非库约束）：
+-- 申请段：PENDING_REVIEW(审核中), PENDING_APPROVAL(待批准), APPROVED(已批准), REJECTED_FINAL(不批准)
+-- 历史兼容（新单不写入）：DRAFT、WITHDRAWN
+-- 后续阶段待定：PENDING_ASSIGN, PENDING_CLAIM, IN_PROGRESS, PLAN_*, PENDING_EVALUATION, PENDING_SIGNOFF, COMPLETED
+-- 主表 status 无库默认值，须由状态机写入
 --
 -- 改善性质：proposal_improvement_type 配置表（种子 SAFETY/QUALITY/EFFICIENCY/DELIVERY/COST）
 --   提案主表 improvement_types 仍存 JSON 数组字符串，码必须是当前启用行

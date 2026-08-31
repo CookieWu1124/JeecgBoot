@@ -119,7 +119,7 @@
 
 ## 9. 依赖与前置
 
-- [x] [01 申请单](./01_application_DEV_PROGRESS.md) 批准人决策完成（`PENDING_ASSIGN`）
+- [x] [01 申请单](./01_application_DEV_PROGRESS.md) 批准人决策完成（出口 `APPROVED`；本段入口 `PENDING_ASSIGN` 待定）
 - [x] `proposal_dept_leader` 配置表已建（`inside_dev` 2026-08-28）
 - [ ] 部门树 / 用户部门关系正确（`sys_user_depart`）
 
