@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 提案改善 App 微信小程序登录 / H5 工号+手机号登录 / 管理端解绑
+ * 提案改善 App 微信小程序登录 / 管理端解绑
  */
 @Slf4j
 @RestController
@@ -43,15 +43,6 @@ public class WxMiniLoginController {
         return wxMiniAuthService.bind(dto);
     }
     //update-end---author:spex ---date:2026-08-31  for：【提案App】工号+微信手机号绑定-----------
-
-    //update-begin---author:spex ---date:2026-08-31  for：【提案App】H5工号+手机号登录-----------
-    @IgnoreAuth
-    @Operation(summary = "H5工号+手机号登录")
-    @PostMapping("/phoneLogin")
-    public Result<JSONObject> phoneLogin(@RequestBody WxMiniLoginDTO dto) {
-        return wxMiniAuthService.phoneLogin(dto);
-    }
-    //update-end---author:spex ---date:2026-08-31  for：【提案App】H5工号+手机号登录-----------
 
     //update-begin---author:spex ---date:2026-08-31  for：【提案App】管理端解绑微信-----------
     @Operation(summary = "管理端解绑微信")

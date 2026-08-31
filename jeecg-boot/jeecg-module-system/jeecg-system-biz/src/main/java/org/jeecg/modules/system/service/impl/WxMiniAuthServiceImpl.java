@@ -137,27 +137,6 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
     }
 
     @Override
-    public Result<JSONObject> phoneLogin(WxMiniLoginDTO dto) {
-        if (dto == null) {
-            return Result.error(MSG_PROFILE_MISMATCH);
-        }
-        String workNo = trimToEmpty(dto.getWorkNo());
-        String phone = normalizePhone(dto.getPhone());
-        if (oConvertUtils.isEmpty(workNo) || oConvertUtils.isEmpty(phone)) {
-            return Result.error("请输入工号和手机号");
-        }
-        SysUser sysUser = findUserByWorkNoAndPhone(workNo, phone);
-        if (sysUser == null) {
-            return Result.error(MSG_PROFILE_MISMATCH);
-        }
-        Result<?> effective = sysUserService.checkUserIsEffective(sysUser);
-        if (!effective.isSuccess()) {
-            return Result.error(effective.getMessage());
-        }
-        return issueAppToken(sysUser, false);
-    }
-
-    @Override
     public Result<String> unbind(String userId) {
         if (oConvertUtils.isEmpty(userId)) {
             return Result.error("缺少用户id");
@@ -171,17 +150,6 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         }
         sysThirdAccountService.remove(wrapper);
         return Result.OK("解绑成功");
-    }
-
-    private SysUser findUserByWorkNoAndPhone(String workNo, String phone) {
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUser::getUsername, workNo);
-        wrapper.eq(SysUser::getDelFlag, CommonConstant.DEL_FLAG_0);
-        SysUser user = sysUserService.getOne(wrapper, false);
-        if (user == null || !phonesMatch(user.getPhone(), phone)) {
-            return null;
-        }
-        return user;
     }
 
     private void saveBinding(SysUser sysUser, String openid) {

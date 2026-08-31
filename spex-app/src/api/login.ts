@@ -127,10 +127,3 @@ export function silentLogin(jsCode: string) {
 export function bindWxMini(data: { jsCode: string, workNo: string, phoneCode: string }) {
   return http.post<IJeecgLoginRes>('/sys/wxMini/bind', data, undefined, undefined, { hideErrorToast: true })
 }
-
-/**
- * H5 工号 + 手机号登录（不写微信绑定）
- */
-export function phoneLogin(data: { workNo: string, phone: string }) {
-  return http.post<IJeecgLoginRes>('/sys/wxMini/phoneLogin', data, undefined, undefined, { hideErrorToast: true })
-}

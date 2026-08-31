@@ -10,7 +10,6 @@ import {
   refreshToken as _refreshToken,
   silentLogin as _silentLogin,
   bindWxMini as _bindWxMini,
-  phoneLogin as _phoneLogin,
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes, mapJeecgLoginRes, mapJeecgUser } from '@/api/types/login'
@@ -204,33 +203,6 @@ export const useTokenStore = defineStore(
     }
 
     /**
-     * H5 工号 + 手机号登录
-     */
-    const phoneLogin = async (workNo: string, phone: string) => {
-      try {
-        const res = await _phoneLogin({ workNo, phone })
-        const user = res.userInfo ? mapJeecgUser(res.userInfo) : undefined
-        await _postLogin(mapJeecgLoginRes(res), user)
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success',
-        })
-        return res
-      }
-      catch (error: any) {
-        console.error('工号手机号登录失败:', error)
-        uni.showToast({
-          title: error?.message || '登录失败，请重试',
-          icon: 'none',
-        })
-        throw error
-      }
-      finally {
-        updateNowTime()
-      }
-    }
-
-    /**
      * 退出登录 并 删除用户信息
      */
     const logout = async () => {
@@ -355,7 +327,6 @@ export const useTokenStore = defineStore(
       login,
       wxSilentLogin,
       wxBindLogin,
-      phoneLogin,
       logout,
 
       // 认证状态判断（最常用的）

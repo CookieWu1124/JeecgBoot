@@ -31,8 +31,7 @@
             <text v-if="usernameError" class="login-error">{{ usernameError }}</text>
           </view>
 
-          <!-- #ifndef MP-WEIXIN -->
-          <view v-if="h5Mode === 'password'" class="login-field login-field--gap">
+          <view v-if="loginMode === 'password'" class="login-field login-field--gap">
             <text class="login-label">密码</text>
             <wd-input
               v-model="form.password"
@@ -42,48 +41,26 @@
               placeholder="请输入密码"
               custom-class="login-input"
               @blur="touched.password = true"
-              @confirm="handleH5Login"
+              @confirm="handlePasswordLogin"
             />
             <text v-if="passwordError" class="login-error">{{ passwordError }}</text>
           </view>
 
-          <view v-else class="login-field login-field--gap">
-            <text class="login-label">手机号</text>
-            <wd-input
-              v-model="form.phone"
-              prefix-icon="phone"
-              clearable
-              type="number"
-              placeholder="请输入预留手机号"
-              custom-class="login-input"
-              @blur="touched.phone = true"
-              @confirm="handleH5Login"
-            />
-            <text v-if="phoneError" class="login-error">{{ phoneError }}</text>
-          </view>
-
           <wd-button
+            v-if="loginMode === 'password'"
             block
             size="large"
             :loading="submitting"
             :disabled="!canSubmit"
             custom-class="login-submit"
-            @click="handleH5Login"
+            @click="handlePasswordLogin"
           >
             登录
           </wd-button>
 
-          <view class="login-switch" hover-class="login-hover" @click="toggleH5Mode">
-            <text class="login-switch__text">{{ h5Mode === 'password' ? '使用工号+手机号登录' : '使用账号密码登录' }}</text>
-          </view>
-
-          <view v-if="h5Mode === 'password'" class="login-demo" hover-class="login-hover" @click="handleDemoLogin">
-            <text class="login-demo__text">体验登录</text>
-          </view>
-          <!-- #endif -->
-
           <!-- #ifdef MP-WEIXIN -->
           <button
+            v-if="loginMode === 'wechat'"
             class="login-wx-btn"
             :class="{ 'login-wx-btn--disabled': !canSubmit || submitting }"
             :disabled="!canSubmit || submitting"
@@ -91,9 +68,26 @@
             open-type="getPhoneNumber"
             @getphonenumber="onGetPhoneNumber"
           >
-            登录
+            微信授权登录
           </button>
           <!-- #endif -->
+
+          <!-- #ifndef MP-WEIXIN -->
+          <wd-button
+            v-if="loginMode === 'wechat'"
+            block
+            size="large"
+            :disabled="!canSubmit"
+            custom-class="login-submit"
+            @click="handleH5WechatHint"
+          >
+            微信授权登录
+          </wd-button>
+          <!-- #endif -->
+
+          <view class="login-switch" hover-class="login-hover" @click="toggleLoginMode">
+            <text class="login-switch__text">{{ loginMode === 'password' ? '使用工号+微信授权登录' : '使用工号+密码登录' }}</text>
+          </view>
         </view>
       </view>
 
@@ -104,16 +98,15 @@
           与
           <text class="login-footer__link">《隐私政策》</text>
         </text>
-        <text class="login-footer__tip">白名单邀请制 · 请使用公司预录工号绑定</text>
+        <text class="login-footer__tip">白名单邀请制 · 工号+密码 或 工号+微信授权</text>
       </view>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { IUserInfoRes } from '@/api/types/login'
 import { isMpWeixin } from '@uni-helper/uni-env'
-import { useTokenStore, useUserStore } from '@/store'
+import { useTokenStore } from '@/store'
 import { isPageTabbar } from '@/tabbar/store'
 
 defineOptions({
@@ -134,21 +127,18 @@ definePage({
 })
 
 const tokenStore = useTokenStore()
-const userStore = useUserStore()
 
 const form = reactive({
   username: '',
   password: '',
-  phone: '',
 })
 const touched = reactive({
   username: false,
   password: false,
-  phone: false,
 })
 const submitting = ref(false)
 const redirect = ref('')
-const h5Mode = ref<'password' | 'phone'>('password')
+const loginMode = ref<'password' | 'wechat'>(isMpWeixin ? 'wechat' : 'password')
 const silentTried = ref(false)
 
 const usernameError = computed(() => {
@@ -171,27 +161,14 @@ const passwordError = computed(() => {
   return ''
 })
 
-const phoneError = computed(() => {
-  if (!touched.phone)
-    return ''
-  const phone = form.phone.trim()
-  if (!phone)
-    return '请输入手机号'
-  if (!/^1\d{10}$/.test(phone))
-    return '请输入正确的11位手机号'
-  return ''
-})
-
 const canSubmit = computed(() => {
   if (submitting.value)
     return false
   if (form.username.trim().length < 3)
     return false
-  if (isMpWeixin)
-    return true
-  if (h5Mode.value === 'password')
+  if (loginMode.value === 'password')
     return form.password.length >= 6
-  return /^1\d{10}$/.test(form.phone.trim())
+  return true
 })
 
 onLoad((query) => {
@@ -202,12 +179,12 @@ onLoad((query) => {
 })
 
 onMounted(() => {
-  if (isMpWeixin)
+  if (isMpWeixin && loginMode.value === 'wechat')
     trySilentLogin()
 })
 
-function toggleH5Mode() {
-  h5Mode.value = h5Mode.value === 'password' ? 'phone' : 'password'
+function toggleLoginMode() {
+  loginMode.value = loginMode.value === 'password' ? 'wechat' : 'password'
 }
 
 function goAfterLogin() {
@@ -243,27 +220,19 @@ async function trySilentLogin() {
   }
 }
 
-async function handleH5Login() {
+async function handlePasswordLogin() {
   touched.username = true
-  if (h5Mode.value === 'password')
-    touched.password = true
-  else
-    touched.phone = true
+  touched.password = true
   if (!canSubmit.value)
     return
 
   submitting.value = true
   try {
-    if (h5Mode.value === 'password') {
-      await tokenStore.login({
-        username: form.username.trim(),
-        password: form.password,
-        inputCode: '',
-      })
-    }
-    else {
-      await tokenStore.phoneLogin(form.username.trim(), form.phone.trim())
-    }
+    await tokenStore.login({
+      username: form.username.trim(),
+      password: form.password,
+      inputCode: '',
+    })
     uni.setStorageSync('login-username', form.username.trim())
     goAfterLogin()
   }
@@ -273,6 +242,18 @@ async function handleH5Login() {
   finally {
     submitting.value = false
   }
+}
+
+function handleH5WechatHint() {
+  if (form.username.trim().length < 3) {
+    touched.username = true
+    uni.showToast({ title: '请先输入工号', icon: 'none' })
+    return
+  }
+  uni.showToast({
+    title: '微信授权请在小程序中使用',
+    icon: 'none',
+  })
 }
 
 async function onGetPhoneNumber(e: any) {
@@ -304,24 +285,6 @@ async function onGetPhoneNumber(e: any) {
   finally {
     submitting.value = false
   }
-}
-
-function handleDemoLogin() {
-  const demoUser: IUserInfoRes = {
-    userId: 10086,
-    username: form.username.trim() || 'spex',
-    nickname: '陈晓舟',
-    avatar: '/static/logo.svg',
-    role: 'user',
-  }
-  userStore.setUserInfo(demoUser)
-  tokenStore.setTokenInfo({
-    token: 'demo-token',
-    expiresIn: 7 * 24 * 3600,
-  })
-  uni.setStorageSync('login-username', demoUser.username)
-  uni.showToast({ title: '已进入体验账号', icon: 'success' })
-  setTimeout(() => goAfterLogin(), 400)
 }
 </script>
 
@@ -469,7 +432,6 @@ function handleDemoLogin() {
   font-size: 12px;
 }
 
-.login-demo,
 .login-switch {
   display: flex;
   align-items: center;
@@ -477,7 +439,6 @@ function handleDemoLogin() {
   margin-top: 1.6vh;
 }
 
-.login-demo__text,
 .login-switch__text {
   color: #1890ff;
   font-size: 14px;
