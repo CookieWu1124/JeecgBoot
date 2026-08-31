@@ -74,9 +74,9 @@
 
 | 页面 | 路径 | 进度 |
 |------|------|------|
-| 提案管理列表（仅查询+详情） | `views/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
-| 提案配置（五 Tab） | `views/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / **改善性质** / 评分维度 |
-| 提案详情弹窗 | `views/proposal/manage/components/ProposalModal` | [x] 对齐原型：摘要卡/四 Tab/申请单分块；委员意见表已接；计划书·报告书占位；操作留痕已接 status_log |
+| 提案管理列表（仅查询+详情） | `views/mes/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
+| 提案配置（五 Tab） | `views/mes/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / **改善性质** / 评分维度 |
+| 提案详情弹窗 | `views/mes/proposal/manage/components/ProposalModal` | [x] 对齐原型：摘要卡/四 Tab/申请单分块；委员意见表已接；计划书·报告书占位；操作留痕已接 status_log |
 
 ---
 
@@ -184,3 +184,4 @@
 | 2026-08-31 | **状态文案唯一真相**：`GET /proposal/meta/statuses`；列表/详情带 `statusLabel`；管理端筛选 ApiSelect，不再写死中文 |
 | 2026-08-31 | **状态机提前落地**：`ProposalStateMachine` + `ProposalAction`；提交/撤回/委员齐/批准/不批准改走 `transit()`；02/03/04 合法跳转已预注册 |
 | 2026-08-31 | **改善性质落库**：表 `proposal_improvement_type`；配置 Tab 在评分维度前；`GET /proposal/meta/improvementTypes`；提交校验启用码；列表/详情带 `improvementTypesLabel` |
+| 2026-08-31 | **管理端页面迁目录**：`views/proposal` → `views/mes/proposal`；菜单 `component` 改为 `mes/proposal/**`，访问 url 仍为 `/proposal/**` |

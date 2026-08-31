@@ -2,12 +2,13 @@
 -- 提案改善系统 — 管理端菜单与按钮权限（sys_permission）
 -- 目标库：inside_dev（与 application-dev.yml 一致）
 -- 说明：
---   1. 页面组件位于 jeecgboot-vue3/src/views/proposal/
+--   1. 页面组件位于 jeecgboot-vue3/src/views/mes/proposal/（与 MES 前端同事目录对齐）
 --   2. sys_permission.id 为 varchar(32)，所有 ID 必须 ≤32 字符
 --   3. 使用固定 ID + NOT EXISTS 插入；文末 UPDATE 纠偏已存在行（可重复执行）
---   4. component 必须对应 views/ 真实路径（proposal/...），禁止写成 mes/proposal/...
---   5. 执行后请在「角色管理」为 admin / proposal_admin 等角色授权菜单
---   6. 若菜单不显示或空白页，请退出重新登录或刷新权限缓存
+--   4. component 必须对应 views/ 真实路径：mes/proposal/...（不要写成 proposal/...）
+--   5. url 仍为 /proposal/**，与 component 相互独立，不要把 /mes 写进访问路径
+--   6. 执行后请在「角色管理」为 admin / proposal_admin 等角色授权菜单
+--   7. 若菜单不显示或空白页，请退出重新登录或刷新权限缓存
 -- =============================================================================
 
 SET NAMES utf8mb4;
@@ -48,7 +49,7 @@ INSERT INTO `sys_permission` (
   `status`, `del_flag`, `rule_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `internal_or_external`
 )
 SELECT
-  'pr0p0sa3002manage00000000000001', 'pr0p0sa3001menu000000000000001', '提案管理', '/proposal/manage', 'proposal/manage/index', NULL, NULL,
+  'pr0p0sa3002manage00000000000001', 'pr0p0sa3001menu000000000000001', '提案管理', '/proposal/manage', 'mes/proposal/manage/index', NULL, NULL,
   1, NULL, '1', 1.0, 0, NULL,
   1, 0, 0, 0, 0, NULL,
   '1', 0, 0, 'admin', NOW(), NULL, NULL, 0
@@ -63,7 +64,7 @@ INSERT INTO `sys_permission` (
   `status`, `del_flag`, `rule_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `internal_or_external`
 )
 SELECT
-  'pr0p0sa3003config000000000000001', 'pr0p0sa3001menu000000000000001', '提案配置', '/proposal/config', 'proposal/config/index', NULL, NULL,
+  'pr0p0sa3003config000000000000001', 'pr0p0sa3001menu000000000000001', '提案配置', '/proposal/config', 'mes/proposal/config/index', NULL, NULL,
   1, NULL, '1', 2.0, 0, NULL,
   1, 0, 0, 0, 0, NULL,
   '1', 0, 0, 'admin', NOW(), NULL, NULL, 0
@@ -134,18 +135,19 @@ UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3002manage0000000
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3003config000000000000001';
 
 -- -----------------------------------------------------------------------------
--- 自愈：INSERT 幂等不会覆盖已存在行；若曾在「菜单管理」误改成 mes/proposal/**，
--- 页面会空白提示「查看组件引用是否正确」。固定 id 强制纠回权威路径。
--- component 必须对应 jeecgboot-vue3/src/views/ 下真实文件（无 mes/ 前缀）。
+-- 自愈：INSERT 幂等不会覆盖已存在行。component 必须对应
+-- jeecgboot-vue3/src/views/mes/proposal/ 下真实文件。
+-- 若仍写 proposal/manage/index（无 mes 前缀），页面会空白提示「查看组件引用是否正确」。
+-- url 保持 /proposal/**，不要改成 /mes/proposal/**。
 -- -----------------------------------------------------------------------------
 UPDATE `sys_permission`
 SET `url` = '/proposal', `component` = 'layouts/RouteView', `name` = '提案改善'
 WHERE `id` = 'pr0p0sa3001menu000000000000001';
 
 UPDATE `sys_permission`
-SET `url` = '/proposal/manage', `component` = 'proposal/manage/index', `name` = '提案管理'
+SET `url` = '/proposal/manage', `component` = 'mes/proposal/manage/index', `name` = '提案管理'
 WHERE `id` = 'pr0p0sa3002manage00000000000001';
 
 UPDATE `sys_permission`
-SET `url` = '/proposal/config', `component` = 'proposal/config/index', `name` = '提案配置'
+SET `url` = '/proposal/config', `component` = 'mes/proposal/config/index', `name` = '提案配置'
 WHERE `id` = 'pr0p0sa3003config000000000000001';
