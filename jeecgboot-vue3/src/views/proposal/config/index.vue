@@ -10,6 +10,9 @@
       <a-tab-pane key="approver" tab="批准人">
         <ApproverPanel />
       </a-tab-pane>
+      <a-tab-pane key="improvementType" tab="改善性质">
+        <ImprovementTypePanel />
+      </a-tab-pane>
       <a-tab-pane key="scoreDimension" tab="评分维度">
         <ScoreDimensionPanel />
       </a-tab-pane>
@@ -21,6 +24,7 @@
   import DeptLeaderPanel from './components/DeptLeaderPanel.vue';
   import CommitteePanel from './components/CommitteePanel.vue';
   import ApproverPanel from './components/ApproverPanel.vue';
+  import ImprovementTypePanel from './components/ImprovementTypePanel.vue';
   import ScoreDimensionPanel from './components/ScoreDimensionPanel.vue';
 
   const activeKey = ref('deptLeader');

@@ -109,6 +109,8 @@ import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store'
 import {
   improvementTypeLabels,
+  loadImprovementTypes,
+  loadStatusLabels,
   statusLabel,
   statusStamp,
   type StampTone,
@@ -209,8 +211,8 @@ const displayList = computed<DisplayItem[]>(() => {
         title: item.title || '未命名提案',
         dept: deptNameMap.value[item.deptId || ''] || item.deptId || '—',
         who,
-        nature: improvementTypeLabels(item.improvementTypes),
-        statusLabel: statusLabel(item.status),
+        nature: improvementTypeLabels(item.improvementTypes, item.improvementTypesLabel),
+        statusLabel: item.statusLabel || statusLabel(item.status),
         stamp,
         score,
         band: BAND[stamp],
@@ -291,6 +293,8 @@ onShow(() => {
 
 onLoad(() => {
   loadDepts()
+  loadStatusLabels()
+  loadImprovementTypes()
 })
 </script>
 

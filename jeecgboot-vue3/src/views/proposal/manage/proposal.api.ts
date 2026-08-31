@@ -1,5 +1,5 @@
 import { defHttp } from '/@/utils/http/axios';
-import { formatAward, formatImprovementTypes, proposalStatusOptions } from './proposal.data';
+import { formatAward, formatImprovementTypes, STATUS_TAG_COLOR } from './proposal.data';
 
 enum Api {
   list = '/proposal/admin/manage/list',
@@ -8,9 +8,6 @@ enum Api {
   departQueryByIds = '/sys/sysDepart/queryByIds',
   departByOrgCode = '/sys/sysDepart/getDepartName',
 }
-
-const statusLabelMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.value, o.label]));
-const statusColorMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.value, o.color]));
 
 const actionLabelMap: Record<string, string> = {
   SUBMIT: '提交申请',
@@ -120,7 +117,7 @@ async function fetchDeptNameMap(ids: Array<string | undefined | null>): Promise<
 function enrichRecord(record: Recordable, userMap: Record<string, string>, deptMap: Record<string, string>) {
   record.proposerName = userMap[record.proposerId] || record.proposerName || '-';
   record.deptName = deptMap[record.deptId] || record.deptName || '-';
-  record.improvementTypesLabel = formatImprovementTypes(record.improvementTypes);
+  record.improvementTypesLabel = record.improvementTypesLabel || formatImprovementTypes(record.improvementTypes);
   record.awardAmountText = formatAward(record.awardAmount);
   return record;
 }
@@ -171,8 +168,8 @@ export const getProposalById = async (params: { id: string }) => {
     proposalNo: proposal.proposalNo || '-',
     title: proposal.title || '-',
     status: proposal.status,
-    statusLabel: statusLabelMap[proposal.status] || proposal.status || '-',
-    statusColor: statusColorMap[proposal.status] || 'default',
+    statusLabel: proposal.statusLabel || proposal.status || '-',
+    statusColor: STATUS_TAG_COLOR[proposal.status] || 'default',
     proposerId: proposal.proposerId,
     proposerName: proposer.name,
     proposerWorkNo: proposer.workNo,
@@ -183,7 +180,7 @@ export const getProposalById = async (params: { id: string }) => {
     deptName: deptMap[proposal.deptId] || '-',
     deptLeaderId: proposal.deptLeaderId,
     deptLeaderName: leader?.name || '-',
-    improvementTypesLabel: formatImprovementTypes(proposal.improvementTypes),
+    improvementTypesLabel: proposal.improvementTypesLabel || formatImprovementTypes(proposal.improvementTypes),
     awardAmountText: formatAward(proposal.awardAmount),
     planRequiredLabel:
       proposal.planRequired === 1 ? '形成' : proposal.planRequired === 0 ? '不形成' : '-',
@@ -212,9 +209,9 @@ export const getProposalById = async (params: { id: string }) => {
       : null,
     statusLogs: statusLogs.map((log) => ({
       ...log,
-      actionLabel: actionLabelMap[log.action] || log.action || '-',
-      fromStatusLabel: statusLabelMap[log.fromStatus] || log.fromStatus || '-',
-      toStatusLabel: statusLabelMap[log.toStatus] || log.toStatus || '-',
+      actionLabel: log.actionLabel || actionLabelMap[log.action] || log.action || '-',
+      fromStatusLabel: log.fromStatusLabel || log.fromStatus || '-',
+      toStatusLabel: log.toStatusLabel || log.toStatus || '-',
       operatorName: userInfoMap[log.operatorId]?.name || '-',
     })),
     reviews: committeeReviews.map((r, idx) => {

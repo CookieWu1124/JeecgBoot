@@ -264,13 +264,13 @@ const apply = computed(() => {
     .map(a => resolveFileUrl(a.fileUrl))
     .filter(Boolean)
   return {
-    nature: formatImprovementTypes(p?.improvementTypes),
+    nature: formatImprovementTypes(p?.improvementTypes, p?.improvementTypesLabel),
     dept: deptMeta.value?.deptName || p?.deptId || '—',
     leader: deptMeta.value?.leaderName || '',
     problem: app?.currentSituation || '—',
     idea: app?.improvementSuggestion || '—',
     images,
-    status: statusLabel(p?.status),
+    status: statusLabel(p?.status, p?.statusLabel),
     progress: p?.reviewProgress || '',
   }
 })

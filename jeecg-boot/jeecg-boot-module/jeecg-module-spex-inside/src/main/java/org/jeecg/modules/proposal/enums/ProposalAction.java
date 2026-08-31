@@ -48,4 +48,16 @@ public enum ProposalAction {
         this.code = code;
         this.label = label;
     }
+
+    public static String labelOf(String code) {
+        if (code == null) {
+            return null;
+        }
+        for (ProposalAction item : values()) {
+            if (item.code.equals(code)) {
+                return item.label;
+            }
+        }
+        return code;
+    }
 }

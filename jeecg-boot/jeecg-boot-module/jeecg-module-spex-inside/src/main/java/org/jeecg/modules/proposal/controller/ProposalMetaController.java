@@ -7,12 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.ProposalDeptLeader;
+import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.service.IProposalDeptLeaderService;
+import org.jeecg.modules.proposal.service.IProposalImprovementTypeService;
 import org.jeecg.modules.proposal.vo.ImprovementDeptOption;
+import org.jeecg.modules.proposal.vo.ImprovementTypeOption;
+import org.jeecg.modules.proposal.vo.StatusOption;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -31,6 +36,8 @@ public class ProposalMetaController {
 
     @Autowired
     private IProposalDeptLeaderService deptLeaderService;
+    @Autowired
+    private IProposalImprovementTypeService improvementTypeService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -67,6 +74,27 @@ public class ProposalMetaController {
             options.add(opt);
         }
         return Result.OK(options);
+    }
+
+    @Operation(summary = "提案状态选项（枚举，非字典）")
+    @GetMapping("/statuses")
+    public Result<List<StatusOption>> statuses() {
+        List<StatusOption> options = new ArrayList<>();
+        for (ProposalStatusEnum item : ProposalStatusEnum.values()) {
+            StatusOption opt = new StatusOption();
+            opt.setCode(item.getCode());
+            opt.setLabel(item.getLabel());
+            opt.setTerminal(item.terminal());
+            options.add(opt);
+        }
+        return Result.OK(options);
+    }
+
+    @Operation(summary = "改善性质选项（配置表，非字典；默认仅启用）")
+    @GetMapping("/improvementTypes")
+    public Result<List<ImprovementTypeOption>> improvementTypes(
+            @RequestParam(name = "enabledOnly", defaultValue = "true") boolean enabledOnly) {
+        return Result.OK(improvementTypeService.listOptions(enabledOnly));
     }
 
     private Map<String, String> queryNameMap(String sqlTemplate, List<String> ids) {

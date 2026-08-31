@@ -86,7 +86,7 @@ SELECT 'pr0p0sa3006mgdel0000000000000001', 'pr0p0sa3002manage00000000000001', '�
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3006mgdel0000000000000001');
 
 -- -----------------------------------------------------------------------------
--- 提案配置 — 按钮权限（四 Tab，id 均 32 字符）
+-- 提案配置 — 按钮权限（五 Tab，id 均 32 字符）
 -- -----------------------------------------------------------------------------
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT 'pr0p0sa3007cfdls0000000000000001', 'pr0p0sa3003config000000000000001', '部门负责人-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:deptLeader:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
@@ -119,6 +119,14 @@ FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT 'pr0p0sa3014cfsdd0000000000000001', 'pr0p0sa3003config000000000000001', '评分维度-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:scoreDimension:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3014cfsdd0000000000000001');
+
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
+SELECT 'pr0p0sa3015cftys0000000000000001', 'pr0p0sa3003config000000000000001', '改善性质-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3015cftys0000000000000001');
+
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
+SELECT 'pr0p0sa3016cftyd0000000000000001', 'pr0p0sa3003config000000000000001', '改善性质-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3016cftyd0000000000000001');
 
 -- 修正父级 is_leaf
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = 'pr0p0sa3001menu000000000000001';

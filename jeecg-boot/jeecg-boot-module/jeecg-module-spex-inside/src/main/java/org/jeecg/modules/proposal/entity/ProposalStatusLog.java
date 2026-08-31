@@ -1,5 +1,6 @@
 package org.jeecg.modules.proposal.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -22,12 +23,21 @@ public class ProposalStatusLog extends ProposalBaseEntity implements Serializabl
     /** 跳转前状态，对应 {@link org.jeecg.modules.proposal.enums.ProposalStatusEnum#getCode()}。 */
     @Schema(description = "变更前状态")
     private String fromStatus;
+    @TableField(exist = false)
+    @Schema(description = "变更前状态中文")
+    private String fromStatusLabel;
     /** 跳转后状态。 */
     @Schema(description = "变更后状态")
     private String toStatus;
+    @TableField(exist = false)
+    @Schema(description = "变更后状态中文")
+    private String toStatusLabel;
     /** 动作码，对应 {@link org.jeecg.modules.proposal.enums.ProposalAction#getCode()}。 */
     @Schema(description = "动作")
     private String action;
+    @TableField(exist = false)
+    @Schema(description = "动作中文")
+    private String actionLabel;
     @Schema(description = "操作人用户ID")
     private String operatorId;
 }

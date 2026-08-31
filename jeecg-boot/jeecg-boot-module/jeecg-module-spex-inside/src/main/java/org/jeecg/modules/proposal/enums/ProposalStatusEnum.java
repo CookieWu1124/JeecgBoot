@@ -1,6 +1,7 @@
 package org.jeecg.modules.proposal.enums;
 
 import lombok.Getter;
+import org.jeecg.modules.proposal.entity.Proposal;
 
 /**
  * 提案主表 {@code proposal.status} 的合法取值。{@link #code} 落库，{@link #label} 给前端/提示。
@@ -48,5 +49,21 @@ public enum ProposalStatusEnum {
             }
         }
         return null;
+    }
+
+    /** 给列表/详情回显；未知码原样返回，避免空白。 */
+    public static String labelOf(String code) {
+        ProposalStatusEnum item = fromCode(code);
+        return item == null ? code : item.getLabel();
+    }
+
+    public boolean terminal() {
+        return this == REJECTED_FINAL || this == WITHDRAWN || this == COMPLETED;
+    }
+
+    public static void attachLabel(Proposal proposal) {
+        if (proposal != null) {
+            proposal.setStatusLabel(labelOf(proposal.getStatus()));
+        }
     }
 }

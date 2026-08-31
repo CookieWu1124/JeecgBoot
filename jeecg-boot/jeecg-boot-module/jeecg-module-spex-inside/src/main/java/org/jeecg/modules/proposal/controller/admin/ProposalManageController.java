@@ -12,8 +12,11 @@ import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.proposal.entity.Proposal;
+import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
+import org.jeecg.modules.proposal.service.IProposalImprovementTypeService;
 import org.jeecg.modules.proposal.service.IProposalService;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +29,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/proposal/admin/manage")
 public class ProposalManageController extends JeecgController<Proposal, IProposalService> {
+
+    @Autowired
+    private IProposalImprovementTypeService improvementTypeService;
 
     @Operation(summary = "分页列表查询")
     @GetMapping("/list")
@@ -45,6 +51,10 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
         queryWrapper.orderByDesc("create_time");
         Page<Proposal> page = new Page<>(pageNo, pageSize);
         IPage<Proposal> pageList = service.page(page, queryWrapper);
+        if (pageList.getRecords() != null) {
+            pageList.getRecords().forEach(ProposalStatusEnum::attachLabel);
+            improvementTypeService.attachTypeLabels(pageList.getRecords());
+        }
         return Result.OK(pageList);
     }
 

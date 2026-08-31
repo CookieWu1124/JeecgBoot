@@ -31,6 +31,12 @@ export interface ImprovementDeptOption {
   leaderConfigured?: boolean
 }
 
+export interface StatusOption {
+  code: string
+  label: string
+  terminal?: boolean
+}
+
 export interface ProposalListQuery {
   /** all | mine | draft | doing | done */
   tab?: string
@@ -44,7 +50,9 @@ export interface ProposalListItem {
   proposalNo?: string
   title?: string
   status?: string
+  statusLabel?: string
   improvementTypes?: string
+  improvementTypesLabel?: string
   deptId?: string
   deptLeaderId?: string
   proposerId?: string
@@ -122,8 +130,26 @@ export interface ApplicationApprovalResult {
 
 /** ---------- 元数据 ---------- */
 
+export interface ImprovementTypeOption {
+  code: string
+  label: string
+  typeStatus?: string
+  sortNo?: number
+  description?: string
+}
+
 export function fetchImprovementDepts() {
   return http.get<ImprovementDeptOption[]>('/proposal/meta/improvementDepts')
+}
+
+export function fetchProposalStatuses() {
+  return http.get<StatusOption[]>('/proposal/meta/statuses')
+}
+
+export function fetchImprovementTypes(enabledOnly = true) {
+  return http.get<ImprovementTypeOption[]>('/proposal/meta/improvementTypes', {
+    enabledOnly: enabledOnly ? 'true' : 'false',
+  })
 }
 
 /** ---------- Phase 1：已实现 ---------- */

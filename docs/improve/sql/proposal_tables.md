@@ -1,7 +1,7 @@
 # 提案改善系统 — 业务表结构
 
 > 数据库：MySQL 5.7+ | 字符集：utf8mb4 | 主键：varchar(36)，应用层 IdType.ASSIGN_ID 生成  
-> 可执行 DDL：`proposal_init.sql`（V1.2）  
+> 可执行 DDL：`proposal_init.sql`（V1.3）  
 > Cursor 规则：`.cursor/rules/improve/proposal-sql-ddl.mdc`
 
 ## 目录
@@ -9,6 +9,7 @@
 - [proposal_dept_leader](#proposal_dept_leader) — 改善部门负责人配置
 - [proposal_committee_member](#proposal_committee_member) — 提案委员会名册
 - [proposal_approver](#proposal_approver) — 提案批准人配置
+- [proposal_improvement_type](#proposal_improvement_type) — 改善性质配置
 - [proposal_score_dimension](#proposal_score_dimension) — 六维评分维度配置
 - [proposal](#proposal) — 提案主表
 - [proposal_application](#proposal_application) — 提案申请书
@@ -115,6 +116,28 @@
 
 ---
 
+## proposal_improvement_type
+
+**表说明**：改善性质配置（无权重；停用勿物理删除已出现在提案 JSON 中的码）
+
+### 业务字段
+
+| 字段名 | 数据类型 | 允许空 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | varchar(36) | 否 | 主键 |
+| `type_code` | varchar(32) | 否 | 性质编码 SAFETY/QUALITY 等，创建后不可改 |
+| `type_name` | varchar(64) | 否 | 性质名称 |
+| `description` | varchar(200) | 是 | 性质说明 |
+| `sort_no` | int | 是 | 排序 |
+| `type_status` | varchar(16) | 否 | 启用状态 active/disabled |
+
+### 索引与约束
+
+- **主键**：(`id`)
+- **唯一索引** `uk_proposal_improvement_type_code`：(`type_code`, `tenant_id`)
+
+---
+
 ## proposal_score_dimension
 
 **表说明**：六维评分维度配置（权重合计 100%）
@@ -150,7 +173,7 @@
 | `proposal_no` | varchar(20) | 是 | 提案编号（提交时生成） |
 | `title` | varchar(100) | 否 | 提案名称 |
 | `status` | varchar(32) | 否 | 状态枚举 |
-| `improvement_types` | varchar(200) | 是 | 改善性质 JSON |
+| `improvement_types` | varchar(200) | 是 | 改善性质 JSON 数组（码对应 `proposal_improvement_type.type_code`） |
 | `dept_id` | varchar(36) | 是 | 改善部门 |
 | `dept_leader_id` | varchar(36) | 是 | 部门负责人 |
 | `proposer_id` | varchar(36) | 否 | 提案人 |

@@ -137,8 +137,8 @@ const view = computed(() => {
   return {
     no: p?.proposalNo || '—',
     title: p?.title || '未命名提案',
-    status: statusLabel(p?.status),
-    nature: formatImprovementTypes(p?.improvementTypes),
+    status: statusLabel(p?.status, p?.statusLabel),
+    nature: formatImprovementTypes(p?.improvementTypes, p?.improvementTypesLabel),
     who: userInfo.value.nickname || userInfo.value.username || '我',
     dept: deptMeta.value?.deptName || p?.deptId || '—',
   }

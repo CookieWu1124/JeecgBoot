@@ -75,7 +75,7 @@
 | 页面 | 路径 | 进度 |
 |------|------|------|
 | 提案管理列表（仅查询+详情） | `views/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
-| 提案配置（四 Tab） | `views/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / 评分维度 |
+| 提案配置（五 Tab） | `views/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / **改善性质** / 评分维度 |
 | 提案详情弹窗 | `views/proposal/manage/components/ProposalModal` | [x] 对齐原型：摘要卡/四 Tab/申请单分块；委员意见表已接；计划书·报告书占位；操作留痕已接 status_log |
 
 ---
@@ -91,6 +91,7 @@
 | `proposal_committee_member` | 1 | [x] | 审核名册 |
 | `proposal_approver` | 1 | [x] | 批准人配置 |
 | `proposal_dept_leader` | 1 | [x] | 提交前校验 |
+| `proposal_improvement_type` | 1 | [x] | 改善性质配置；`inside_dev` 用 fix 增量 |
 | `proposal_committee_review` | 2 | [x] | 委员审核记录 + 提交快照；`inside_dev` 已建表并对 202608290001 补种 |
 | `proposal_approval` | 2 | [x] | 批准人决策记录；`inside_dev` 已建表 |
 
@@ -124,7 +125,7 @@
 | 4 | 批准人申请批准页 | 小程序 | [x] `approve.vue` |
 | 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [x] 列表已展示 reviewProgress |
 | 6 | 管理端提案列表（查询对齐原型） | 管理端 | [x] 仅查询+详情；筛选/列/进度条/状态 Tag |
-| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置四 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
+| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置五 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
 | 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] `proposal_menu.sql` 含 component 自愈 UPDATE |
 | 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
 | 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；对接 create/draft/submit |
@@ -180,4 +181,6 @@
 | 2026-08-29 | **Phase2 批准人申请决策**：建表 proposal_approval；pending/决策接口；写 plan_required/award_amount；spex-app 待核定+approve 接真；管理端详情展示批准结果；申请段 Phase2 收齐 |
 | 2026-08-29 | **申请段 Phase2 联调归档**：`202608290001` 委员 5/5 → 待核定（管理端已验）；批准人决策链路已验；本段关闭，下一里程碑 02 任务分配 |
 | 2026-08-29 | **App 对接清单**：新增 `docs/improve/api/提案小程序-接口对接清单.md`（申请段接口/字段/示例/联调账号），供小程序前端同事联调 |
+| 2026-08-31 | **状态文案唯一真相**：`GET /proposal/meta/statuses`；列表/详情带 `statusLabel`；管理端筛选 ApiSelect，不再写死中文 |
 | 2026-08-31 | **状态机提前落地**：`ProposalStateMachine` + `ProposalAction`；提交/撤回/委员齐/批准/不批准改走 `transit()`；02/03/04 合法跳转已预注册 |
+| 2026-08-31 | **改善性质落库**：表 `proposal_improvement_type`；配置 Tab 在评分维度前；`GET /proposal/meta/improvementTypes`；提交校验启用码；列表/详情带 `improvementTypesLabel` |

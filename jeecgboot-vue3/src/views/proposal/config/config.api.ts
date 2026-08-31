@@ -10,6 +10,9 @@ enum Api {
   approverList = '/proposal/admin/config/approver/list',
   approverSave = '/proposal/admin/config/approver/save',
   approverDelete = '/proposal/admin/config/approver/delete',
+  improvementTypeList = '/proposal/admin/config/improvementType/list',
+  improvementTypeSave = '/proposal/admin/config/improvementType/save',
+  improvementTypeDelete = '/proposal/admin/config/improvementType/delete',
   scoreDimensionList = '/proposal/admin/config/scoreDimension/list',
   scoreDimensionSave = '/proposal/admin/config/scoreDimension/save',
   scoreDimensionDelete = '/proposal/admin/config/scoreDimension/delete',
@@ -209,6 +212,17 @@ export const saveApprover = (params) => {
 
 export const deleteApprover = (params, handleSuccess?) =>
   defHttp.delete({ url: Api.approverDelete, data: params }, { joinParamsToUrl: true }).then(() => handleSuccess && handleSuccess());
+
+export const getImprovementTypeList = async (params?) => {
+  const list = await defHttp.get({ url: Api.improvementTypeList, params });
+  const records = Array.isArray(list) ? list : [];
+  return { records, total: records.length };
+};
+
+export const saveImprovementType = (params) => defHttp.post({ url: Api.improvementTypeSave, params });
+
+export const deleteImprovementType = (params, handleSuccess) =>
+  defHttp.delete({ url: Api.improvementTypeDelete, data: params }, { joinParamsToUrl: true }).then(() => handleSuccess());
 
 export const getScoreDimensionList = async (params?) => {
   const list = await defHttp.get({ url: Api.scoreDimensionList, params });

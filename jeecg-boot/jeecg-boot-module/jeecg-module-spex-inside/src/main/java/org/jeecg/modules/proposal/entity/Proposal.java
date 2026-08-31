@@ -1,5 +1,6 @@
 package org.jeecg.modules.proposal.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.Version;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,7 +25,13 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
     private String title;
     /** 当前环节，取值见 {@link org.jeecg.modules.proposal.enums.ProposalStatusEnum}。改状态须走 ProposalStateMachine。 */
     private String status;
+    /** 状态中文，来自枚举，不落库。 */
+    @TableField(exist = false)
+    private String statusLabel;
     private String improvementTypes;
+    /** 改善性质中文，配置表回显，不落库。 */
+    @TableField(exist = false)
+    private String improvementTypesLabel;
     private String deptId;
     private String deptLeaderId;
     private String proposerId;

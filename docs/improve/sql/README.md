@@ -4,7 +4,7 @@
 
 | 脚本 | 职责 | 新环境是否必跑 |
 |------|------|----------------|
-| `proposal_init.sql` | **业务表 DDL** + 角色 + 评分维度种子 | ✅ 必跑 |
+| `proposal_init.sql` | **业务表 DDL** + 角色 + 改善性质 / 评分维度种子 | ✅ 必跑 |
 | `proposal_menu.sql` | **管理端菜单/按钮**（`sys_permission`） | ✅ 必跑 |
 | `proposal_spex_user_seed.sql` | 斯派科样例组织 + MES/电气控制员工（`org_code=S01*`） | ⭕ 开发/联调建议跑 |
 | `proposal_config_seed.sql` | 联调配置：部门负责人 / 委员会 / 批准人 | ⭕ 跑完用户种子后执行 |
@@ -21,7 +21,7 @@
 # 1. Jeecg 基础库（若尚未导入）
 # mysql -u root -p inside_dev < jeecg-boot/db/jeecgboot-mysql-5.7.sql
 
-# 2. 提案业务表 + 角色 + 六维种子
+# 2. 提案业务表 + 角色 + 改善性质 / 六维种子
 mysql -u root -p inside_dev < docs/improve/sql/proposal_init.sql
 
 # 3. 管理端菜单权限

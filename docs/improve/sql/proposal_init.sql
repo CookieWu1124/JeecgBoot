@@ -1,7 +1,7 @@
 -- =============================================================================
 -- 提案改善系统 — Phase 1 数据库初始化脚本
--- 版本：V1.2
--- 日期：2026-08-28
+-- 版本：V1.3
+-- 日期：2026-08-31
 -- 说明：
 --   1. 用户/角色/组织复用 JeecgBoot sys_* 表，本脚本建提案配置表 + 业务表
 --   2. 业务表通用字段约定见 docs/improve/sql/proposal_tables.md
@@ -104,6 +104,51 @@ CREATE TABLE `proposal_approver` (
   KEY `idx_proposal_approver_user` (`user_id`),
   KEY `idx_proposal_approver_status` (`approver_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案批准人配置';
+
+DROP TABLE IF EXISTS `proposal_improvement_type`;
+CREATE TABLE `proposal_improvement_type` (
+  `id` varchar(36) NOT NULL COMMENT '主键',
+  `type_code` varchar(32) NOT NULL COMMENT '性质编码 如 SAFETY，创建后不可改',
+  `type_name` varchar(64) NOT NULL COMMENT '性质名称',
+  `description` varchar(200) DEFAULT NULL COMMENT '性质说明',
+  `sort_no` int DEFAULT 0 COMMENT '排序',
+  `type_status` varchar(16) NOT NULL DEFAULT 'active' COMMENT '启用状态 active/disabled',
+  `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
+  `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
+  `update_no` varchar(50) DEFAULT NULL COMMENT '更新人工号',
+  `update_by` varchar(50) DEFAULT NULL COMMENT '更新人名称',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
+  `sys_org_code` varchar(64) DEFAULT NULL COMMENT '所属部门',
+  `sys_org_name` varchar(300) DEFAULT NULL COMMENT '机构名称',
+  `tenant_id` varchar(36) NOT NULL DEFAULT '' COMMENT '租户ID',
+  `remark` varchar(300) DEFAULT NULL COMMENT '备注',
+  `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_proposal_improvement_type_code` (`type_code`, `tenant_id`),
+  KEY `idx_proposal_improvement_type_status` (`type_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='改善性质配置';
+
+-- 默认五类改善性质（幂等；与现网码一致）
+INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT 'pr0p0sa2101safety00000000000001', 'SAFETY', '安全改善', '安全隐患、防护、作业规范等改善', 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'SAFETY' AND `tenant_id` = '');
+
+INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT 'pr0p0sa2102quality0000000000001', 'QUALITY', '品质改善', '质量、不良、检验与标准相关改善', 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'QUALITY' AND `tenant_id` = '');
+
+INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT 'pr0p0sa2103efficiency0000000001', 'EFFICIENCY', '效率改善', '节拍、工时、流程效率相关改善', 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'EFFICIENCY' AND `tenant_id` = '');
+
+INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT 'pr0p0sa2104delivery000000000001', 'DELIVERY', '交付改善', '交期、齐套、物流与响应相关改善', 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'DELIVERY' AND `tenant_id` = '');
+
+INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT 'pr0p0sa2105cost0000000000000001', 'COST', '成本改善', '物料、能耗、浪费与费用相关改善', 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'COST' AND `tenant_id` = '');
 
 DROP TABLE IF EXISTS `proposal_score_dimension`;
 CREATE TABLE `proposal_score_dimension` (
@@ -354,7 +399,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- PLAN_PENDING_APPROVAL, PLAN_REJECTED, PENDING_EVALUATION,
 -- PENDING_SIGNOFF, COMPLETED
 --
--- 改善性质参考：SAFETY, QUALITY, EFFICIENCY, DELIVERY, COST
+-- 改善性质：proposal_improvement_type 配置表（种子 SAFETY/QUALITY/EFFICIENCY/DELIVERY/COST）
+--   提案主表 improvement_types 仍存 JSON 数组字符串，码必须是当前启用行
 --
 -- 配置表说明：
 -- proposal_committee_member：member_status=active 在任委员参与审核；score_enabled=1 参与评分

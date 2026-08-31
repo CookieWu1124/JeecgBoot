@@ -1,36 +1,43 @@
 import { BasicColumn, FormSchema } from '/@/components/Table';
 import { h } from 'vue';
 import { Progress, Tag } from 'ant-design-vue';
+import { defHttp } from '/@/utils/http/axios';
 
-/** 当前环节（对齐原型显示名与状态色） */
-export const proposalStatusOptions = [
-  { label: '草稿', value: 'DRAFT', color: 'default' },
-  { label: '待审核', value: 'PENDING_REVIEW', color: 'gold' },
-  { label: '待批准', value: 'PENDING_APPROVAL', color: 'blue' },
-  { label: '不批准', value: 'REJECTED_FINAL', color: 'error' },
-  { label: '已撤回', value: 'WITHDRAWN', color: 'default' },
-  { label: '待指派', value: 'PENDING_ASSIGN', color: 'processing' },
-  { label: '待领取', value: 'PENDING_CLAIM', color: 'processing' },
-  { label: '实施中', value: 'IN_PROGRESS', color: 'processing' },
-  { label: '计划书待审', value: 'PLAN_PENDING_REVIEW', color: 'orange' },
-  { label: '计划书待批', value: 'PLAN_PENDING_APPROVAL', color: 'orange' },
-  { label: '已驳回', value: 'PLAN_REJECTED', color: 'error' },
-  { label: '待评定', value: 'PENDING_EVALUATION', color: 'cyan' },
-  { label: '待签核', value: 'PENDING_SIGNOFF', color: 'cyan' },
-  { label: '已完成', value: 'COMPLETED', color: 'success' },
-];
+/** 状态色仅前端展示用；文案以接口 /proposal/meta/statuses 及行内 statusLabel 为准 */
+const STATUS_TAG_COLOR: Record<string, string> = {
+  DRAFT: 'default',
+  PENDING_REVIEW: 'gold',
+  PENDING_APPROVAL: 'blue',
+  REJECTED_FINAL: 'error',
+  WITHDRAWN: 'default',
+  PENDING_ASSIGN: 'processing',
+  PENDING_CLAIM: 'processing',
+  IN_PROGRESS: 'processing',
+  PLAN_PENDING_REVIEW: 'orange',
+  PLAN_PENDING_APPROVAL: 'orange',
+  PLAN_REJECTED: 'error',
+  PENDING_EVALUATION: 'cyan',
+  PENDING_SIGNOFF: 'cyan',
+  COMPLETED: 'success',
+};
 
-/** 改善性质 */
-export const improvementTypeOptions = [
-  { label: '安全改善', value: 'SAFETY' },
-  { label: '品质改善', value: 'QUALITY' },
-  { label: '效率改善', value: 'EFFICIENCY' },
-  { label: '交付改善', value: 'DELIVERY' },
-  { label: '成本改善', value: 'COST' },
-];
+export function fetchProposalStatusOptions() {
+  return defHttp.get({ url: '/proposal/meta/statuses' });
+}
 
-const statusMap = Object.fromEntries(proposalStatusOptions.map((o) => [o.value, o]));
-const improvementTypeMap = Object.fromEntries(improvementTypeOptions.map((o) => [o.value, o.label]));
+export function fetchProposalImprovementTypeOptions() {
+  return defHttp.get({ url: '/proposal/meta/improvementTypes' }).then((list) => {
+    const rows = Array.isArray(list) ? list : [];
+    rows.forEach((o) => {
+      if (o?.code) {
+        improvementTypeMap[o.code] = o.label || o.code;
+      }
+    });
+    return rows;
+  });
+}
+
+let improvementTypeMap: Record<string, string> = {};
 
 function parseImprovementTypes(raw: unknown): string[] {
   if (raw == null || raw === '') {
@@ -102,12 +109,13 @@ function renderReviewProgress(text: unknown) {
   ]);
 }
 
-function renderStatusTag(status: unknown) {
-  const meta = statusMap[String(status || '')];
-  if (!meta) {
-    return status || '-';
+function renderStatusTag(status: unknown, statusLabel?: unknown) {
+  const code = String(status || '');
+  const label = statusLabel ? String(statusLabel) : code || '-';
+  if (!code) {
+    return '-';
   }
-  return h(Tag, { color: meta.color }, () => meta.label);
+  return h(Tag, { color: STATUS_TAG_COLOR[code] || 'default' }, () => label);
 }
 
 /** 对齐原型：序号 | 提案编号 | 提案名称 | 提案人 | 改善部门 | 改善性质 | 当前环节 | 审核进度 | 核定提案奖 | 提交时间 | 操作 */
@@ -140,13 +148,13 @@ export const columns: BasicColumn[] = [
     dataIndex: 'improvementTypes',
     width: 160,
     align: 'left',
-    customRender: ({ text }) => formatImprovementTypes(text),
+    customRender: ({ text, record }) => record?.improvementTypesLabel || formatImprovementTypes(text),
   },
   {
     title: '当前环节',
     dataIndex: 'status',
     width: 110,
-    customRender: ({ text }) => renderStatusTag(text),
+    customRender: ({ text, record }) => renderStatusTag(text, record?.statusLabel),
   },
   {
     title: '审核进度',
@@ -186,9 +194,11 @@ export const searchFormSchema: FormSchema[] = [
   {
     field: 'status',
     label: '当前环节',
-    component: 'Select',
+    component: 'ApiSelect',
     componentProps: {
-      options: proposalStatusOptions.map(({ label, value }) => ({ label, value })),
+      api: fetchProposalStatusOptions,
+      labelField: 'label',
+      valueField: 'code',
       placeholder: '请选择',
       allowClear: true,
     },
@@ -210,9 +220,11 @@ export const searchFormSchema: FormSchema[] = [
   {
     field: 'improvementTypes',
     label: '改善性质',
-    component: 'Select',
+    component: 'ApiSelect',
     componentProps: {
-      options: improvementTypeOptions,
+      api: fetchProposalImprovementTypeOptions,
+      labelField: 'label',
+      valueField: 'code',
       placeholder: '请选择',
       allowClear: true,
     },
@@ -239,4 +251,4 @@ export const searchFormSchema: FormSchema[] = [
   },
 ];
 
-export { formatImprovementTypes, formatAward };
+export { formatImprovementTypes, formatAward, STATUS_TAG_COLOR };

@@ -261,8 +261,8 @@ const view = computed(() => {
       stamp: statusStamp(p?.status),
       prog: p?.reviewProgress || '',
     },
-    status: statusLabel(p?.status),
-    nature: formatImprovementTypes(p?.improvementTypes),
+    status: statusLabel(p?.status, p?.statusLabel),
+    nature: formatImprovementTypes(p?.improvementTypes, p?.improvementTypesLabel),
   }
 })
 

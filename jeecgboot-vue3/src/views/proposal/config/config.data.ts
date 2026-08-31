@@ -171,3 +171,31 @@ export const scoreDimensionColumns: BasicColumn[] = [
   { title: '更新人', dataIndex: 'updateBy', width: 100 },
   { title: '更新时间', dataIndex: 'updateTime', width: 170 },
 ];
+
+/** 对齐原型：排序 | 性质编码 | 改善性质(名+说明) | 状态 | 更新人 | 更新时间 */
+export const improvementTypeColumns: BasicColumn[] = [
+  { title: '排序', dataIndex: 'sortNo', width: 70 },
+  { title: '性质编码', dataIndex: 'typeCode', width: 120 },
+  {
+    title: '改善性质',
+    dataIndex: 'typeName',
+    align: 'left',
+    customRender: ({ record }) => {
+      return h('div', { style: { lineHeight: '1.4', padding: '4px 0' } }, [
+        h('div', { style: { fontWeight: 600 } }, record.typeName || '-'),
+        h('div', { style: { color: '#8c8c8c', fontSize: '12px' } }, record.description || ''),
+      ]);
+    },
+  },
+  {
+    title: '状态',
+    dataIndex: 'typeStatus',
+    width: 90,
+    customRender: ({ text }) =>
+      text === 'active'
+        ? h(Tag, { color: 'success' }, () => '启用')
+        : h(Tag, { color: 'default' }, () => '禁用'),
+  },
+  { title: '更新人', dataIndex: 'updateBy', width: 100 },
+  { title: '更新时间', dataIndex: 'updateTime', width: 170 },
+];

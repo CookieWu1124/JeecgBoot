@@ -57,6 +57,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private IProposalApprovalRecordService approvalRecordService;
     @Autowired
     private ProposalStateMachine stateMachine;
+    @Autowired
+    private IProposalImprovementTypeService improvementTypeService;
 
     private static final String CONCLUSION_ADOPT = "ADOPT";
     private static final String CONCLUSION_REJECT = "REJECT";
@@ -175,6 +177,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (ProposalStatusEnum.PENDING_REVIEW.getCode().equals(proposal.getStatus())) {
             ensureReviewSnapshot(proposal, null);
         }
+        ProposalStatusEnum.attachLabel(proposal);
+        improvementTypeService.attachTypeLabels(Collections.singletonList(proposal));
         ProposalDetailVo vo = new ProposalDetailVo();
         vo.setProposal(proposal);
         vo.setApplication(applicationService.getOne(new LambdaQueryWrapper<ProposalApplication>()
@@ -183,9 +187,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                 .eq(ProposalAttachment::getProposalId, id)
                 .orderByAsc(ProposalAttachment::getSortNo)));
         if (withStatusLogs) {
-            vo.setStatusLogs(statusLogService.list(new LambdaQueryWrapper<ProposalStatusLog>()
+            List<ProposalStatusLog> logs = statusLogService.list(new LambdaQueryWrapper<ProposalStatusLog>()
                     .eq(ProposalStatusLog::getProposalId, id)
-                    .orderByDesc(ProposalStatusLog::getCreateTime)));
+                    .orderByDesc(ProposalStatusLog::getCreateTime));
+            logs.forEach(this::fillStatusLogLabels);
+            vo.setStatusLogs(logs);
         }
         vo.setCommitteeReviews(committeeReviewService.list(new LambdaQueryWrapper<ProposalCommitteeReview>()
                 .eq(ProposalCommitteeReview::getProposalId, id)
@@ -215,7 +221,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         qw.in(Proposal::getId, proposalIds)
                 .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode())
                 .orderByDesc(Proposal::getCreateTime);
-        return page(new Page<>(pageNo, pageSize), qw);
+        return withStatusLabels(page(new Page<>(pageNo, pageSize), qw));
     }
 
     @Override
@@ -283,7 +289,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         LambdaQueryWrapper<Proposal> qw = new LambdaQueryWrapper<>();
         qw.eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode())
                 .orderByDesc(Proposal::getUpdateTime);
-        return page(new Page<>(pageNo, pageSize), qw);
+        return withStatusLabels(page(new Page<>(pageNo, pageSize), qw));
     }
 
     @Override
@@ -353,7 +359,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         }
         applyListTab(qw, tab);
         qw.orderByDesc(Proposal::getCreateTime);
-        return page(new Page<>(pageNo, pageSize), qw);
+        return withStatusLabels(page(new Page<>(pageNo, pageSize), qw));
     }
 
     @Override
@@ -462,6 +468,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         if (oConvertUtils.isEmpty(proposal.getImprovementTypes())) {
             throw new JeecgBootBizTipException("请选择改善性质");
         }
+        improvementTypeService.assertEnabledCodes(proposal.getImprovementTypes());
         if (oConvertUtils.isEmpty(proposal.getDeptId())) {
             throw new JeecgBootBizTipException("请选择改善部门");
         }
@@ -612,6 +619,23 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         }
     }
 
+    private IPage<Proposal> withStatusLabels(IPage<Proposal> page) {
+        if (page != null && page.getRecords() != null) {
+            page.getRecords().forEach(ProposalStatusEnum::attachLabel);
+            improvementTypeService.attachTypeLabels(page.getRecords());
+        }
+        return page;
+    }
+
+    private void fillStatusLogLabels(ProposalStatusLog log) {
+        if (log == null) {
+            return;
+        }
+        log.setFromStatusLabel(ProposalStatusEnum.labelOf(log.getFromStatus()));
+        log.setToStatusLabel(ProposalStatusEnum.labelOf(log.getToStatus()));
+        log.setActionLabel(ProposalAction.labelOf(log.getAction()));
+    }
+
     private String generateProposalNo() {
         String datePart = new SimpleDateFormat("yyyyMMdd").format(new Date());
         String prefix = datePart;
@@ -664,7 +688,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             item.setProposalNo(p.getProposalNo());
             item.setTitle(p.getTitle());
             item.setStatus(p.getStatus());
-            item.setStatusLabel(ProposalStatusEnum.DRAFT.getLabel());
+            item.setStatusLabel(ProposalStatusEnum.labelOf(p.getStatus()));
             item.setActionHint("继续编辑并提交");
             return item;
         }).collect(Collectors.toList());

@@ -77,7 +77,7 @@
 <script lang="ts" setup>
 import type { ProposalListItem } from '@/api/proposal'
 import { fetchApprovalPending, fetchCommitteePending, fetchImprovementDepts } from '@/api/proposal'
-import { statusLabel, statusStamp } from '@/pages/proposal/helpers'
+import { statusLabel, statusStamp, loadStatusLabels } from '@/pages/proposal/helpers'
 
 defineOptions({
   name: 'Todo',
@@ -165,7 +165,7 @@ async function ensureDeptMap() {
 async function loadPending() {
   loading.value = true
   try {
-    await ensureDeptMap()
+    await Promise.all([ensureDeptMap(), loadStatusLabels()])
     const [reviewPage, approvePage] = await Promise.all([
       fetchCommitteePending({ pageNo: 1, pageSize: 50 }).catch(() => null),
       fetchApprovalPending({ pageNo: 1, pageSize: 50 }).catch(() => null),
@@ -192,7 +192,7 @@ function mapTodo(item: ProposalListItem, char: string, tint: TodoItem['tint']): 
     who: '提案人',
     char,
     tint,
-    status: statusLabel(item.status),
+    status: item.statusLabel || statusLabel(item.status),
     stamp: statusStamp(item.status),
     progress: item.reviewProgress,
   }

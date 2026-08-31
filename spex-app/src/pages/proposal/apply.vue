@@ -120,14 +120,14 @@
             </view>
             <view class="nature-grid">
               <view
-                v-for="item in IMPROVEMENT_TYPES"
-                :key="item.value"
+                v-for="item in typeOptions"
+                :key="item.code"
                 class="nature-tag"
-                :class="{ 'nature-tag--on': form.natures.includes(item.value) }"
+                :class="{ 'nature-tag--on': form.natures.includes(item.code) }"
                 hover-class="apply-press"
-                @click="toggleNature(item.value)"
+                @click="toggleNature(item.code)"
               >
-                <text :class="form.natures.includes(item.value) ? 'nature-tag__on' : 'nature-tag__off'">
+                <text :class="form.natures.includes(item.code) ? 'nature-tag__on' : 'nature-tag__off'">
                   {{ item.label }}
                 </text>
               </view>
@@ -337,7 +337,7 @@ import { createProposal, fetchImprovementDepts, fetchProposalDetail, submitPropo
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/store'
 import {
-  IMPROVEMENT_TYPES,
+  loadImprovementTypes,
   toImprovementTypesPayload,
   uploadProposalImage,
 } from './helpers'
@@ -379,6 +379,7 @@ const submitting = ref(false)
 const uploading = ref(false)
 const deptOptions = ref<ImprovementDeptOption[]>([])
 const loadingDepts = ref(false)
+const typeOptions = ref<{ code: string, label: string }[]>([])
 
 const form = reactive({
   title: '',
@@ -400,7 +401,7 @@ const currentLeader = computed(() => {
 const leaderText = computed(() => currentLeader.value || '未配置负责人')
 const confirmDeptText = computed(() => `${form.deptName || '—'}（负责人：${currentLeader.value || '—'}）`)
 const natureLabels = computed(() =>
-  IMPROVEMENT_TYPES.filter(i => form.natures.includes(i.value)).map(i => i.label),
+  typeOptions.value.filter(i => form.natures.includes(i.code)).map(i => i.label),
 )
 
 const step1Errors = computed(() => {
@@ -423,7 +424,21 @@ const step1Errors = computed(() => {
 
 onLoad(() => {
   loadDepts()
+  loadTypes()
 })
+
+async function loadTypes() {
+  try {
+    const list = await loadImprovementTypes()
+    typeOptions.value = (Array.isArray(list) ? list : []).map(i => ({ code: i.code, label: i.label }))
+    if (!typeOptions.value.length)
+      toast('改善性质尚未配置')
+  }
+  catch (err) {
+    console.error('加载改善性质失败', err)
+    toast('改善性质加载失败')
+  }
+}
 
 async function loadDepts() {
   loadingDepts.value = true

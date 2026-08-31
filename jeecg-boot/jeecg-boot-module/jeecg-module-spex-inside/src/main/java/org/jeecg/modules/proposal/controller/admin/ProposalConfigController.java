@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * 管理端 - 提案配置（四 Tab）
+ * 管理端 - 提案配置（五 Tab）
  */
 @Slf4j
 @Tag(name = "管理端-提案配置")
@@ -38,6 +38,8 @@ public class ProposalConfigController {
     private IProposalApproverService approverService;
     @Autowired
     private IProposalScoreDimensionService scoreDimensionService;
+    @Autowired
+    private IProposalImprovementTypeService improvementTypeService;
 
     @Operation(summary = "部门负责人-列表")
     @GetMapping("/deptLeader/list")
@@ -130,6 +132,31 @@ public class ProposalConfigController {
     @DeleteMapping("/approver/delete")
     public Result<String> approverDelete(@RequestParam String id) {
         approverService.removeById(id);
+        return Result.OK("删除成功");
+    }
+
+    @Operation(summary = "改善性质-列表")
+    @GetMapping("/improvementType/list")
+    public Result<List<ProposalImprovementType>> improvementTypeList() {
+        QueryWrapper<ProposalImprovementType> qw = new QueryWrapper<>();
+        qw.orderByAsc("sort_no", "type_code");
+        return Result.OK(improvementTypeService.list(qw));
+    }
+
+    @AutoLog(value = "管理端-提案配置-改善性质-保存")
+    @Operation(summary = "改善性质-保存")
+    @PostMapping("/improvementType/save")
+    public Result<String> improvementTypeSave(@RequestBody ProposalImprovementType entity) {
+        fillAudit(entity);
+        improvementTypeService.saveConfig(entity);
+        return Result.OK("保存成功");
+    }
+
+    @AutoLog(value = "管理端-提案配置-改善性质-删除")
+    @Operation(summary = "改善性质-删除")
+    @DeleteMapping("/improvementType/delete")
+    public Result<String> improvementTypeDelete(@RequestParam String id) {
+        improvementTypeService.deleteConfig(id);
         return Result.OK("删除成功");
     }
 
