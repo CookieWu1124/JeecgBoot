@@ -29,6 +29,9 @@ public class ProposalHomeController {
     @GetMapping("/home")
     public Result<ProposalHomeVo> home() {
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        if (loginUser == null) {
+            return Result.error("请先登录");
+        }
         return Result.OK(proposalService.buildHome(loginUser));
     }
 }

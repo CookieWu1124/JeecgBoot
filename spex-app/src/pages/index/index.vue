@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { AppHomeFeedItem, AppHomeTodoItem } from '@/api/proposal'
+import { fetchAppHome } from '@/api/proposal'
 import { storeToRefs } from 'pinia'
 import { useTokenStore, useUserStore } from '@/store'
 
@@ -19,6 +21,8 @@ definePage({
 })
 
 interface TodoItem {
+  id: string
+  kind: string
   char: string
   tint: string
   title: string
@@ -28,11 +32,20 @@ interface TodoItem {
 }
 
 interface FeedItem {
+  id: string
+  proposalId: string
   char: string
   tint: string
   title: string
   sub: string
   time: string
+}
+
+const FEED_STYLE: Record<string, { char: string, tint: string }> = {
+  SUBMIT: { char: '通', tint: 'blue' },
+  COMMITTEE_DONE: { char: '审', tint: 'purple' },
+  APPROVE: { char: '批', tint: 'blue' },
+  REJECT_FINAL: { char: '驳', tint: 'red' },
 }
 
 const userStore = useUserStore()
@@ -59,53 +72,72 @@ const greetText = computed(() => {
 })
 
 const kpis = ref([
-  { label: '待办', value: 2, action: 'todo' },
-  { label: '进行中', value: 2, action: 'proposal' },
-  { label: '已结案', value: 1, action: 'proposal' },
+  { label: '待办', value: 0, action: 'todo' },
+  { label: '进行中', value: 0, action: 'proposal' },
+  { label: '已结案', value: 0, action: 'proposal' },
 ])
 
-const todos = ref<TodoItem[]>([
-  {
-    char: '审',
-    tint: 'blue',
-    title: '关注「产线换模时间过长改善」',
-    sub: '计划书待批准人决策',
-    stamp: '计划书待批',
-    stampTint: 'amber',
-  },
-  {
-    char: '池',
-    tint: 'amber',
-    title: '领取「包装线人效提升方案」',
-    sub: '部门任务池待领取',
-    stamp: '待领取',
-    stampTint: 'amber',
-  },
-])
+const todos = ref<TodoItem[]>([])
+const feeds = ref<FeedItem[]>([])
 
-const feeds = ref<FeedItem[]>([
-  {
-    char: '通',
-    tint: 'blue',
-    title: '「车间物料标识标准化」已批准',
-    sub: '批准人核定提案奖 ¥200，等待改善部门指派',
-    time: '昨天 16:02',
-  },
-  {
-    char: '驳',
-    tint: 'red',
-    title: '「产线换模时间过长改善」计划书被驳回',
-    sub: '请补充效益测算依据后重新提交',
-    time: '昨天 09:15',
-  },
-  {
-    char: '评',
-    tint: 'purple',
-    title: '「安全通道划线规范」评分完成',
-    sub: '总分 86.5 · 等级 A · 已签核归档',
-    time: '08-22 15:30',
-  },
-])
+function mapTodo(item: AppHomeTodoItem): TodoItem {
+  const review = item.kind === 'review'
+  const no = item.proposalNo ? `NO. ${item.proposalNo}` : ''
+  return {
+    id: item.proposalId || '',
+    kind: item.kind || '',
+    char: review ? '审' : '批',
+    tint: review ? 'blue' : 'amber',
+    title: item.title || '未命名提案',
+    sub: [no, item.actionHint].filter(Boolean).join(' · '),
+    stamp: item.statusLabel || (review ? '待审' : '待核'),
+    stampTint: review ? 'blue' : 'amber',
+  }
+}
+
+function mapFeed(item: AppHomeFeedItem, index: number): FeedItem {
+  const style = FEED_STYLE[item.action || ''] || { char: '动', tint: 'blue' }
+  const remark = [item.actionLabel, item.remark].filter(Boolean).join(' · ')
+  return {
+    id: `${item.proposalId || ''}-${item.action || ''}-${item.time || index}`,
+    proposalId: item.proposalId || '',
+    char: style.char,
+    tint: style.tint,
+    title: item.title ? `「${item.title}」` : '提案动态',
+    sub: remark || item.proposalNo || '',
+    time: item.time || '',
+  }
+}
+
+async function loadHome() {
+  if (!isLoggedIn.value) {
+    kpis.value = [
+      { label: '待办', value: 0, action: 'todo' },
+      { label: '进行中', value: 0, action: 'proposal' },
+      { label: '已结案', value: 0, action: 'proposal' },
+    ]
+    todos.value = []
+    feeds.value = []
+    return
+  }
+  try {
+    const res = await fetchAppHome()
+    kpis.value = [
+      { label: '待办', value: Number(res?.todoCount) || 0, action: 'todo' },
+      { label: '进行中', value: Number(res?.doingCount) || 0, action: 'proposal' },
+      { label: '已结案', value: Number(res?.doneCount) || 0, action: 'proposal' },
+    ]
+    todos.value = (res?.todoItems || []).map(mapTodo)
+    feeds.value = (res?.feeds || []).map(mapFeed)
+  }
+  catch (err) {
+    console.error('加载首页失败', err)
+  }
+}
+
+onShow(() => {
+  loadHome()
+})
 
 function handleMsg() {
   uni.showToast({ title: '消息功能开发中', icon: 'none' })
@@ -123,12 +155,28 @@ function handleAllTodos() {
   uni.switchTab({ url: '/pages/todo/index' })
 }
 
-function handleTodoItem() {
+function handleTodoItem(item: TodoItem) {
+  if (!item.id) {
+    uni.switchTab({ url: '/pages/todo/index' })
+    return
+  }
+  if (item.kind === 'review') {
+    uni.navigateTo({ url: `/pages/proposal/review?id=${item.id}` })
+    return
+  }
+  if (item.kind === 'approve') {
+    uni.navigateTo({ url: `/pages/proposal/approve?id=${item.id}` })
+    return
+  }
   uni.switchTab({ url: '/pages/todo/index' })
 }
 
-function handleFeedItem() {
-  uni.showToast({ title: '详情开发中', icon: 'none' })
+function handleFeedItem(item: FeedItem) {
+  if (!item.proposalId) {
+    uni.switchTab({ url: '/pages/proposal/index' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/proposal/detail?id=${item.proposalId}` })
 }
 </script>
 
@@ -141,7 +189,6 @@ function handleFeedItem() {
       <view class="relative z-1 px-4 pt-safe">
         <view class="home-msg" hover-class="home-hover" @click="handleMsg">
           <wd-icon name="notification" size="18px" color="#fff" />
-          <view class="home-msg__dot" />
         </view>
 
         <text class="home-hi">
@@ -179,10 +226,10 @@ function handleFeedItem() {
 
       <view
         v-for="item in todos"
-        :key="item.title"
+        :key="item.id"
         class="home-card"
         hover-class="home-hover"
-        @click="handleTodoItem"
+        @click="handleTodoItem(item)"
       >
         <view class="home-card__ic" :class="`tint-${item.tint}`">
           <text>{{ item.char }}</text>
@@ -192,6 +239,9 @@ function handleFeedItem() {
           <text class="home-card__sub">{{ item.sub }}</text>
         </view>
         <text class="home-stamp" :class="`stamp-${item.stampTint}`">{{ item.stamp }}</text>
+      </view>
+      <view v-if="!todos.length" class="home-empty">
+        <text class="home-empty__txt">暂无待办</text>
       </view>
 
       <view class="home-sec">
@@ -203,10 +253,10 @@ function handleFeedItem() {
 
       <view
         v-for="item in feeds"
-        :key="item.title"
+        :key="item.id"
         class="home-feed"
         hover-class="home-hover"
-        @click="handleFeedItem"
+        @click="handleFeedItem(item)"
       >
         <view class="home-card__ic" :class="`tint-${item.tint}`">
           <text>{{ item.char }}</text>
@@ -216,6 +266,9 @@ function handleFeedItem() {
           <text class="home-card__sub">{{ item.sub }}</text>
           <text class="home-feed__time">{{ item.time }}</text>
         </view>
+      </view>
+      <view v-if="!feeds.length" class="home-empty">
+        <text class="home-empty__txt">暂无动态</text>
       </view>
     </view>
   </view>
@@ -274,17 +327,6 @@ function handleFeedItem() {
   background: rgba(255, 255, 255, 0.16);
 }
 
-.home-msg__dot {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid #fff;
-  border-radius: 9999px;
-  background: #ff5a5f;
-}
-
 .home-hi {
   display: block;
   padding-top: 22px;
@@ -337,6 +379,16 @@ function handleFeedItem() {
 
 .home-body {
   padding-top: 4px;
+}
+
+.home-empty {
+  padding: 18px 8px 8px;
+  text-align: center;
+}
+
+.home-empty__txt {
+  color: #9aa3bd;
+  font-size: 12px;
 }
 
 .home-sec {

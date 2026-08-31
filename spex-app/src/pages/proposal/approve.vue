@@ -118,7 +118,7 @@
           <view class="ap-field ap-field--last">
             <view class="ap-label-wrap">
               <text class="ap-label">核定提案奖金额</text>
-              <text class="ap-hint">委员会建议 ¥{{ suggestedReward }}</text>
+              <text v-if="suggestedReward != null" class="ap-hint">委员会建议 ¥{{ suggestedReward }}</text>
             </view>
             <view class="ap-ipt" :class="{ 'ap-ipt--on': focusField === 'reward' }">
               <text class="ap-ipt__unit">¥</text>
@@ -211,7 +211,6 @@ definePage({
 
 const PH_STYLE = 'color:#9AA3BD;font-size:14px;'
 const COMMENT_MAX = 300
-const DEFAULT_REWARD = 200
 const DECISION_OPTS = [
   { value: 'approve', label: '批准' },
   { value: 'reject', label: '不批准' },
@@ -243,7 +242,7 @@ const submitting = ref(false)
 const form = reactive({
   decision: 'approve' as Decision,
   needPlan: 'yes' as NeedPlan,
-  reward: String(DEFAULT_REWARD),
+  reward: '',
   comment: '',
 })
 
@@ -295,7 +294,7 @@ const suggestedReward = computed(() => {
     .map(item => item.reward)
     .filter((n): n is number => typeof n === 'number' && !Number.isNaN(n))
   if (!nums.length)
-    return DEFAULT_REWARD
+    return undefined
   const counts = new Map<number, number>()
   for (const n of nums)
     counts.set(n, (counts.get(n) || 0) + 1)
@@ -346,7 +345,7 @@ async function loadDetail() {
     }
     reviewerNameMap.value = map
 
-    form.reward = String(suggestedReward.value)
+    form.reward = suggestedReward.value != null ? String(suggestedReward.value) : ''
     form.needPlan = suggestedPlan.value
   }
   catch (err) {

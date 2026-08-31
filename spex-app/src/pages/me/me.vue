@@ -176,15 +176,15 @@ const roleTags = computed(() => {
   const fromRoles = (userInfo.value.roles || []).filter(Boolean)
   if (fromRoles.length)
     return fromRoles.slice(0, 3)
-  return ['提案人', '委员', '评分座位']
+  return []
 })
 const avatarText = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const avatarError = ref(false)
 
 const stats = [
-  { label: '参与提案', value: 12 },
-  { label: '采纳率', value: '67%' },
-  { label: '累计奖金', value: '¥4,500' },
+  { label: '参与提案', value: '--' },
+  { label: '采纳率', value: '--' },
+  { label: '累计奖金', value: '--' },
 ]
 
 const services: ServiceItem[] = [
@@ -196,7 +196,7 @@ const services: ServiceItem[] = [
 
 const accountMenus: MenuItem[] = [
   { title: '账号与安全', icon: 'lock', tint: 'tint-blue', action: 'todo' },
-  { title: '消息通知', icon: 'notification', tint: 'tint-violet', extra: '3 条未读', action: 'todo' },
+  { title: '消息通知', icon: 'notification', tint: 'tint-violet', action: 'todo' },
   { title: '通用设置', icon: 'settings', tint: 'tint-slate', action: 'todo' },
 ]
 

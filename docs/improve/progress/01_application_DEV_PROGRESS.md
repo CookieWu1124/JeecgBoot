@@ -45,6 +45,7 @@
 | 委员提交意见 | POST | `/proposal/review/committee/{proposalId}` | 共用 | [x] |
 | 批准人待办 | GET | `/proposal/approval/pending` | 共用 | [x] |
 | 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [x] |
+| 首页聚合 | GET | `/proposal/app/home` | 小程序 | [x] |
 | 管理端列表/详情 | * | `/proposal/admin/manage/*` | 管理端 | [x] 列表+详情含申请书/留痕/委员意见/批准决策 |
 | 配置（委员/批准人） | * | `/proposal/admin/config/*` | 管理端 | [x] |
 
@@ -61,6 +62,7 @@
 | 申请委员审核 | 采用/不采用 + 计划书建议 + 奖励建议 | [x] `pages/proposal/review` 已接真实接口 |
 | 批准人待办 | 申请批准入口 | [x] pages/todo 待核定 |
 | 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [x] `pages/proposal/approve` 已接真 |
+| 首页 | KPI + 待办摘要 + 动态 | [x] `pages/index` 接 `GET /proposal/app/home` |
 | 提案列表 Tab | 含待审核进度展示 | [x] `pages/proposal/index` 已接 list |
 | 提案详情 | 申请阶段信息展示 | [x] `pages/proposal/detail` 已接 detail |
 
@@ -123,6 +125,7 @@
 | 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] `proposal_menu.sql` 含 component 自愈 UPDATE |
 | 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
 | 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；确认后只调 create（一次进审核中） |
+| 12 | 小程序首页聚合 | 小程序 | [x] `pages/index` 接 `/proposal/app/home` |
 | 11 | 管理端详情弹窗对齐原型 | 管理端 | [x] 申请单正文来自 `proposal_application`；留痕来自 `proposal_status_log`；委员意见来自 `committeeReviews` |
 
 ---
@@ -185,3 +188,4 @@
 | 2026-08-31 | **取消暂存**：`POST /proposal/create` 一次进入审核中；更新草稿失败；列表去掉草稿 Tab |
 | 2026-08-31 | **去掉 DRAFT**：枚举与状态机不再有草稿；发起直接写 `PENDING_REVIEW`；流转 `from_status` 为空；存量见 `20260831_purge_proposal_draft.sql` |
 | 2026-08-31 | **去掉草稿/撤回接口**：删除 `PUT /{id}/draft`、`POST /{id}/withdraw`；枚举去掉 `WITHDRAWN`；存量见 `20260831_purge_proposal_withdrawn.sql` |
+| 2026-08-31 | **首页接真实聚合**：`GET /proposal/app/home`；待办=委员未审+批准人待核定；已结案含已批准/不批准 |

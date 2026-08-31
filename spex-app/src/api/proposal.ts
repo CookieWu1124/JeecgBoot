@@ -234,7 +234,39 @@ export function submitApplicationApproval(proposalId: string, data: ApplicationA
   return http.post<string>(`/proposal/approval/application/${proposalId}`, data)
 }
 
-/** 小程序首页聚合（若已部署） */
+/** 小程序首页聚合 GET /proposal/app/home */
+export interface AppHomeTodoItem {
+  proposalId?: string
+  proposalNo?: string
+  title?: string
+  status?: string
+  statusLabel?: string
+  actionHint?: string
+  /** review=委员待审，approve=批准人待核定 */
+  kind?: 'review' | 'approve' | string
+}
+
+export interface AppHomeFeedItem {
+  proposalId?: string
+  proposalNo?: string
+  title?: string
+  action?: string
+  actionLabel?: string
+  remark?: string
+  time?: string
+}
+
+export interface AppHomeResult {
+  greeting?: string
+  userName?: string
+  deptDesc?: string
+  todoCount?: number
+  doingCount?: number
+  doneCount?: number
+  todoItems?: AppHomeTodoItem[]
+  feeds?: AppHomeFeedItem[]
+}
+
 export function fetchAppHome() {
-  return http.get<Record<string, any>>('/proposal/app/home')
+  return http.get<AppHomeResult>('/proposal/app/home')
 }

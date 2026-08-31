@@ -347,10 +347,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setDeptDesc(buildDeptDesc(loginUser));
 
         String userId = loginUser.getId();
-        vo.setTodoCount(0);
+        List<ProposalHomeVo.TodoItem> todoItems = buildHomeTodos(loginUser);
+        vo.setTodoCount(countHomeTodos(loginUser));
         vo.setDoingCount(countDoing(userId));
         vo.setDoneCount(countDone(userId));
-        vo.setTodoItems(Collections.emptyList());
+        vo.setTodoItems(todoItems);
         vo.setFeeds(buildFeeds(userId));
         return vo;
     }
@@ -689,7 +690,86 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private long countDone(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
-                .eq(Proposal::getStatus, ProposalStatusEnum.COMPLETED.getCode()));
+                .in(Proposal::getStatus,
+                        ProposalStatusEnum.APPROVED.getCode(),
+                        ProposalStatusEnum.REJECTED_FINAL.getCode(),
+                        ProposalStatusEnum.COMPLETED.getCode()));
+    }
+
+    /** 委员未审快照 + 批准人待核定，不走权限抛错，非角色即为 0。 */
+    private long countHomeTodos(LoginUser loginUser) {
+        long n = countCommitteeTodos(loginUser.getId());
+        if (isActiveApprover(loginUser.getId())) {
+            n += count(new LambdaQueryWrapper<Proposal>()
+                    .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode()));
+        }
+        return n;
+    }
+
+    private long countCommitteeTodos(String userId) {
+        List<ProposalCommitteeReview> pending = committeeReviewService.list(
+                new LambdaQueryWrapper<ProposalCommitteeReview>()
+                        .eq(ProposalCommitteeReview::getReviewerId, userId)
+                        .isNull(ProposalCommitteeReview::getConclusion));
+        if (pending.isEmpty()) {
+            return 0;
+        }
+        List<String> ids = pending.stream()
+                .map(ProposalCommitteeReview::getProposalId)
+                .filter(oConvertUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        return count(new LambdaQueryWrapper<Proposal>()
+                .in(Proposal::getId, ids)
+                .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode()));
+    }
+
+    private List<ProposalHomeVo.TodoItem> buildHomeTodos(LoginUser loginUser) {
+        List<ProposalHomeVo.TodoItem> items = new ArrayList<>();
+        List<String> reviewIds = committeeReviewService.list(
+                        new LambdaQueryWrapper<ProposalCommitteeReview>()
+                                .eq(ProposalCommitteeReview::getReviewerId, loginUser.getId())
+                                .isNull(ProposalCommitteeReview::getConclusion))
+                .stream()
+                .map(ProposalCommitteeReview::getProposalId)
+                .filter(oConvertUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
+        if (!reviewIds.isEmpty()) {
+            List<Proposal> reviews = list(new LambdaQueryWrapper<Proposal>()
+                    .in(Proposal::getId, reviewIds)
+                    .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode())
+                    .orderByDesc(Proposal::getCreateTime)
+                    .last("LIMIT 5"));
+            for (Proposal p : reviews) {
+                items.add(toHomeTodo(p, "review", "出具审核意见"));
+            }
+        }
+        if (isActiveApprover(loginUser.getId())) {
+            List<Proposal> approvals = list(new LambdaQueryWrapper<Proposal>()
+                    .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode())
+                    .orderByDesc(Proposal::getUpdateTime)
+                    .last("LIMIT 5"));
+            for (Proposal p : approvals) {
+                items.add(toHomeTodo(p, "approve", "待核定"));
+            }
+        }
+        return items.stream().limit(5).collect(Collectors.toList());
+    }
+
+    private static ProposalHomeVo.TodoItem toHomeTodo(Proposal p, String kind, String hint) {
+        ProposalHomeVo.TodoItem item = new ProposalHomeVo.TodoItem();
+        item.setProposalId(p.getId());
+        item.setProposalNo(p.getProposalNo());
+        item.setTitle(p.getTitle());
+        item.setStatus(p.getStatus());
+        item.setStatusLabel(ProposalStatusEnum.labelOf(p.getStatus()));
+        item.setActionHint(hint);
+        item.setKind(kind);
+        return item;
     }
 
     private List<ProposalHomeVo.FeedItem> buildFeeds(String userId) {
@@ -714,6 +794,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             feed.setProposalNo(p != null ? p.getProposalNo() : null);
             feed.setTitle(p != null ? p.getTitle() : "");
             feed.setAction(log.getAction());
+            feed.setActionLabel(ProposalAction.labelOf(log.getAction()));
             feed.setRemark(log.getRemark());
             feed.setTime(log.getCreateTime() != null ? sdf.format(log.getCreateTime()) : null);
             return feed;

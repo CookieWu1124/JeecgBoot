@@ -18,7 +18,12 @@
           <stats-chips :items="PERIODS" :active="period" @change="onPeriodChange" />
         </view>
 
-        <view class="metric-grid">
+        <view v-if="!overview.metrics.length" class="stats-empty">
+          <text class="stats-empty__title">暂无统计数据</text>
+          <text class="stats-empty__hint">统计接口尚未对接</text>
+        </view>
+
+        <view v-else class="metric-grid">
           <view v-for="item in overview.metrics" :key="item.key" class="metric">
             <text class="metric__k">{{ item.label }}</text>
             <view class="metric__num">
@@ -31,6 +36,7 @@
           </view>
         </view>
 
+        <template v-if="overview.metrics.length">
         <view class="stats-card">
           <view class="stats-card__hd">
             <view class="stats-idx"><text class="stats-idx__txt">T</text></view>
@@ -94,16 +100,17 @@
             <text class="hbar__vl">{{ item.value }}</text>
           </view>
         </view>
+        </template>
       </template>
 
       <template v-else-if="tab === 'me'">
         <view class="score-hero">
           <text class="score-hero__who">{{ scoreName }} · 个人成绩单</text>
-          <text class="score-hero__title">超过 85% 的员工</text>
-          <text class="score-hero__sub">全公司排名第 12 名</text>
+          <text class="score-hero__title">暂无个人成绩</text>
+          <text class="score-hero__sub">统计接口尚未对接</text>
         </view>
 
-        <view class="metric-grid">
+        <view v-if="MY_METRICS.length" class="metric-grid">
           <view v-for="item in MY_METRICS" :key="item.key" class="metric">
             <text class="metric__k">{{ item.label }}</text>
             <view class="metric__num">
@@ -124,7 +131,12 @@
           <stats-chips :items="RANK_TABS" :active="rankKey" @change="onRankChange" />
         </view>
 
-        <view class="stats-card">
+        <view v-if="!rankRows.length" class="stats-empty">
+          <text class="stats-empty__title">暂无排行数据</text>
+          <text class="stats-empty__hint">统计接口尚未对接</text>
+        </view>
+
+        <view v-else class="stats-card">
           <view
             v-for="(item, index) in rankRows"
             :key="`${rankKey}-${item.no}-${item.name}`"
@@ -160,7 +172,7 @@ import {
   type PeriodKey,
   type RankKey,
   type StatsTab,
-} from './mock'
+} from './stats.data'
 import StatsChips from './stats-chips.vue'
 
 defineOptions({
@@ -178,8 +190,6 @@ definePage({
   },
 })
 
-const DEMO_SELF = '张伟'
-
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
 
@@ -193,6 +203,8 @@ const natureTotal = computed(() =>
 )
 const donutBg = computed(() => {
   const items = overview.value.natures
+  if (!items.length)
+    return '#eef2f8'
   const total = natureTotal.value || 1
   let acc = 0
   const stops = items.map((item) => {
@@ -211,14 +223,9 @@ const deptRows = computed(() => {
   }))
 })
 const scoreName = computed(() =>
-  userInfo.value.nickname || userInfo.value.username || DEMO_SELF,
+  userInfo.value.nickname || userInfo.value.username || '我',
 )
-const rankRows = computed(() =>
-  RANK_DATA[rankKey.value].map(row => ({
-    ...row,
-    name: row.name === DEMO_SELF ? scoreName.value : row.name,
-  })),
-)
+const rankRows = computed(() => RANK_DATA[rankKey.value])
 
 function switchTab(key: string) {
   tab.value = key as StatsTab
@@ -300,6 +307,25 @@ onLoad((query) => {
 
 .stats-body {
   padding: 4px 16px 8px;
+}
+
+.stats-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 16px 24px;
+}
+
+.stats-empty__title {
+  color: #5a6380;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stats-empty__hint {
+  margin-top: 6px;
+  color: #9aa3bd;
+  font-size: 12px;
 }
 
 .stats-period {

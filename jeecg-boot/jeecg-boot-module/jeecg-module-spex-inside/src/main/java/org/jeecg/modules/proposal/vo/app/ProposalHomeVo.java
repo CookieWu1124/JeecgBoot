@@ -27,6 +27,8 @@ public class ProposalHomeVo {
         private String status;
         private String statusLabel;
         private String actionHint;
+        /** review=委员待审，approve=批准人待核定 */
+        private String kind;
     }
 
     @Data
@@ -35,6 +37,7 @@ public class ProposalHomeVo {
         private String proposalNo;
         private String title;
         private String action;
+        private String actionLabel;
         private String remark;
         private String time;
     }
