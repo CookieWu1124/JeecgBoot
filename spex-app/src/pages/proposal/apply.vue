@@ -156,32 +156,9 @@
               <wd-icon name="arrow-down" size="14px" color="#9AA3BD" />
             </view>
           </view>
-          <view class="apply-cell">
+          <view class="apply-cell apply-cell--last">
             <text class="apply-cell__lab">部门负责人</text>
             <text class="apply-cell__val apply-cell__val--ro">{{ leaderText }}</text>
-          </view>
-          <view class="apply-field apply-field--last" style="margin-top: 12px">
-            <view class="apply-label-row">
-              <view class="apply-label-wrap">
-                <text class="apply-req">*</text>
-                <text class="apply-label">通知邮箱</text>
-              </view>
-            </view>
-            <view class="apply-ipt" :class="{ 'apply-ipt--on': focusField === 'email' }">
-              <input
-                v-model="form.email"
-                class="apply-ipt__inner"
-                type="text"
-                maxlength="100"
-                placeholder="用于接收流程通知"
-                placeholder-class="apply-ph"
-                :placeholder-style="PH_STYLE"
-                confirm-type="done"
-                :cursor-spacing="24"
-                @focus="focusField = 'email'"
-                @blur="focusField = ''"
-              >
-            </view>
           </view>
           <view v-if="form.deptId && !currentLeader" class="apply-banner apply-banner--err">
             <text class="apply-banner__ic">!</text>
@@ -240,10 +217,6 @@
           <view class="apply-cell">
             <text class="apply-cell__lab">改善部门</text>
             <text class="apply-cell__val">{{ confirmDeptText }}</text>
-          </view>
-          <view class="apply-cell">
-            <text class="apply-cell__lab">通知邮箱</text>
-            <text class="apply-cell__val">{{ form.email }}</text>
           </view>
           <view class="apply-cell apply-cell--last apply-cell--block">
             <text class="apply-cell__lab">现场图片</text>
@@ -367,7 +340,6 @@ interface ImageItem {
 const STEPS = ['内容填写', '确认提交'] as const
 const PH_STYLE = 'color:#9AA3BD;font-size:14px;'
 const MAX_IMAGES = 4
-const EMAIL_RE = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
 
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
@@ -388,7 +360,6 @@ const form = reactive({
   natures: [] as string[],
   deptId: '',
   deptName: '',
-  email: String(userInfo.value.email || ''),
   images: [] as ImageItem[],
 })
 
@@ -415,10 +386,6 @@ const step1Errors = computed(() => {
     return '请至少选择一项改善性质'
   if (!form.deptId || !currentLeader.value)
     return '请选择已配置负责人的改善部门'
-  if (!form.email.trim())
-    return '请填写通知邮箱'
-  if (!EMAIL_RE.test(form.email.trim()))
-    return '请填写正确的邮箱格式'
   return ''
 })
 
@@ -566,7 +533,6 @@ function goNext() {
   form.title = form.title.trim()
   form.problem = form.problem.trim()
   form.idea = form.idea.trim()
-  form.email = form.email.trim()
   step.value = 2
   uni.pageScrollTo({ scrollTop: 0, duration: 200 })
 }
@@ -584,7 +550,6 @@ function buildPayload(): ProposalCreatePayload {
     teamType: 'PERSONAL',
     currentSituation: form.problem.trim(),
     improvementSuggestion: form.idea.trim(),
-    email: form.email.trim(),
     attachments: form.images.map(img => ({
       fileName: img.fileName,
       fileUrl: img.fileUrl,

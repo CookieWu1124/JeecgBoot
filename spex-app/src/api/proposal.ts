@@ -13,7 +13,6 @@ export interface ProposalCreatePayload {
   teamType?: string
   currentSituation: string
   improvementSuggestion: string
-  email?: string
   attachments?: ProposalAttachmentPayload[]
 }
 
@@ -80,7 +79,6 @@ export interface ProposalApplication {
   proposalId?: string
   currentSituation?: string
   improvementSuggestion?: string
-  email?: string
   submitTime?: string
   [key: string]: any
 }

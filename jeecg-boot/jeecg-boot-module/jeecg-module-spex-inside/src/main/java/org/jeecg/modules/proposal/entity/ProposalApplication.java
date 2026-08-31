@@ -21,6 +21,5 @@ public class ProposalApplication extends ProposalBaseEntity implements Serializa
     private String proposalId;
     private String currentSituation;
     private String improvementSuggestion;
-    private String email;
     private Date submitTime;
 }

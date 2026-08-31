@@ -411,7 +411,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         }
         application.setCurrentSituation(trimToNull(request.getCurrentSituation()));
         application.setImprovementSuggestion(trimToNull(request.getImprovementSuggestion()));
-        application.setEmail(trimToNull(request.getEmail()));
         if (isCreate) {
             ProposalAuditHelper.fillOnCreate(loginUser, application);
         } else {
@@ -477,9 +476,6 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         }
         if (oConvertUtils.isEmpty(application.getImprovementSuggestion())) {
             throw new JeecgBootBizTipException("请填写改善意见");
-        }
-        if (oConvertUtils.isEmpty(application.getEmail())) {
-            throw new JeecgBootBizTipException("请填写通知邮箱");
         }
     }
 

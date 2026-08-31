@@ -1,6 +1,6 @@
 -- =============================================================================
 -- 提案改善系统 — Phase 1 数据库初始化脚本
--- 版本：V1.3
+-- 版本：V1.4
 -- 日期：2026-08-31
 -- 说明：
 --   1. 用户/角色/组织复用 JeecgBoot sys_* 表，本脚本建提案配置表 + 业务表
@@ -255,7 +255,6 @@ CREATE TABLE `proposal_application` (
   `proposal_id` varchar(36) NOT NULL COMMENT '提案ID',
   `current_situation` text COMMENT '目前状况及问题',
   `improvement_suggestion` text COMMENT '改善意见',
-  `email` varchar(100) DEFAULT NULL COMMENT '通知邮箱',
   `submit_time` datetime DEFAULT NULL COMMENT '提交时间',
   `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
   `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',

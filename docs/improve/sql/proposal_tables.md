@@ -1,7 +1,7 @@
 # 提案改善系统 — 业务表结构
 
 > 数据库：MySQL 5.7+ | 字符集：utf8mb4 | 主键：varchar(36)，应用层 IdType.ASSIGN_ID 生成  
-> 可执行 DDL：`proposal_init.sql`（V1.3）  
+> 可执行 DDL：`proposal_init.sql`（V1.4）  
 > Cursor 规则：`.cursor/rules/improve/proposal-sql-ddl.mdc`
 
 ## 目录
@@ -209,7 +209,6 @@
 | `proposal_id` | varchar(36) | 否 | 提案ID |
 | `current_situation` | text | 是 | 目前状况及问题 |
 | `improvement_suggestion` | text | 是 | 改善意见 |
-| `email` | varchar(100) | 是 | 通知邮箱 |
 | `submit_time` | datetime | 是 | 提交时间 |
 
 ### 索引与约束
