@@ -40,6 +40,8 @@ public class ProposalConfigController {
     private IProposalScoreDimensionService scoreDimensionService;
     @Autowired
     private IProposalImprovementTypeService improvementTypeService;
+    @Autowired
+    private ProposalOrgFillHelper orgFillHelper;
 
     @Operation(summary = "部门负责人-列表")
     @GetMapping("/deptLeader/list")
@@ -49,7 +51,11 @@ public class ProposalConfigController {
                                                               HttpServletRequest req) {
         QueryWrapper<ProposalDeptLeader> qw = QueryGenerator.initQueryWrapper(entity, req.getParameterMap());
         qw.orderByAsc("dept_id");
-        return Result.OK(deptLeaderService.page(new Page<>(pageNo, pageSize), qw));
+        IPage<ProposalDeptLeader> page = deptLeaderService.page(new Page<>(pageNo, pageSize), qw);
+        //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        orgFillHelper.fillDeptLeaders(page.getRecords());
+        //update-end---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        return Result.OK(page);
     }
 
     // 【提案改善】部门负责人保存强制单部门+审计字段
@@ -80,7 +86,11 @@ public class ProposalConfigController {
                                                                  HttpServletRequest req) {
         QueryWrapper<ProposalCommitteeMember> qw = QueryGenerator.initQueryWrapper(entity, req.getParameterMap());
         qw.orderByAsc("sort_no", "seat_no");
-        return Result.OK(committeeMemberService.page(new Page<>(pageNo, pageSize), qw));
+        IPage<ProposalCommitteeMember> page = committeeMemberService.page(new Page<>(pageNo, pageSize), qw);
+        //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        orgFillHelper.fillCommitteeMembers(page.getRecords());
+        //update-end---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        return Result.OK(page);
     }
 
     // 【提案改善】配置保存补审计字段
@@ -110,7 +120,11 @@ public class ProposalConfigController {
     public Result<List<ProposalApprover>> approverList() {
         QueryWrapper<ProposalApprover> qw = new QueryWrapper<>();
         qw.eq("approver_status", "active").orderByAsc("create_time");
-        return Result.OK(approverService.list(qw));
+        List<ProposalApprover> list = approverService.list(qw);
+        //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        orgFillHelper.fillApprovers(list);
+        //update-end---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
+        return Result.OK(list);
     }
 
     // 【提案改善】配置保存补审计字段

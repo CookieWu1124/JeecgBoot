@@ -4,9 +4,6 @@ import { formatAward, formatImprovementTypes, STATUS_TAG_COLOR } from './proposa
 enum Api {
   list = '/proposal/admin/manage/list',
   get = '/proposal/admin/manage/queryById',
-  userQueryByIds = '/sys/user/queryByIds',
-  departQueryByIds = '/sys/sysDepart/queryByIds',
-  departByOrgCode = '/sys/sysDepart/getDepartName',
 }
 
 const actionLabelMap: Record<string, string> = {
@@ -41,106 +38,21 @@ function toSingleId(value: unknown): string | undefined {
   return text.includes(',') ? text.split(',')[0].trim() : text;
 }
 
-type UserInfo = { name: string; workNo: string; post: string; orgCode?: string; deptName?: string };
-
-async function fetchUserInfoMap(ids: Array<string | undefined | null>): Promise<Record<string, UserInfo>> {
-  const unique = [...new Set(ids.filter((id): id is string => !!id))];
-  if (!unique.length) {
-    return {};
-  }
-  const list = await defHttp.get({ url: Api.userQueryByIds, params: { userIds: unique.join(',') } });
-  const map: Record<string, UserInfo> = {};
-  (Array.isArray(list) ? list : []).forEach((u) => {
-    if (u?.id) {
-      map[u.id] = {
-        name: u.realname || u.username || u.id,
-        workNo: u.workNo || u.username || '-',
-        // 种子/HR 字段为 position_type，不是 post
-        post: u.positionType || u.post || '-',
-        orgCode: u.orgCode,
-      };
-    }
-  });
-
-  // 提案人「部门」取用户所属组织，不是提案改善部门
-  const orgCodes = [...new Set(Object.values(map).map((u) => u.orgCode).filter(Boolean) as string[])];
-  if (orgCodes.length) {
-    const deptResults = await Promise.all(
-      orgCodes.map(async (orgCode) => {
-        try {
-          const dept = await defHttp.get({ url: Api.departByOrgCode, params: { orgCode } });
-          return { orgCode, name: dept?.departName || orgCode };
-        } catch {
-          return { orgCode, name: orgCode };
-        }
-      })
-    );
-    const orgMap = Object.fromEntries(deptResults.map((d) => [d.orgCode, d.name]));
-    Object.values(map).forEach((u) => {
-      if (u.orgCode) {
-        u.deptName = orgMap[u.orgCode] || u.orgCode;
-      }
-    });
-  }
-  return map;
+function userName(user?: Recordable) {
+  return user?.realname || user?.username || '-';
 }
 
-async function fetchUserNameMap(ids: Array<string | undefined | null>): Promise<Record<string, string>> {
-  const infoMap = await fetchUserInfoMap(ids);
-  const map: Record<string, string> = {};
-  Object.keys(infoMap).forEach((id) => {
-    map[id] = infoMap[id].name;
-  });
-  return map;
-}
-
-async function fetchDeptNameMap(ids: Array<string | undefined | null>): Promise<Record<string, string>> {
-  const unique = [...new Set(ids.filter((id): id is string => !!id))];
-  if (!unique.length) {
-    return {};
-  }
-  try {
-    const list = await defHttp.get({ url: Api.departQueryByIds, params: { deptIds: unique.join(',') } });
-    const map: Record<string, string> = {};
-    (Array.isArray(list) ? list : []).forEach((d) => {
-      if (d?.id) {
-        map[d.id] = d.departName || d.departPathName || d.id;
-      }
-    });
-    return map;
-  } catch (e) {
-    console.warn('[proposal-manage] 部门名称回显失败', e);
-    return {};
-  }
-}
-
-function enrichRecord(record: Recordable, userMap: Record<string, string>, deptMap: Record<string, string>) {
-  record.proposerName = userMap[record.proposerId] || record.proposerName || '-';
-  record.deptName = deptMap[record.deptId] || record.deptName || '-';
-  record.improvementTypesLabel = record.improvementTypesLabel || formatImprovementTypes(record.improvementTypes);
-  record.awardAmountText = formatAward(record.awardAmount);
-  return record;
-}
-
-/** 列表：回显提案人/改善部门名称 */
+/** 列表：人员/部门已由后端嵌套返回 */
 export const getProposalList = async (params) => {
   const query = { ...params };
   query.deptId = toSingleId(query.deptId);
   if (query.improvementTypes) {
     query.improvementTypes = `*${query.improvementTypes}*`;
   }
-
-  const page = await defHttp.get({ url: Api.list, params: query });
-  const records = page?.records || [];
-  const [userMap, deptMap] = await Promise.all([
-    fetchUserNameMap(records.map((r) => r.proposerId)),
-    fetchDeptNameMap(records.map((r) => r.deptId)),
-  ]);
-  records.forEach((r) => enrichRecord(r, userMap, deptMap));
-  return page;
+  return defHttp.get({ url: Api.list, params: query });
 };
 
-/** 管理端详情：申请书 + 留痕 + 委员意见 + 名称回显 */
+/** 管理端详情：申请书 + 留痕 + 委员意见；姓名部门走嵌套字段 */
 export const getProposalById = async (params: { id: string }) => {
   const vo = await defHttp.get({ url: Api.get, params });
   const proposal = vo?.proposal || vo || {};
@@ -148,20 +60,8 @@ export const getProposalById = async (params: { id: string }) => {
   const statusLogs = Array.isArray(vo?.statusLogs) ? vo.statusLogs : [];
   const committeeReviews = Array.isArray(vo?.committeeReviews) ? vo.committeeReviews : [];
   const applicationApproval = vo?.applicationApproval || null;
-
-  const [userInfoMap, deptMap] = await Promise.all([
-    fetchUserInfoMap([
-      proposal.proposerId,
-      proposal.deptLeaderId,
-      applicationApproval?.approverId,
-      ...statusLogs.map((l) => l.operatorId),
-      ...committeeReviews.map((r) => r.reviewerId),
-    ]),
-    fetchDeptNameMap([proposal.deptId]),
-  ]);
-
-  const proposer = userInfoMap[proposal.proposerId] || { name: '-', workNo: '-', post: '-', deptName: '-' };
-  const leader = userInfoMap[proposal.deptLeaderId];
+  const proposer = proposal.proposer || {};
+  const leader = proposal.deptLeader;
 
   return {
     id: proposal.id,
@@ -171,15 +71,14 @@ export const getProposalById = async (params: { id: string }) => {
     statusLabel: proposal.statusLabel || proposal.status || '-',
     statusColor: STATUS_TAG_COLOR[proposal.status] || 'default',
     proposerId: proposal.proposerId,
-    proposerName: proposer.name,
-    proposerWorkNo: proposer.workNo,
-    proposerPost: proposer.post || '-',
-    // 提案人信息.部门 = 申请人所属部门（如 MES开发），≠ 改善部门
+    proposerName: userName(proposer),
+    proposerWorkNo: proposer.workNo || '-',
+    proposerPost: proposer.positionType || '-',
     proposerDeptName: proposer.deptName || '-',
     deptId: proposal.deptId,
-    deptName: deptMap[proposal.deptId] || '-',
+    deptName: proposal.dept?.departName || '-',
     deptLeaderId: proposal.deptLeaderId,
-    deptLeaderName: leader?.name || '-',
+    deptLeaderName: userName(leader),
     improvementTypesLabel: proposal.improvementTypesLabel || formatImprovementTypes(proposal.improvementTypes),
     awardAmountText: formatAward(proposal.awardAmount),
     planRequiredLabel:
@@ -203,7 +102,7 @@ export const getProposalById = async (params: { id: string }) => {
                 : '-',
           awardAmountText: formatAward(applicationApproval.awardAmount),
           comment: applicationApproval.comment || '-',
-          approverName: userInfoMap[applicationApproval.approverId]?.name || '-',
+          approverName: userName(applicationApproval.approver),
           approveTime: applicationApproval.approveTime || '-',
         }
       : null,
@@ -212,13 +111,13 @@ export const getProposalById = async (params: { id: string }) => {
       actionLabel: log.actionLabel || actionLabelMap[log.action] || log.action || '-',
       fromStatusLabel: log.fromStatusLabel || log.fromStatus || '-',
       toStatusLabel: log.toStatusLabel || log.toStatus || '-',
-      operatorName: userInfoMap[log.operatorId]?.name || '-',
+      operatorName: userName(log.operator),
     })),
     reviews: committeeReviews.map((r, idx) => {
       const done = !!r.conclusion;
       return {
         id: r.id || `${r.reviewerId}-${idx}`,
-        memberName: userInfoMap[r.reviewerId]?.name || r.reviewerId || '-',
+        memberName: r.reviewer?.realname || r.reviewerId || '-',
         statusLabel: done ? '已审' : '待审',
         conclusion: done ? conclusionLabelMap[r.conclusion] || r.conclusion : '-',
         planRequiredLabel: r.planRequired === 1 ? '形成' : r.planRequired === 0 ? '不形成' : '-',

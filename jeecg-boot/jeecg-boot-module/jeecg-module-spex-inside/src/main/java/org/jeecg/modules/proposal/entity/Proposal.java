@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.jeecg.modules.proposal.vo.DeptBriefVo;
+import org.jeecg.modules.proposal.vo.UserBriefVo;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -35,6 +37,17 @@ public class Proposal extends ProposalBaseEntity implements Serializable {
     private String deptId;
     private String deptLeaderId;
     private String proposerId;
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】列表/详情嵌套回显人员部门-----------
+    @TableField(exist = false)
+    @Schema(description = "改善部门摘要")
+    private DeptBriefVo dept;
+    @TableField(exist = false)
+    @Schema(description = "提案人摘要")
+    private UserBriefVo proposer;
+    @TableField(exist = false)
+    @Schema(description = "部门负责人摘要")
+    private UserBriefVo deptLeader;
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】列表/详情嵌套回显人员部门-----------
     private String implementLeaderId;
     private String teamType;
     /** 批准人核定：1 走计划书，0 任务分配后直接交报告书。委员审核里的同名字段只是建议。 */

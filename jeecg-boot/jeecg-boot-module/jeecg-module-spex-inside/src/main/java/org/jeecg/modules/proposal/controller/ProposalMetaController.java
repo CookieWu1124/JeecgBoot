@@ -10,9 +10,11 @@ import org.jeecg.modules.proposal.entity.ProposalDeptLeader;
 import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.service.IProposalDeptLeaderService;
 import org.jeecg.modules.proposal.service.IProposalImprovementTypeService;
+import org.jeecg.modules.proposal.service.ProposalOrgFillHelper;
 import org.jeecg.modules.proposal.vo.ImprovementDeptOption;
 import org.jeecg.modules.proposal.vo.ImprovementTypeOption;
 import org.jeecg.modules.proposal.vo.StatusOption;
+import org.jeecg.modules.proposal.vo.UserBriefVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,6 +41,8 @@ public class ProposalMetaController {
     private IProposalDeptLeaderService deptLeaderService;
     @Autowired
     private IProposalImprovementTypeService improvementTypeService;
+    @Autowired
+    private ProposalOrgFillHelper orgFillHelper;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -96,6 +101,30 @@ public class ProposalMetaController {
             @RequestParam(name = "enabledOnly", defaultValue = "true") boolean enabledOnly) {
         return Result.OK(improvementTypeService.listOptions(enabledOnly));
     }
+
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选人后一次查出姓名/工号/部门/职位-----------
+    @Operation(summary = "用户摘要（含所属部门名，逗号分隔 id）")
+    @GetMapping("/userBriefs")
+    public Result<List<UserBriefVo>> userBriefs(@RequestParam(name = "userIds") String userIds) {
+        if (oConvertUtils.isEmpty(userIds)) {
+            return Result.OK(new ArrayList<>());
+        }
+        List<String> ids = Arrays.stream(userIds.split(","))
+                .map(String::trim)
+                .filter(oConvertUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, UserBriefVo> map = orgFillHelper.loadUsers(ids);
+        List<UserBriefVo> list = new ArrayList<>();
+        for (String id : ids) {
+            UserBriefVo vo = map.get(id);
+            if (vo != null) {
+                list.add(vo);
+            }
+        }
+        return Result.OK(list);
+    }
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选人后一次查出姓名/工号/部门/职位-----------
 
     private Map<String, String> queryNameMap(String sqlTemplate, List<String> ids) {
         if (ids == null || ids.isEmpty()) {

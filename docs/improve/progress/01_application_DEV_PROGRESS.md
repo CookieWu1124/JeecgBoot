@@ -185,3 +185,5 @@
 | 2026-08-31 | **状态机提前落地**：`ProposalStateMachine` + `ProposalAction`；提交/撤回/委员齐/批准/不批准改走 `transit()`；02/03/04 合法跳转已预注册 |
 | 2026-08-31 | **改善性质落库**：表 `proposal_improvement_type`；配置 Tab 在评分维度前；`GET /proposal/meta/improvementTypes`；提交校验启用码；列表/详情带 `improvementTypesLabel` |
 | 2026-08-31 | **管理端页面迁目录**：`views/proposal` → `views/mes/proposal`；菜单 `component` 改为 `mes/proposal/**`，访问 url 仍为 `/proposal/**` |
+| 2026-08-31 | **管理端对接清单补系统选人/选部门**：S5 `/sys/user/list`、S6 部门树及 S1–S4 字段；`SysUser`/`SysDepart` 补 `@Operation` 以便 Knife4j 可见 |
+| 2026-08-31 | **列表/详情嵌套回显**：配置与提案管理 list/detail 一次返回人员部门摘要，去掉前端 N+1 |

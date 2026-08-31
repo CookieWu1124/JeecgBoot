@@ -59,6 +59,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private ProposalStateMachine stateMachine;
     @Autowired
     private IProposalImprovementTypeService improvementTypeService;
+    @Autowired
+    private ProposalOrgFillHelper orgFillHelper;
 
     private static final String CONCLUSION_ADOPT = "ADOPT";
     private static final String CONCLUSION_REJECT = "REJECT";
@@ -199,6 +201,9 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setApplicationApproval(approvalRecordService.getOne(new LambdaQueryWrapper<ProposalApproval>()
                 .eq(ProposalApproval::getProposalId, id)
                 .eq(ProposalApproval::getStage, APPROVAL_STAGE_APPLICATION)));
+        //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】详情嵌套回显人员部门-----------
+        orgFillHelper.fillDetail(vo);
+        //update-end---author:spex ---date:2026-08-31  for：【提案管理端】详情嵌套回显人员部门-----------
         return vo;
     }
 

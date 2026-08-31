@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.jeecg.modules.proposal.vo.UserBriefVo;
 
 import java.io.Serializable;
 
@@ -40,4 +41,9 @@ public class ProposalStatusLog extends ProposalBaseEntity implements Serializabl
     private String actionLabel;
     @Schema(description = "操作人用户ID")
     private String operatorId;
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】详情嵌套回显操作人-----------
+    @TableField(exist = false)
+    @Schema(description = "操作人摘要")
+    private UserBriefVo operator;
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】详情嵌套回显操作人-----------
 }

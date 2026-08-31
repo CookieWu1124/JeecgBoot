@@ -42,20 +42,35 @@ function createDeptScopedUserSelectProps(formModel: Recordable) {
 
 /** 对齐原型：改善部门 | 负责人姓名 | 负责人工号 | 职位 | 更新人 | 更新时间 */
 export const deptLeaderColumns: BasicColumn[] = [
-  { title: '改善部门', dataIndex: 'deptName', width: 160 },
+  {
+    title: '改善部门',
+    dataIndex: 'dept',
+    width: 160,
+    customRender: ({ record }) => record.dept?.departName || '-',
+  },
   {
     title: '负责人姓名',
-    dataIndex: 'leaderRealname',
+    dataIndex: 'leader',
     width: 120,
-    customRender: ({ text, record }) => {
+    customRender: ({ record }) => {
       if (!record.leaderUserId) {
         return h('span', { style: { color: '#999' } }, '未配置');
       }
-      return text || '-';
+      return record.leader?.realname || '-';
     },
   },
-  { title: '负责人工号', dataIndex: 'leaderWorkNo', width: 120 },
-  { title: '职位', dataIndex: 'leaderPosition', width: 140 },
+  {
+    title: '负责人工号',
+    dataIndex: 'leaderWorkNo',
+    width: 120,
+    customRender: ({ record }) => record.leader?.workNo || '-',
+  },
+  {
+    title: '职位',
+    dataIndex: 'leaderPosition',
+    width: 140,
+    customRender: ({ record }) => record.leader?.positionType || '-',
+  },
   { title: '更新人', dataIndex: 'updateBy', width: 100 },
   { title: '更新时间', dataIndex: 'updateTime', width: 170 },
 ];
@@ -98,10 +113,30 @@ export const deptLeaderFormSchema: FormSchema[] = [
 
 /** 对齐原型：成员姓名 | 工号 | 部门 | 职位 | 评分职责 | 更新人 | 更新时间 */
 export const committeeColumns: BasicColumn[] = [
-  { title: '成员姓名', dataIndex: 'realname', width: 110 },
-  { title: '工号', dataIndex: 'workNo', width: 100 },
-  { title: '部门', dataIndex: 'userDeptName', width: 140 },
-  { title: '职位', dataIndex: 'positionType', width: 140 },
+  {
+    title: '成员姓名',
+    dataIndex: 'realname',
+    width: 110,
+    customRender: ({ record }) => record.user?.realname || '-',
+  },
+  {
+    title: '工号',
+    dataIndex: 'workNo',
+    width: 100,
+    customRender: ({ record }) => record.user?.workNo || '-',
+  },
+  {
+    title: '部门',
+    dataIndex: 'userDeptName',
+    width: 140,
+    customRender: ({ record }) => record.user?.deptName || '-',
+  },
+  {
+    title: '职位',
+    dataIndex: 'positionType',
+    width: 140,
+    customRender: ({ record }) => record.user?.positionType || '-',
+  },
   {
     title: '评分职责',
     dataIndex: 'scoreDutyLabel',

@@ -9,19 +9,19 @@
     <a-spin :spinning="loading">
       <div v-if="current" class="approver-card">
         <div class="approver-row">
-          <div class="approver-name">{{ current.realname }}</div>
+          <div class="approver-name">{{ current.user?.realname || '-' }}</div>
           <div class="approver-fields">
             <div class="field-cell">
               <div class="field-label">工号</div>
-              <div class="field-value">{{ current.workNo || '-' }}</div>
+              <div class="field-value">{{ current.user?.workNo || '-' }}</div>
             </div>
             <div class="field-cell">
               <div class="field-label">部门</div>
-              <div class="field-value" :title="current.userDeptName">{{ current.userDeptName || '-' }}</div>
+              <div class="field-value" :title="current.user?.deptName">{{ current.user?.deptName || '-' }}</div>
             </div>
             <div class="field-cell">
               <div class="field-label">职位</div>
-              <div class="field-value">{{ current.positionType || '-' }}</div>
+              <div class="field-value">{{ current.user?.positionType || '-' }}</div>
             </div>
           </div>
         </div>

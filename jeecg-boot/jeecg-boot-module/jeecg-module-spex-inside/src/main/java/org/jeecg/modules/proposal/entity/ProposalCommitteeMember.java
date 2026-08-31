@@ -1,10 +1,12 @@
 package org.jeecg.modules.proposal.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.jeecg.modules.proposal.vo.UserBriefVo;
 
 import java.io.Serializable;
 
@@ -22,4 +24,10 @@ public class ProposalCommitteeMember extends ProposalBaseEntity implements Seria
     private Integer seatNo;
     private String memberStatus;
     private Integer sortNo;
+
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】列表嵌套回显成员-----------
+    @TableField(exist = false)
+    @Schema(description = "成员摘要")
+    private UserBriefVo user;
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】列表嵌套回显成员-----------
 }

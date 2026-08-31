@@ -133,15 +133,15 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '提案人',
-    dataIndex: 'proposerName',
+    dataIndex: 'proposer',
     width: 100,
-    customRender: ({ text }) => text || '-',
+    customRender: ({ record }) => record.proposer?.realname || '-',
   },
   {
     title: '改善部门',
-    dataIndex: 'deptName',
+    dataIndex: 'dept',
     width: 120,
-    customRender: ({ text }) => text || '-',
+    customRender: ({ record }) => record.dept?.departName || '-',
   },
   {
     title: '改善性质',

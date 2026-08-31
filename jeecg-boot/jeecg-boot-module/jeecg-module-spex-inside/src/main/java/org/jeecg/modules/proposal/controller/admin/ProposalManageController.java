@@ -15,6 +15,7 @@ import org.jeecg.modules.proposal.entity.Proposal;
 import org.jeecg.modules.proposal.enums.ProposalStatusEnum;
 import org.jeecg.modules.proposal.service.IProposalImprovementTypeService;
 import org.jeecg.modules.proposal.service.IProposalService;
+import org.jeecg.modules.proposal.service.ProposalOrgFillHelper;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,8 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
 
     @Autowired
     private IProposalImprovementTypeService improvementTypeService;
+    @Autowired
+    private ProposalOrgFillHelper orgFillHelper;
 
     @Operation(summary = "分页列表查询")
     @GetMapping("/list")
@@ -54,6 +57,9 @@ public class ProposalManageController extends JeecgController<Proposal, IProposa
         if (pageList.getRecords() != null) {
             pageList.getRecords().forEach(ProposalStatusEnum::attachLabel);
             improvementTypeService.attachTypeLabels(pageList.getRecords());
+            //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】列表嵌套回显人员部门-----------
+            orgFillHelper.fillProposals(pageList.getRecords());
+            //update-end---author:spex ---date:2026-08-31  for：【提案管理端】列表嵌套回显人员部门-----------
         }
         return Result.OK(pageList);
     }

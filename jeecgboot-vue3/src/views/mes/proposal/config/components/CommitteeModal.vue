@@ -138,13 +138,13 @@
       selectedUser.value = profile;
       return;
     }
-    if (fallback?.realname || fallback?.workNo) {
+    if (fallback?.realname || fallback?.workNo || fallback?.user) {
       selectedUser.value = {
         id: String(userId || ''),
-        realname: fallback.realname,
-        workNo: fallback.workNo,
-        deptName: fallback.deptName || fallback.userDeptName,
-        positionType: fallback.positionType,
+        realname: fallback.realname || fallback.user?.realname,
+        workNo: fallback.workNo || fallback.user?.workNo,
+        deptName: fallback.deptName || fallback.userDeptName || fallback.user?.deptName,
+        positionType: fallback.positionType || fallback.user?.positionType,
       };
       return;
     }
