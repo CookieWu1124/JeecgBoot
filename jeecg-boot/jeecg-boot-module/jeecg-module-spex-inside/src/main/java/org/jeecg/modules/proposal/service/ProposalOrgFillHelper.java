@@ -143,6 +143,27 @@ public class ProposalOrgFillHelper {
         return n != null && n > 0;
     }
 
+    //update-begin---author:spex ---date:2026-09-01  for：【提案管理】按部门名/提案人姓名查 id，列表用 MP in-----------
+    /** 未传关键词返回 null（不加条件）；无匹配返回空列表 */
+    public List<String> findDeptIdsByNameLike(String name) {
+        if (oConvertUtils.isEmpty(name)) {
+            return null;
+        }
+        return jdbcTemplate.queryForList(
+                "select id from sys_depart where depart_name like concat('%', ?, '%')",
+                String.class, name.trim());
+    }
+
+    public List<String> findUserIdsByRealnameLike(String name) {
+        if (oConvertUtils.isEmpty(name)) {
+            return null;
+        }
+        return jdbcTemplate.queryForList(
+                "select id from sys_user where realname like concat('%', ?, '%')",
+                String.class, name.trim());
+    }
+    //update-end---author:spex ---date:2026-09-01  for：【提案管理】按部门名/提案人姓名查 id，列表用 MP in-----------
+
     public Map<String, UserBriefVo> loadUsers(Collection<String> userIds) {
         List<String> ids = distinctIds(userIds);
         if (ids.isEmpty()) {

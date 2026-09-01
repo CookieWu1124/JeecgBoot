@@ -23,32 +23,13 @@ const decisionLabelMap: Record<string, string> = {
   REJECT: '不批准',
 };
 
-function toSingleId(value: unknown): string | undefined {
-  if (value == null || value === '') {
-    return undefined;
-  }
-  if (Array.isArray(value)) {
-    return value.length ? String(value[0]) : undefined;
-  }
-  const text = String(value).trim();
-  if (!text) {
-    return undefined;
-  }
-  return text.includes(',') ? text.split(',')[0].trim() : text;
-}
-
 function userName(user?: Recordable) {
   return user?.realname || user?.username || '-';
 }
 
 /** 列表：人员/部门已由后端嵌套返回 */
 export const getProposalList = async (params) => {
-  const query = { ...params };
-  query.deptId = toSingleId(query.deptId);
-  if (query.improvementTypes) {
-    query.improvementTypes = `*${query.improvementTypes}*`;
-  }
-  return defHttp.get({ url: Api.list, params: query });
+  return defHttp.get({ url: Api.list, params });
 };
 
 /** 管理端详情：申请书 + 留痕 + 委员意见；姓名部门走嵌套字段 */

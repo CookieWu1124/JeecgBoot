@@ -204,16 +204,10 @@ export const searchFormSchema: FormSchema[] = [
     colProps: { span: 4 },
   },
   {
-    field: 'deptId',
+    field: 'deptName',
     label: '改善部门',
-    component: 'JSelectDept',
-    componentProps: {
-      multiple: false,
-      sync: false,
-      checkStrictly: true,
-      showButton: false,
-      placeholder: '请选择',
-    },
+    component: 'Input',
+    componentProps: { placeholder: '请输入' },
     colProps: { span: 4 },
   },
   {
