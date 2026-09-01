@@ -7,7 +7,7 @@
 
 | 序号 | 文件 | 业务段 | 规划 Phase | 当前整体进度 |
 |------|------|--------|------------|--------------|
-| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟢 申请段 Phase2 已收齐并联调通过；出口 → 02 |
+| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟢 **已归档暂停**（2026-09-01）：业务闭环 + 微信登录；出口 → 02 |
 | 02 | [02_task_assignment_DEV_PROGRESS.md](./02_task_assignment_DEV_PROGRESS.md) | 任务分配 | 3（前半） | ⚪ 未开始 |
 | 03 | [03_plan_DEV_PROGRESS.md](./03_plan_DEV_PROGRESS.md) | 计划书（条件分支） | 3（后半） | ⚪ 未开始 |
 | 04 | [04_report_DEV_PROGRESS.md](./04_report_DEV_PROGRESS.md) | 报告书 + 六维评分 + 签核结案 | 4 | ⚪ 未开始 |
@@ -42,6 +42,7 @@
 | 小程序提案业务页 | 1~2 | 发起/列表/详情/委员审核/批准人决策已接真 | [x] 申请段闭环 |
 | 联调配置名册种子 | 1 | `proposal_config_seed.sql` | [x] 已与 inside_dev 管理端实配对齐 |
 | 轻量状态机 | 1~4 | `ProposalStateMachine`：合法 from+action→to；计划书/报告书守卫 | [x] 2026-08-31 申请段已接入；02/03/04 路线已预注册 |
+| 微信小程序登录 | 公共 | `/sys/wxMini` silent / bind / unbind；同一 AppID 其它业务只改前端 | [x] 2026-09-01 方案 A 归档；对接清单已发 |
 
 ## 更新约定
 
@@ -68,3 +69,5 @@
 | 小程序接口对接清单 | `api/提案小程序-接口对接清单.md`（申请段，供 App 前端联调） | 2026-08-29 |
 | `ProposalStateMachine` 申请段接入 | 提交/撤回/委员齐/批准改走 `transit()`；后续段路线已预注册 | 2026-08-31 |
 | 改善性质配置表 | `proposal_improvement_type` + 配置 Tab + meta 接口；种子 5 码与现网一致 | 2026-08-31 |
+| 微信小程序登录（公共） | `/sys/wxMini`；小程序双登录；管理端解绑；对接清单已齐 | 2026-09-01 |
+| **01 申请段归档暂停** | 业务 + 登录方案 A 拍板；后续联调有问题再开；下一里程碑 02 | 2026-09-01 |
