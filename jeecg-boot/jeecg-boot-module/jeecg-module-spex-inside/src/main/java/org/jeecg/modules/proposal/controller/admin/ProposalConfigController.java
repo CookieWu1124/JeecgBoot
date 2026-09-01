@@ -87,15 +87,10 @@ public class ProposalConfigController {
         if (oConvertUtils.isEmpty(entity.getActive())) {
             entity.setActive(null);
         }
-        if (oConvertUtils.isEmpty(entity.getId())) {
-            ProposalDeptLeader existing = deptLeaderService.getOne(
-                    new QueryWrapper<ProposalDeptLeader>().eq("dept_id", entity.getDeptId()).last("limit 1"), false);
-            if (existing != null) {
-                entity.setId(existing.getId());
-            }
-        }
-        fillAudit(entity);
-        deptLeaderService.saveOrUpdate(entity);
+        //update-begin---author:spex ---date:2026-09-01  for：【提案配置】部门负责人保存含逻辑删除行恢复-----------
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        deptLeaderService.saveLeader(entity, loginUser);
+        //update-end---author:spex ---date:2026-09-01  for：【提案配置】部门负责人保存含逻辑删除行恢复-----------
         return Result.OK("保存成功");
     }
 
@@ -128,11 +123,19 @@ public class ProposalConfigController {
     @PostMapping("/committee/save")
     public Result<String> committeeSave(@RequestBody ProposalCommitteeMember entity) {
         entity.setUserId(firstId(entity.getUserId()));
+        //update-begin---author:spex ---date:2026-09-01  for：【提案配置】校验 userId，重加已移除委员走恢复-----------
+        if (oConvertUtils.isEmpty(entity.getUserId())) {
+            throw new JeecgBootBizTipException("userId 必填，须为 sys_user.id");
+        }
+        if (!orgFillHelper.userExists(entity.getUserId())) {
+            throw new JeecgBootBizTipException("userId 在用户表中不存在，须为 sys_user.id，不能传工号、姓名或 username");
+        }
         if (entity.getScoreEnabled() != null && entity.getScoreEnabled() == 0) {
             entity.setSeatNo(null);
         }
-        fillAudit(entity);
-        committeeMemberService.saveOrUpdate(entity);
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        committeeMemberService.saveMember(entity, loginUser);
+        //update-end---author:spex ---date:2026-09-01  for：【提案配置】校验 userId，重加已移除委员走恢复-----------
         return Result.OK("保存成功");
     }
 
@@ -148,7 +151,7 @@ public class ProposalConfigController {
     @GetMapping("/approver/list")
     public Result<List<ProposalApprover>> approverList() {
         QueryWrapper<ProposalApprover> qw = new QueryWrapper<>();
-        qw.eq("approver_status", "active").orderByAsc("create_time");
+        qw.eq("approver_status", "active").orderByDesc("update_time").last("limit 1");
         List<ProposalApprover> list = approverService.list(qw);
         //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】配置列表嵌套回显-----------
         orgFillHelper.fillApprovers(list);
@@ -156,17 +159,22 @@ public class ProposalConfigController {
         return Result.OK(list);
     }
 
-    // 【提案改善】配置保存补审计字段
+    // 【提案改善】更换批准人：旧行 active=N，只保留一条有效
     @AutoLog(value = "管理端-提案配置-批准人-保存")
     @Operation(summary = "批准人-保存")
     @PostMapping("/approver/save")
     public Result<String> approverSave(@RequestBody ProposalApprover entity) {
         entity.setUserId(firstId(entity.getUserId()));
-        if (oConvertUtils.isEmpty(entity.getApproverStatus())) {
-            entity.setApproverStatus("active");
+        if (oConvertUtils.isEmpty(entity.getUserId())) {
+            throw new JeecgBootBizTipException("userId 必填，须为 sys_user.id");
         }
+        if (!orgFillHelper.userExists(entity.getUserId())) {
+            throw new JeecgBootBizTipException("userId 在用户表中不存在，须为 sys_user.id，不能传工号、姓名或 username");
+        }
+        entity.setApproverStatus("active");
+        entity.setId(null);
         fillAudit(entity);
-        approverService.saveOrUpdate(entity);
+        approverService.replaceCurrent(entity);
         return Result.OK("保存成功");
     }
 

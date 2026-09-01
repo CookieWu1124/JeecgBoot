@@ -27,7 +27,7 @@ public class ProposalHomeVo {
         private String status;
         private String statusLabel;
         private String actionHint;
-        /** review=委员待审，approve=批准人待核定 */
+        /** review=委员待审，approve=批准人待核定，assign=部门负责人待指派 */
         private String kind;
     }
 

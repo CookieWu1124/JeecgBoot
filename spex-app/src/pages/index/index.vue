@@ -81,17 +81,41 @@ const todos = ref<TodoItem[]>([])
 const feeds = ref<FeedItem[]>([])
 
 function mapTodo(item: AppHomeTodoItem): TodoItem {
-  const review = item.kind === 'review'
+  const kind = item.kind || ''
   const no = item.proposalNo ? `NO. ${item.proposalNo}` : ''
+  if (kind === 'review') {
+    return {
+      id: item.proposalId || '',
+      kind,
+      char: '审',
+      tint: 'blue',
+      title: item.title || '未命名提案',
+      sub: [no, item.actionHint].filter(Boolean).join(' · '),
+      stamp: item.statusLabel || '待审',
+      stampTint: 'blue',
+    }
+  }
+  if (kind === 'assign') {
+    return {
+      id: item.proposalId || '',
+      kind,
+      char: '派',
+      tint: 'purple',
+      title: item.title || '未命名提案',
+      sub: [no, item.actionHint].filter(Boolean).join(' · '),
+      stamp: item.statusLabel || '待派',
+      stampTint: 'blue',
+    }
+  }
   return {
     id: item.proposalId || '',
-    kind: item.kind || '',
-    char: review ? '审' : '批',
-    tint: review ? 'blue' : 'amber',
+    kind,
+    char: '批',
+    tint: 'amber',
     title: item.title || '未命名提案',
     sub: [no, item.actionHint].filter(Boolean).join(' · '),
-    stamp: item.statusLabel || (review ? '待审' : '待核'),
-    stampTint: review ? 'blue' : 'amber',
+    stamp: item.statusLabel || '待核',
+    stampTint: 'amber',
   }
 }
 
@@ -166,6 +190,10 @@ function handleTodoItem(item: TodoItem) {
   }
   if (item.kind === 'approve') {
     uni.navigateTo({ url: `/pages/proposal/approve?id=${item.id}` })
+    return
+  }
+  if (item.kind === 'assign') {
+    uni.navigateTo({ url: `/pages/proposal/detail?id=${item.id}` })
     return
   }
   uni.switchTab({ url: '/pages/todo/index' })

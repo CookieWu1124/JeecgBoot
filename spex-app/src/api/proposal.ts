@@ -242,8 +242,8 @@ export interface AppHomeTodoItem {
   status?: string
   statusLabel?: string
   actionHint?: string
-  /** review=委员待审，approve=批准人待核定 */
-  kind?: 'review' | 'approve' | string
+  /** review=委员待审，approve=批准人待核定，assign=部门负责人待指派 */
+  kind?: 'review' | 'approve' | 'assign' | string
 }
 
 export interface AppHomeFeedItem {

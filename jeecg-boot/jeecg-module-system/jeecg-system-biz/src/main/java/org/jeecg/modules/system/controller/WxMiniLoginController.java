@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 提案改善 App 微信小程序登录 / 管理端解绑
+ * 微信小程序登录（系统公共能力）：静默登录、工号绑定、管理端解绑。
+ * 任意业务 App 只要走同一套 sys_user + 同一小程序 AppID，即可复用本接口。
  */
 @Slf4j
 @RestController
@@ -26,29 +27,29 @@ public class WxMiniLoginController {
     @Autowired
     private IWxMiniAuthService wxMiniAuthService;
 
-    //update-begin---author:spex ---date:2026-08-31  for：【提案App】微信静默登录-----------
+    //update-begin---author:spex ---date:2026-08-31  for：微信小程序静默登录-----------
     @IgnoreAuth
     @Operation(summary = "小程序静默登录")
     @PostMapping("/silentLogin")
     public Result<JSONObject> silentLogin(@RequestBody WxMiniLoginDTO dto) {
         return wxMiniAuthService.silentLogin(dto);
     }
-    //update-end---author:spex ---date:2026-08-31  for：【提案App】微信静默登录-----------
+    //update-end---author:spex ---date:2026-08-31  for：微信小程序静默登录-----------
 
-    //update-begin---author:spex ---date:2026-08-31  for：【提案App】工号+微信手机号绑定-----------
+    //update-begin---author:spex ---date:2026-08-31  for：微信小程序工号绑定-----------
     @IgnoreAuth
     @Operation(summary = "小程序首次绑定")
     @PostMapping("/bind")
     public Result<JSONObject> bind(@RequestBody WxMiniLoginDTO dto) {
         return wxMiniAuthService.bind(dto);
     }
-    //update-end---author:spex ---date:2026-08-31  for：【提案App】工号+微信手机号绑定-----------
+    //update-end---author:spex ---date:2026-08-31  for：微信小程序工号绑定-----------
 
-    //update-begin---author:spex ---date:2026-08-31  for：【提案App】管理端解绑微信-----------
+    //update-begin---author:spex ---date:2026-08-31  for：管理端解绑微信小程序-----------
     @Operation(summary = "管理端解绑微信")
     @PostMapping("/unbind")
     public Result<String> unbind(@RequestBody WxMiniLoginDTO dto) {
         return wxMiniAuthService.unbind(dto == null ? null : dto.getUserId());
     }
-    //update-end---author:spex ---date:2026-08-31  for：【提案App】管理端解绑微信-----------
+    //update-end---author:spex ---date:2026-08-31  for：管理端解绑微信小程序-----------
 }

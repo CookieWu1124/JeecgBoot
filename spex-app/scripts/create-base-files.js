@@ -11,24 +11,10 @@ const __dirname = path.dirname(__filename)
 
 // 最简可运行配置
 const manifest = { }
+// 占位即可。真正的 pages 由 vite-plugin-uni-pages 根据 definePage 生成。
+// 这里不要再写 pages/index/index，否则和扫描结果合并后，小程序编译会报 duplication。
 const pages = {
-  pages: [
-    {
-      path: 'pages/index/index',
-      type: 'home',
-      style: {
-        navigationStyle: 'custom',
-        navigationBarTitleText: '首页',
-      },
-    },
-    {
-      path: 'pages/me/me',
-      type: 'page',
-      style: {
-        navigationBarTitleText: '我的',
-      },
-    },
-  ],
+  pages: [],
   subPackages: [],
 }
 

@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> implements IProposalService {
 
     private static final int MAX_ATTACHMENTS = 4;
+    private static final int HOME_TODO_LIMIT = 5;
+    private static final int HOME_FEED_LIMIT = 5;
     private static final Set<String> TERMINAL_STATUSES = Set.of(
             ProposalStatusEnum.COMPLETED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
@@ -262,7 +264,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     // 【Phase2】批准人待核定与申请决策
     @Override
     public IPage<Proposal> listApprovalPending(int pageNo, int pageSize, LoginUser loginUser) {
-        assertActiveApprover(loginUser);
+        //update-begin---author:spex ---date:2026-09-01  for：【提案待办】非批准人查询待核定列表返回空页-----------
+        if (!isActiveApprover(loginUser.getId())) {
+            return new Page<>(pageNo, pageSize);
+        }
+        //update-end---author:spex ---date:2026-09-01  for：【提案待办】非批准人查询待核定列表返回空页-----------
         LambdaQueryWrapper<Proposal> qw = new LambdaQueryWrapper<>();
         qw.eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode())
                 .orderByDesc(Proposal::getUpdateTime);
@@ -352,7 +358,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setDoingCount(countDoing(userId));
         vo.setDoneCount(countDone(userId));
         vo.setTodoItems(todoItems);
-        vo.setFeeds(buildFeeds(userId));
+        vo.setFeeds(buildFeeds(loginUser));
         return vo;
     }
 
@@ -487,6 +493,14 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         return approverService.count(new LambdaQueryWrapper<ProposalApprover>()
                 .eq(ProposalApprover::getUserId, userId)
                 .eq(ProposalApprover::getApproverStatus, "active")) > 0;
+    }
+
+    private boolean isActiveDeptLeader(String userId) {
+        if (oConvertUtils.isEmpty(userId)) {
+            return false;
+        }
+        return deptLeaderService.count(new LambdaQueryWrapper<ProposalDeptLeader>()
+                .eq(ProposalDeptLeader::getLeaderUserId, userId)) > 0;
     }
 
     // 【Phase2】委员审核快照与进度汇总
@@ -696,12 +710,18 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                         ProposalStatusEnum.COMPLETED.getCode()));
     }
 
-    /** 委员未审快照 + 批准人待核定，不走权限抛错，非角色即为 0。 */
+    /** 委员未审 + 批准人待核定 + 部门负责人待指派；按名册/配置位，不走权限抛错。 */
     private long countHomeTodos(LoginUser loginUser) {
-        long n = countCommitteeTodos(loginUser.getId());
-        if (isActiveApprover(loginUser.getId())) {
+        String userId = loginUser.getId();
+        long n = countCommitteeTodos(userId);
+        if (isActiveApprover(userId)) {
             n += count(new LambdaQueryWrapper<Proposal>()
                     .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode()));
+        }
+        if (isActiveDeptLeader(userId)) {
+            n += count(new LambdaQueryWrapper<Proposal>()
+                    .eq(Proposal::getDeptLeaderId, userId)
+                    .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_ASSIGN.getCode()));
         }
         return n;
     }
@@ -743,7 +763,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                     .in(Proposal::getId, reviewIds)
                     .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode())
                     .orderByDesc(Proposal::getCreateTime)
-                    .last("LIMIT 5"));
+                    .last("LIMIT " + HOME_TODO_LIMIT));
             for (Proposal p : reviews) {
                 items.add(toHomeTodo(p, "review", "出具审核意见"));
             }
@@ -752,12 +772,22 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             List<Proposal> approvals = list(new LambdaQueryWrapper<Proposal>()
                     .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_APPROVAL.getCode())
                     .orderByDesc(Proposal::getUpdateTime)
-                    .last("LIMIT 5"));
+                    .last("LIMIT " + HOME_TODO_LIMIT));
             for (Proposal p : approvals) {
                 items.add(toHomeTodo(p, "approve", "待核定"));
             }
         }
-        return items.stream().limit(5).collect(Collectors.toList());
+        if (isActiveDeptLeader(loginUser.getId())) {
+            List<Proposal> assigns = list(new LambdaQueryWrapper<Proposal>()
+                    .eq(Proposal::getDeptLeaderId, loginUser.getId())
+                    .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_ASSIGN.getCode())
+                    .orderByDesc(Proposal::getUpdateTime)
+                    .last("LIMIT " + HOME_TODO_LIMIT));
+            for (Proposal p : assigns) {
+                items.add(toHomeTodo(p, "assign", "待指派"));
+            }
+        }
+        return items.stream().limit(HOME_TODO_LIMIT).collect(Collectors.toList());
     }
 
     private static ProposalHomeVo.TodoItem toHomeTodo(Proposal p, String kind, String hint) {
@@ -772,22 +802,23 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         return item;
     }
 
-    private List<ProposalHomeVo.FeedItem> buildFeeds(String userId) {
-        List<Proposal> mine = list(new LambdaQueryWrapper<Proposal>()
-                .eq(Proposal::getProposerId, userId)
-                .orderByDesc(Proposal::getUpdateTime)
-                .last("LIMIT 20"));
-        if (mine.isEmpty()) {
+    private List<ProposalHomeVo.FeedItem> buildFeeds(LoginUser loginUser) {
+        String userId = loginUser.getId();
+        List<ProposalStatusLog> logs = statusLogService.listHomeFeeds(
+                userId, isActiveApprover(userId), HOME_FEED_LIMIT);
+        if (logs.isEmpty()) {
             return Collections.emptyList();
         }
-        Map<String, Proposal> proposalMap = mine.stream()
-                .collect(Collectors.toMap(Proposal::getId, p -> p, (a, b) -> a, LinkedHashMap::new));
-        List<ProposalStatusLog> logs = statusLogService.list(new LambdaQueryWrapper<ProposalStatusLog>()
-                .in(ProposalStatusLog::getProposalId, proposalMap.keySet())
-                .orderByDesc(ProposalStatusLog::getCreateTime)
-                .last("LIMIT 5"));
+        Set<String> ids = logs.stream()
+                .map(ProposalStatusLog::getProposalId)
+                .filter(oConvertUtils::isNotEmpty)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<String, Proposal> proposalMap = ids.isEmpty()
+                ? Collections.emptyMap()
+                : listByIds(ids).stream()
+                .collect(Collectors.toMap(Proposal::getId, p -> p, (a, b) -> a));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        return logs.stream().map(log -> {
+        return logs.stream().limit(HOME_FEED_LIMIT).map(log -> {
             Proposal p = proposalMap.get(log.getProposalId());
             ProposalHomeVo.FeedItem feed = new ProposalHomeVo.FeedItem();
             feed.setProposalId(log.getProposalId());

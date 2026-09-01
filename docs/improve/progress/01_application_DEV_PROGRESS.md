@@ -6,7 +6,7 @@
 | **规划 Phase** | Phase 1（骨架）+ Phase 2（审核流） |
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
-| **最后更新** | 2026-08-31 |
+| **最后更新** | 2026-09-01 |
 | **本段状态** | 申请段四档：**审核中 / 待批准 / 已批准 / 不批准**；出口停在 `APPROVED`（阶段 2 待定，不进入待指派） |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
@@ -189,3 +189,5 @@
 | 2026-08-31 | **去掉 DRAFT**：枚举与状态机不再有草稿；发起直接写 `PENDING_REVIEW`；流转 `from_status` 为空；存量见 `20260831_purge_proposal_draft.sql` |
 | 2026-08-31 | **去掉草稿/撤回接口**：删除 `PUT /{id}/draft`、`POST /{id}/withdraw`；枚举去掉 `WITHDRAWN`；存量见 `20260831_purge_proposal_withdrawn.sql` |
 | 2026-08-31 | **首页接真实聚合**：`GET /proposal/app/home`；待办=委员未审+批准人待核定；已结案含已批准/不批准 |
+| 2026-08-31 | **首页按位置并集**：待办/动态随提案人·委员·批准人·部门负责人变化；动态只查 5 条 |
+| 2026-09-01 | **微信登录对接清单**：小程序 A1a/A1b/A1c + 管理端 S7 解绑；发给前端同事以 `docs/improve/api/` 两份清单为准 |

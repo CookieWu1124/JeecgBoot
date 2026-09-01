@@ -35,7 +35,23 @@ export function isSuccessResultCode(code: number): boolean {
 }
 
 export function getResponseMessage(responseData: Partial<IResponse<any>> | undefined, fallback = '请求错误'): string {
-  return responseData?.msg || responseData?.message || fallback
+  const raw = responseData?.msg || responseData?.message || fallback
+  return toFriendlyErrorMessage(raw)
+}
+
+/** 避免把 MyBatis / 唯一索引等后台原文弹到小程序上 */
+export function toFriendlyErrorMessage(raw: string): string {
+  const text = String(raw || '').trim()
+  if (!text)
+    return '请求错误'
+  const lower = text.toLowerCase()
+  if (lower.includes('uniq_sys_user_phone') || lower.includes('duplicate entry'))
+    return '该手机号已被其他用户占用，请联系管理员处理'
+  if (lower.includes('error updating database') || lower.includes('sqlintegrity') || text.includes('Cause:'))
+    return '保存失败，请联系管理员'
+  if (text.length > 40)
+    return '操作失败，请稍后重试'
+  return text
 }
 
 export function createHttpError<T>(params: HttpError<T>): HttpError<T> {

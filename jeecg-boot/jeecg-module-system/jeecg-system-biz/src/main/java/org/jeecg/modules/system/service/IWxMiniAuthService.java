@@ -5,7 +5,7 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.modules.system.model.WxMiniLoginDTO;
 
 /**
- * 提案改善 App：微信小程序静默登录 / 首次绑定 / 管理端解绑
+ * 微信小程序登录：静默登录、工号绑定、管理端解绑（系统公共能力，不绑定某一业务模块）
  */
 public interface IWxMiniAuthService {
 
@@ -17,7 +17,7 @@ public interface IWxMiniAuthService {
     Result<JSONObject> silentLogin(WxMiniLoginDTO dto);
 
     /**
-     * 小程序首次绑定：工号 + 微信手机号与 sys_user 联合校验后写入 sys_third_account
+     * 小程序首次绑定：工号对应档案有手机号则与微信号严校验；档案为空则放行并回填微信手机号
      */
     Result<JSONObject> bind(WxMiniLoginDTO dto);
 

@@ -275,6 +275,7 @@ jeecg:
     webapp: /opt/jeecg-boot/webapp
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**,/api/getUserInfo
+  # 微信小程序（仅后端使用，不要写入前端工程）
   wx-mini:
     app-id: wxce3a1b42d7fa0bd6
     app-secret: ??

@@ -35,7 +35,7 @@ public interface IProposalService extends IService<Proposal> {
     void submitCommitteeReview(String proposalId, CommitteeReviewRequest request, LoginUser loginUser);
 
     // 【Phase2】批准人申请决策
-    /** 批准人待核定列表（PENDING_APPROVAL） */
+    /** 批准人待核定列表（PENDING_APPROVAL）；非在任批准人返回空页 */
     IPage<Proposal> listApprovalPending(int pageNo, int pageSize, LoginUser loginUser);
 
     /** 申请批准决策：批准→APPROVED；不批准→REJECTED_FINAL。不进入待指派。 */

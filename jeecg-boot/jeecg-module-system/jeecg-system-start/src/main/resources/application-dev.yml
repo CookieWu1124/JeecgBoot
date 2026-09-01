@@ -283,7 +283,7 @@ jeecg:
     webapp: /opt/webapp
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**
-  # 提案改善 App 微信小程序（仅后端使用，不要写入 spex-app）
+  # 微信小程序（仅后端使用，不要写入前端工程）
   wx-mini:
     app-id: wxce3a1b42d7fa0bd6
     app-secret: '96ea456f97842dee826cec403a36d321'

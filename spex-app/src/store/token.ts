@@ -13,7 +13,23 @@ import {
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes, mapJeecgLoginRes, mapJeecgUser } from '@/api/types/login'
+import { toFriendlyErrorMessage } from '@/http/tools/enum'
 import { useUserStore } from './user'
+
+/** 用户主动退出后不再自动静默登录，直到下次手动登录成功 */
+const SKIP_WX_SILENT_KEY = 'wx-skip-silent-login'
+
+function markSkipWxSilent() {
+  uni.setStorageSync(SKIP_WX_SILENT_KEY, '1')
+}
+
+function shouldSkipWxSilent() {
+  return uni.getStorageSync(SKIP_WX_SILENT_KEY) === '1'
+}
+
+function clearSkipWxSilent() {
+  uni.removeStorageSync(SKIP_WX_SILENT_KEY)
+}
 
 /**
  * 是否是双token模式
@@ -110,6 +126,7 @@ export const useTokenStore = defineStore(
      */
     async function _postLogin(tokenInfo: IAuthLoginRes, user?: IUserInfoRes) {
       setTokenInfo(tokenInfo)
+      clearSkipWxSilent()
       const userStore = useUserStore()
       if (user) {
         userStore.setUserInfo(user)
@@ -150,6 +167,8 @@ export const useTokenStore = defineStore(
      * 小程序静默登录。未绑定返回 { bound: false }，不弹成功 toast。
      */
     const wxSilentLogin = async () => {
+      if (shouldSkipWxSilent())
+        return { bound: false }
       try {
         const loginRes = await getWxCode()
         const jsCode = loginRes.code
@@ -192,7 +211,7 @@ export const useTokenStore = defineStore(
       catch (error: any) {
         console.error('微信绑定失败:', error)
         uni.showToast({
-          title: error?.message || '绑定失败，请重试',
+          title: toFriendlyErrorMessage(error?.message || '绑定失败，请重试'),
           icon: 'none',
         })
         throw error
@@ -223,6 +242,7 @@ export const useTokenStore = defineStore(
         console.log('退出登录-清除用户信息')
         tokenInfo.value = { ...tokenInfoState }
         uni.removeStorageSync('token')
+        markSkipWxSilent()
         const userStore = useUserStore()
         userStore.clearUserInfo()
       }

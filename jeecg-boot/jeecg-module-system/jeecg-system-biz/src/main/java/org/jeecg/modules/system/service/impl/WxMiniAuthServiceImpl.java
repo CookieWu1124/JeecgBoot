@@ -2,6 +2,7 @@ package org.jeecg.modules.system.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.constant.CommonConstant;
@@ -21,12 +22,19 @@ import org.jeecg.modules.system.service.ISysUserService;
 import org.jeecg.modules.system.service.IWxMiniAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.List;
 
 /**
- * 微信小程序登录绑定
+ * 微信小程序登录绑定（OpenID ↔ sys_user，third_type = wechat_mp）
  */
 @Service
 @Slf4j
@@ -35,7 +43,6 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
     private static final String MSG_PROFILE_MISMATCH = "工号与手机号不一致，请联系管理员修正用户信息";
     private static final String MSG_WORK_NO_INVALID = "工号无效，请重新输入";
     private static final String MSG_BOUND_OTHER_WX = "该工号已绑定其他微信，请联系管理员解绑";
-    private static final String MSG_WX_BOUND_OTHER = "该微信已绑定其他工号，请联系管理员解绑";
     private static final String ACCESS_TOKEN_CACHE_KEY = "wx_mini:access_token:";
     private static final String JSCODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
     private static final String CGI_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
@@ -84,6 +91,7 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result<JSONObject> bind(WxMiniLoginDTO dto) {
         if (dto == null || oConvertUtils.isEmpty(dto.getJsCode())) {
             return Result.error("缺少微信登录凭证");
@@ -115,7 +123,8 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
 
         if (byOpenid != null && oConvertUtils.isNotEmpty(byOpenid.getSysUserId())
                 && !byOpenid.getSysUserId().equals(workUser.getId())) {
-            return Result.error(MSG_WX_BOUND_OTHER);
+            SysUser boundUser = sysUserService.getById(byOpenid.getSysUserId());
+            return Result.error("该微信已绑定其他工号" + formatUserLabel(boundUser) + "，请联系管理员解绑");
         }
         if (byUser != null && oConvertUtils.isNotEmpty(byUser.getThirdUserId())
                 && !byUser.getThirdUserId().equals(openid)) {
@@ -129,7 +138,14 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         if (!phoneRes.isSuccess()) {
             return Result.error(phoneRes.getMessage());
         }
-        if (!phonesMatch(workUser.getPhone(), phoneRes.getResult())) {
+        String wxPhone = phoneRes.getResult();
+        String storedPhone = normalizePhone(workUser.getPhone());
+        if (oConvertUtils.isEmpty(storedPhone)) {
+            Result<String> fillRes = fillEmptyUserPhone(workUser, wxPhone);
+            if (!fillRes.isSuccess()) {
+                return Result.error(fillRes.getMessage());
+            }
+        } else if (!storedPhone.equals(normalizePhone(wxPhone))) {
             return Result.error(MSG_PROFILE_MISMATCH);
         }
         saveBinding(workUser, openid);
@@ -166,6 +182,25 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         account.setThirdUserUuid(openid);
         account.setRealname(sysUser.getRealname());
         sysThirdAccountService.saveOrUpdate(account);
+    }
+
+    /** 档案为空才回填。号码已在其他用户上（含已解绑未清号）则不改档案，交给管理员。 */
+    private Result<String> fillEmptyUserPhone(SysUser workUser, String wxPhone) {
+        if (workUser == null || oConvertUtils.isEmpty(workUser.getId()) || oConvertUtils.isEmpty(wxPhone)) {
+            return Result.error("获取微信手机号失败");
+        }
+        SysUser occupied = sysUserService.getUserByPhone(wxPhone);
+        if (occupied != null && !occupied.getId().equals(workUser.getId())) {
+            log.warn("微信绑定回填跳过，手机号已被其他用户占用, userId={}, occupiedUserId={}",
+                    workUser.getId(), occupied.getId());
+            return Result.error("该手机号已被其他用户占用" + formatUserLabel(occupied) + "，请联系管理员处理");
+        }
+        sysUserService.update(new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, workUser.getId())
+                .set(SysUser::getPhone, wxPhone));
+        workUser.setPhone(wxPhone);
+        log.info("微信绑定回填空手机号, userId={}, username={}", workUser.getId(), workUser.getUsername());
+        return Result.OK("ok");
     }
 
     private SysThirdAccount findByOpenid(String openid) {
@@ -234,7 +269,7 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             vars.put("secret", appSecret);
             vars.put("js_code", jsCode);
             vars.put("grant_type", "authorization_code");
-            JSONObject body = RestUtil.get(JSCODE2SESSION_URL, vars);
+            JSONObject body = getWeixinJson(JSCODE2SESSION_URL, vars);
             if (body == null) {
                 return Result.error("微信登录失败，请稍后重试");
             }
@@ -264,7 +299,7 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             vars.put("access_token", tokenRes.getResult());
             JSONObject payload = new JSONObject();
             payload.put("code", phoneCode);
-            JSONObject body = RestUtil.post(PHONE_URL, vars, payload);
+            JSONObject body = postWeixinJson(PHONE_URL, vars, payload);
             if (body == null) {
                 return Result.error("获取微信手机号失败，请稍后重试");
             }
@@ -306,7 +341,7 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             vars.put("grant_type", "client_credential");
             vars.put("appid", appId);
             vars.put("secret", appSecret);
-            JSONObject body = RestUtil.get(CGI_TOKEN_URL, vars);
+            JSONObject body = getWeixinJson(CGI_TOKEN_URL, vars);
             if (body == null) {
                 return Result.error("获取微信凭证失败");
             }
@@ -329,17 +364,50 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         }
     }
 
+    /**
+     * 微信接口常返回 Content-Type: text/plain，RestUtil 按 JSONObject 提取会失败。
+     */
+    private JSONObject getWeixinJson(String url, JSONObject query) {
+        return callWeixin(HttpMethod.GET, url, query, null);
+    }
+
+    private JSONObject postWeixinJson(String url, JSONObject query, JSONObject payload) {
+        return callWeixin(HttpMethod.POST, url, query, payload);
+    }
+
+    private JSONObject callWeixin(HttpMethod method, String url, JSONObject query, JSONObject payload) {
+        String fullUrl = url;
+        if (query != null && !query.isEmpty()) {
+            fullUrl += "?" + RestUtil.asUrlVariables(query);
+        }
+        HttpHeaders headers = new HttpHeaders();
+        HttpEntity<String> entity;
+        if (payload != null) {
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            entity = new HttpEntity<>(payload.toJSONString(), headers);
+        } else {
+            entity = new HttpEntity<>(headers);
+        }
+        ResponseEntity<String> response = RestUtil.getRestTemplate().exchange(
+                URI.create(fullUrl), method, entity, String.class);
+        String raw = response.getBody();
+        if (oConvertUtils.isEmpty(raw)) {
+            return null;
+        }
+        try {
+            return JSONObject.parseObject(raw);
+        } catch (Exception e) {
+            String preview = raw.length() > 500 ? raw.substring(0, 500) : raw;
+            log.warn("微信接口返回非 JSON, status={}, body={}", response.getStatusCode(), preview);
+            throw e;
+        }
+    }
+
     private Result<String> requireWxConfig() {
         if (oConvertUtils.isEmpty(appId) || oConvertUtils.isEmpty(appSecret)) {
             return Result.error("未配置微信小程序 AppID/AppSecret");
         }
         return Result.OK("ok");
-    }
-
-    private boolean phonesMatch(String stored, String incoming) {
-        String a = normalizePhone(stored);
-        String b = normalizePhone(incoming);
-        return oConvertUtils.isNotEmpty(a) && a.equals(b);
     }
 
     private String normalizePhone(String phone) {
@@ -351,6 +419,24 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             return digits.substring(2);
         }
         return digits;
+    }
+
+    private String formatUserLabel(SysUser user) {
+        if (user == null) {
+            return "";
+        }
+        String name = oConvertUtils.isNotEmpty(user.getRealname()) ? user.getRealname() : "";
+        String workNo = oConvertUtils.isNotEmpty(user.getUsername()) ? user.getUsername() : "";
+        if (oConvertUtils.isEmpty(name) && oConvertUtils.isEmpty(workNo)) {
+            return "";
+        }
+        if (oConvertUtils.isEmpty(name)) {
+            return "（" + workNo + "）";
+        }
+        if (oConvertUtils.isEmpty(workNo)) {
+            return "（" + name + "）";
+        }
+        return "（" + name + " / " + workNo + "）";
     }
 
     private String trimToEmpty(String value) {
