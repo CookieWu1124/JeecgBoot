@@ -42,7 +42,7 @@
 | 小程序提案业务页 | 1~2 | 发起/列表/详情/委员审核/批准人决策已接真 | [x] 申请段闭环 |
 | 联调配置名册种子 | 1 | `proposal_config_seed.sql` | [x] 已与 inside_dev 管理端实配对齐 |
 | 轻量状态机 | 1~4 | `ProposalStateMachine`：合法 from+action→to；计划书/报告书守卫 | [x] 2026-08-31 申请段已接入；02/03/04 路线已预注册 |
-| 微信小程序登录 | 公共 | `/sys/wxMini` silent / bind / unbind；同一 AppID 其它业务只改前端 | [x] 2026-09-01 方案 A 归档；对接清单已发 |
+| 微信小程序登录 | 公共 | `/sys/wxMini` silent / bind / unbind；同一 AppID 其它业务只改前端 | [x] 2026-09-01 方案 A 归档；对接清单已发；2026-09-02 补方案 A vs 参考图及 silentLogin 顺序说明 |
 
 ## 更新约定
 

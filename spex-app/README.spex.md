@@ -28,8 +28,11 @@ pnpm run dev
 ## 鉴权
 
 - 登录：`POST /sys/mLogin`（无图形验证码）
+- 微信：`POST /sys/wxMini/silentLogin`、`/bind`（仅小程序）
 - 部门列表：`POST /sys/loginGetUserDeparts`（`source=APP`）
 - Token：请求头 `X-Access-Token`
+
+**方案 A（当前，联调向）：** 主动退出后写 `wx-skip-silent-login`，不再自动静默登录，便于切工号+密码；与参考图「退出后再进仍 silent」不同。`silentLogin` 后端仍应先 `jscode2session` 再查 OpenID。详见 `docs/improve/api/提案小程序-接口对接清单.md` §3.3。
 
 「体验登录」仍为前端假 Token，**不会打到后端**，仅用于看 UI。
 
