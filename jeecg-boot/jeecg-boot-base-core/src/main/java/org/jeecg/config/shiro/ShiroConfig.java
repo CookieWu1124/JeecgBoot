@@ -92,6 +92,7 @@ public class ShiroConfig {
         //update-begin---author:spex ---date:2026-08-31  for：微信小程序登录匿名放行-----------
         filterChainDefinitionMap.put("/sys/wxMini/silentLogin", "anon");
         filterChainDefinitionMap.put("/sys/wxMini/bind", "anon");
+        filterChainDefinitionMap.put("/sys/wxMini/checkWorkNo", "anon");
         //update-end---author:spex ---date:2026-08-31  for：微信小程序登录匿名放行-----------
         filterChainDefinitionMap.put("/sys/logout", "anon"); //登出接口排除
         filterChainDefinitionMap.put("/sys/thirdLogin/**", "anon"); //第三方登录

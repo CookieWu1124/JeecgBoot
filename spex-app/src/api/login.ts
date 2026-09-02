@@ -114,6 +114,19 @@ export interface IWxMiniLoginRes {
   [key: string]: any
 }
 
+export interface IWxWorkNoCheckRes {
+  valid?: boolean
+  workNo?: string
+  realname?: string
+}
+
+/**
+ * 绑定前校验工号（sys_user 存在且未注销/未冻结）
+ */
+export function checkWxWorkNo(workNo: string) {
+  return http.post<IWxWorkNoCheckRes>('/sys/wxMini/checkWorkNo', { workNo }, undefined, undefined, { hideErrorToast: true })
+}
+
 /**
  * 小程序静默登录（jsCode 换 OpenID，已绑定则直接签发 Token）
  */

@@ -152,6 +152,29 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         return issueAppToken(workUser, true);
     }
 
+    //update-begin---author:spex ---date:2026-09-02  for：微信小程序绑定前工号粗校验-----------
+    @Override
+    public Result<JSONObject> checkWorkNo(String workNo) {
+        String trimmed = trimToEmpty(workNo);
+        if (oConvertUtils.isEmpty(trimmed)) {
+            return Result.error("请输入工号");
+        }
+        SysUser workUser = sysUserService.getUserByName(trimmed);
+        if (workUser == null) {
+            return Result.error(MSG_WORK_NO_INVALID);
+        }
+        Result<?> effective = sysUserService.checkUserIsEffective(workUser);
+        if (!effective.isSuccess()) {
+            return Result.error(effective.getMessage());
+        }
+        JSONObject data = new JSONObject();
+        data.put("valid", true);
+        data.put("workNo", trimmed);
+        data.put("realname", workUser.getRealname());
+        return Result.OK(data);
+    }
+    //update-end---author:spex ---date:2026-09-02  for：微信小程序绑定前工号粗校验-----------
+
     @Override
     public Result<String> unbind(String userId) {
         if (oConvertUtils.isEmpty(userId)) {

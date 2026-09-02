@@ -22,6 +22,11 @@ public interface IWxMiniAuthService {
     Result<JSONObject> bind(WxMiniLoginDTO dto);
 
     /**
+     * 绑定前校验工号：sys_user 是否存在且账号有效（未注销/未冻结）
+     */
+    Result<JSONObject> checkWorkNo(String workNo);
+
+    /**
      * 管理端解绑指定用户的微信小程序绑定
      */
     Result<String> unbind(String userId);

@@ -60,10 +60,20 @@
 
           <!-- #ifdef MP-WEIXIN -->
           <button
-            v-if="loginMode === 'wechat'"
+            v-if="loginMode === 'wechat' && !workNoReady"
             class="login-wx-btn"
             :class="{ 'login-wx-btn--disabled': !canSubmit || submitting }"
             :disabled="!canSubmit || submitting"
+            :loading="submitting"
+            @click="handlePrepareWxBind"
+          >
+            确认工号并继续
+          </button>
+          <button
+            v-if="loginMode === 'wechat' && workNoReady"
+            class="login-wx-btn"
+            :class="{ 'login-wx-btn--disabled': submitting }"
+            :disabled="submitting"
             :loading="submitting"
             open-type="getPhoneNumber"
             @getphonenumber="onGetPhoneNumber"
@@ -106,6 +116,8 @@
 
 <script lang="ts" setup>
 import { isMpWeixin } from '@uni-helper/uni-env'
+import { checkWxWorkNo } from '@/api/login'
+import { toFriendlyErrorMessage } from '@/http/tools/enum'
 import { useTokenStore } from '@/store'
 import { isPageTabbar } from '@/tabbar/store'
 
@@ -140,6 +152,8 @@ const submitting = ref(false)
 const redirect = ref('')
 const loginMode = ref<'password' | 'wechat'>(isMpWeixin ? 'wechat' : 'password')
 const silentTried = ref(false)
+/** 工号粗校验通过后，才展示 getPhoneNumber 按钮 */
+const workNoReady = ref(false)
 
 const usernameError = computed(() => {
   if (!touched.username)
@@ -178,6 +192,10 @@ onLoad((query) => {
     form.username = lastUsername
 })
 
+watch(() => form.username, () => {
+  workNoReady.value = false
+})
+
 onMounted(() => {
   if (isMpWeixin && loginMode.value === 'wechat')
     trySilentLogin()
@@ -185,6 +203,35 @@ onMounted(() => {
 
 function toggleLoginMode() {
   loginMode.value = loginMode.value === 'password' ? 'wechat' : 'password'
+  workNoReady.value = false
+}
+
+async function handlePrepareWxBind() {
+  touched.username = true
+  if (form.username.trim().length < 3) {
+    uni.showToast({ title: '请输入工号', icon: 'none' })
+    return
+  }
+  submitting.value = true
+  try {
+    const res = await checkWxWorkNo(form.username.trim())
+    if (!res?.valid) {
+      uni.showToast({ title: '工号无效，请重新输入', icon: 'none' })
+      return
+    }
+    workNoReady.value = true
+    const name = res.realname ? `（${res.realname}）` : ''
+    uni.showToast({ title: `工号校验通过${name}`, icon: 'none' })
+  }
+  catch (error: any) {
+    uni.showToast({
+      title: toFriendlyErrorMessage(error?.message || '工号校验失败，请重试'),
+      icon: 'none',
+    })
+  }
+  finally {
+    submitting.value = false
+  }
 }
 
 function goAfterLogin() {

@@ -45,6 +45,15 @@ public class WxMiniLoginController {
     }
     //update-end---author:spex ---date:2026-08-31  for：微信小程序工号绑定-----------
 
+    //update-begin---author:spex ---date:2026-09-02  for：微信小程序绑定前工号粗校验-----------
+    @IgnoreAuth
+    @Operation(summary = "绑定前校验工号")
+    @PostMapping("/checkWorkNo")
+    public Result<JSONObject> checkWorkNo(@RequestBody WxMiniLoginDTO dto) {
+        return wxMiniAuthService.checkWorkNo(dto == null ? null : dto.getWorkNo());
+    }
+    //update-end---author:spex ---date:2026-09-02  for：微信小程序绑定前工号粗校验-----------
+
     //update-begin---author:spex ---date:2026-08-31  for：管理端解绑微信小程序-----------
     @Operation(summary = "管理端解绑微信")
     @PostMapping("/unbind")
