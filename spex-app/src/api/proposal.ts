@@ -308,3 +308,7 @@ export function fetchAppUnreadCount() {
 export function markAppMessageRead(id: string) {
   return http.put<string>(`/proposal/app/message/${id}/read`)
 }
+
+export function markAppMessagesReadAll() {
+  return http.put<number>('/proposal/app/message/readAll')
+}

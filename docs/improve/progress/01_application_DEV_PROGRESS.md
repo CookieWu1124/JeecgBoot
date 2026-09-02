@@ -6,8 +6,8 @@
 | **规划 Phase** | Phase 1（骨架）+ Phase 2（审核流） |
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
-| **最后更新** | 2026-09-01 |
-| **本段状态** | 🟢 **已归档暂停**：申请段业务闭环 + 微信登录公共能力已落地；出口仍停在 `APPROVED`（不进待指派）。下一里程碑 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md) |
+| **最后更新** | 2026-09-02 |
+| **本段状态** | 🟢 **联调补丁归档**：申请段业务闭环已交付；本日补齐消息未读表 + 微信 `stable_token`；出口仍停在 `APPROVED`。下一里程碑 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md)；明日继续联调优化 |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
 
@@ -117,7 +117,7 @@
 | 批准人待办 | 申请批准入口 | [x] pages/todo 待核定 |
 | 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [x] `pages/proposal/approve` 已接真 |
 | 首页 | KPI + 待办摘要 + 动态 | [x] `pages/index` 接 `GET /proposal/app/home`；摘要各 3 条；铃铛角标 |
-| 消息 | 全部/未读动态 + 已读 | [x] `pages/message`；F2/F3/F4；我-消息通知「N 条未读」 |
+| 消息 | 全部/未读动态 + 已读/全部已读 | [x] `pages/message`；F2/F3/F4/F5；我-消息通知「N 条未读」（仅他人触发的状态变更） |
 | 提案列表 Tab | 含待审核进度展示 | [x] `pages/proposal/index` 已接 list |
 | 提案详情 | 申请阶段信息展示 | [x] `pages/proposal/detail` 已接 detail |
 
@@ -139,6 +139,7 @@
 | `proposal_application` | 1 | [x] | 申请书正文 |
 | `proposal_attachment` | 1 | [x] | 现场图片等 |
 | `proposal_status_log` | 1 | [x] | 提交/委员齐/批准等由状态机写日志 |
+| `proposal_status_log_unread` | 1 | [x] | 未读 fan-out（排除操作人）；已读物理删行；见 `fix/20260902_create_proposal_status_log_unread.sql` |
 | `proposal_committee_member` | 1 | [x] | 审核名册 |
 | `proposal_approver` | 1 | [x] | 批准人配置 |
 | `proposal_dept_leader` | 1 | [x] | 提交前校验 |
@@ -162,8 +163,8 @@
 | 8 | 委员全部完成 → `PENDING_APPROVAL` | [x] |
 | 9 | `proposal_approval` + 批准/不批准 + 写 `plan_required` | [x] |
 | 10 | 待办聚合（委员/批准人） | [x] 委员+批准人 pending 已通 |
-| 11 | 站内消息 `SysAnnouncement` | [~] 本期用 `proposal_status_log` + `proposal_status_log_read`；未接 SysAnnouncement |
-| 12 | 微信小程序登录 `/sys/wxMini`（silent / bind / unbind） | [x] 系统公共；Shiro 已放行 silent/bind |
+| 11 | 站内消息 `SysAnnouncement` | [~] 本期用 `proposal_status_log` + `proposal_status_log_unread`；未接 SysAnnouncement |
+| 12 | 微信小程序登录 `/sys/wxMini`（silent / bind / unbind） | [x] 系统公共；取号改用 `cgi-bin/stable_token`；40001 清缓存重试 |
 
 ---
 
@@ -200,7 +201,7 @@
 - [x] 管理端详情可查看委员审核意见列表（含未审快照行）
 - [x] 小程序两种登录并存；微信授权仅小程序；退出不解绑
 - [x] 管理端可解绑微信（只删 `sys_third_account`）
-- [~] 微信授权真机/开发者工具：开发侧已通主路径；后续联调问题再开（非阻塞归档）
+- [~] 微信授权真机/开发者工具：已改 `stable_token` 缓解 40001；明日继续联调（未读需用他人账号产生状态变更才能测出）
 
 ---
 
@@ -254,4 +255,6 @@
 | 2026-09-01 | **微信登录对接清单**：小程序 A1a/A1b/A1c + 管理端 S7 解绑；发给前端同事以 `docs/improve/api/` 两份清单为准 |
 | 2026-09-01 | **申请段归档暂停**：业务闭环 + 微信登录方案 A（退出不自动 silent，点授权走 bind）拍板；下一里程碑 02 任务分配 |
 | 2026-09-02 | **文档补记**：方案 A 与参考图差异对照；`silentLogin` 先 jscode2session 再查 OpenID 的设计说明（顺序未搞反） |
-| 2026-09-02 | **消息已读 + 首页摘要 3 条**：表 `proposal_status_log_read`；铃铛=全部动态；我-消息通知=未读+「N 条未读」；点详情标已读 |
+| 2026-09-02 | **消息未读 + 首页摘要 3 条**：表 `proposal_status_log_unread`（fan-out 排除自己；已读物理删行）；铃铛=全部；我-消息通知=未读+「N 条未读」；F5 全部已读 |
+| 2026-09-02 | **微信取号凭证**：`getuserphonenumber` 改用 `cgi-bin/stable_token`；遇 40001 清缓存 `force_refresh` 重试一次（缓解 Redis 缓存到已作废普通 token） |
+| 2026-09-02 | **联调备注**：委员账号（如 600099）自己操作不会产生自己的未读；测未读请用普通提案人（如 600081）新提一单 |

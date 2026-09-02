@@ -9,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- proposal 业务子表（先子后父）
 DELETE FROM `proposal_committee_review`;
 DELETE FROM `proposal_approval`;
-DELETE FROM `proposal_status_log_read`;
+DELETE FROM `proposal_status_log_unread`;
 DELETE FROM `proposal_status_log`;
 DELETE FROM `proposal_attachment`;
 DELETE FROM `proposal_application`;

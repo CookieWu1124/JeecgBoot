@@ -55,7 +55,19 @@ public class ProposalMessageController {
         if (loginUser == null) {
             return Result.error("请先登录");
         }
-        return Result.OK(statusLogService.countUnread(loginUser.getId(), isActiveApprover(loginUser.getId())));
+        return Result.OK(statusLogService.countUnread(loginUser.getId()));
+    }
+
+    @Operation(summary = "全部已读")
+    @PutMapping("/readAll")
+    public Result<Integer> markAllRead() {
+        LoginUser loginUser = currentUser();
+        if (loginUser == null) {
+            return Result.error("请先登录");
+        }
+        //update-begin---author:spex ---date:2026-09-02  for：【消息】全部已读-----------
+        return Result.OK(statusLogService.markAllRead(loginUser));
+        //update-end---author:spex ---date:2026-09-02  for：【消息】全部已读-----------
     }
 
     @Operation(summary = "标记已读")
@@ -65,9 +77,9 @@ public class ProposalMessageController {
         if (loginUser == null) {
             return Result.error("请先登录");
         }
-        //update-begin---author:spex ---date:2026-09-02  for：【消息已读】用户×status_log-----------
-        statusLogService.markRead(id, loginUser, isActiveApprover(loginUser.getId()));
-        //update-end---author:spex ---date:2026-09-02  for：【消息已读】用户×status_log-----------
+        //update-begin---author:spex ---date:2026-09-02  for：【消息已读】删 unread 行-----------
+        statusLogService.markRead(id, loginUser);
+        //update-end---author:spex ---date:2026-09-02  for：【消息已读】删 unread 行-----------
         return Result.OK("ok");
     }
 

@@ -15,7 +15,7 @@
 - [proposal_application](#proposal_application) — 提案申请书
 - [proposal_attachment](#proposal_attachment) — 提案附件
 - [proposal_status_log](#proposal_status_log) — 提案状态变更日志
-- [proposal_status_log_read](#proposal_status_log_read) — 提案状态日志已读（用户×日志）
+- [proposal_status_log_unread](#proposal_status_log_unread) — 提案状态日志未读（用户×日志）
 - [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
 - [proposal_approval](#proposal_approval) — 批准人决策记录
 
@@ -266,24 +266,24 @@
 
 ---
 
-## proposal_status_log_read
+## proposal_status_log_unread
 
-**表说明**：用户对某条 `proposal_status_log` 的已读记录（一人一条动态日志一行；未读=相关动态 − 本表有记录）
+**表说明**：用户对某条 `proposal_status_log` 的未读收件记录。写日志时 fan-out 插入（**不含操作人自己**）；用户点详情已读则**物理删除**本行，表体积约等于当前未读总量。
 
 ### 业务字段
 
 | 字段名 | 数据类型 | 允许空 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `id` | varchar(36) | 否 | 主键 |
-| `user_id` | varchar(36) | 否 | 读者 sys_user.id |
+| `user_id` | varchar(36) | 否 | 收件人 sys_user.id |
 | `status_log_id` | varchar(36) | 否 | `proposal_status_log.id` |
-| `read_time` | datetime | 否 | 已读时间 |
 
 ### 索引与约束
 
 - **主键**：(`id`)
-- **唯一索引** `uk_proposal_status_log_read`：(`user_id`, `status_log_id`, `tenant_id`)
-- **普通索引** `idx_proposal_status_log_read_log`：(`status_log_id`)
+- **唯一索引** `uk_proposal_status_log_unread`：(`user_id`, `status_log_id`, `tenant_id`)
+- **普通索引** `idx_proposal_status_log_unread_log`：(`status_log_id`)
+- **普通索引** `idx_proposal_status_log_unread_user`：(`user_id`)
 
 ---
 

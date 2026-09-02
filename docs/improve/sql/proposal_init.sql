@@ -328,15 +328,15 @@ CREATE TABLE `proposal_status_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案状态变更日志';
 
 -- -----------------------------------------------------------------------------
--- 六-b、状态日志已读（用户 × 日志）
+-- 六-b、状态日志未读（用户 × 日志；点已读则物理删除，表体积≈当前未读量）
 -- -----------------------------------------------------------------------------
 
 DROP TABLE IF EXISTS `proposal_status_log_read`;
-CREATE TABLE `proposal_status_log_read` (
+DROP TABLE IF EXISTS `proposal_status_log_unread`;
+CREATE TABLE `proposal_status_log_unread` (
   `id` varchar(36) NOT NULL COMMENT '主键',
-  `user_id` varchar(36) NOT NULL COMMENT '读者 sys_user.id',
+  `user_id` varchar(36) NOT NULL COMMENT '收件人 sys_user.id',
   `status_log_id` varchar(36) NOT NULL COMMENT 'proposal_status_log.id',
-  `read_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '已读时间',
   `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
   `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
@@ -349,9 +349,10 @@ CREATE TABLE `proposal_status_log_read` (
   `remark` varchar(300) DEFAULT NULL COMMENT '备注',
   `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_proposal_status_log_read` (`user_id`, `status_log_id`, `tenant_id`),
-  KEY `idx_proposal_status_log_read_log` (`status_log_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案状态日志已读（用户×日志）';
+  UNIQUE KEY `uk_proposal_status_log_unread` (`user_id`, `status_log_id`, `tenant_id`),
+  KEY `idx_proposal_status_log_unread_log` (`status_log_id`),
+  KEY `idx_proposal_status_log_unread_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案状态日志未读（用户×日志；已读则删除）';
 
 -- -----------------------------------------------------------------------------
 -- 七、委员审核记录（申请阶段快照）

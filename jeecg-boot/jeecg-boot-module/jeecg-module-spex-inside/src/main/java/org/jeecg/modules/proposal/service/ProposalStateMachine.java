@@ -123,7 +123,7 @@ public class ProposalStateMachine {
         if (rows == 0) {
             throw new JeecgBootBizTipException("提案状态更新失败，请刷新后重试");
         }
-        appendStatusLog(proposal.getId(), fromCode, toCode, action.getCode(), loginUser, remark);
+        appendStatusLog(proposal, fromCode, toCode, action.getCode(), loginUser, remark);
     }
 
     /**
@@ -143,7 +143,7 @@ public class ProposalStateMachine {
         if (oConvertUtils.isEmpty(proposal.getStatus())) {
             throw new JeecgBootBizTipException("提案状态不能为空");
         }
-        appendStatusLog(proposal.getId(), null, proposal.getStatus(), action.getCode(), loginUser, remark);
+        appendStatusLog(proposal, null, proposal.getStatus(), action.getCode(), loginUser, remark);
     }
 
     /**
@@ -159,10 +159,10 @@ public class ProposalStateMachine {
         }
     }
 
-    private void appendStatusLog(String proposalId, String fromStatus, String toStatus,
+    private void appendStatusLog(Proposal proposal, String fromStatus, String toStatus,
                                  String action, LoginUser loginUser, String remark) {
         ProposalStatusLog log = new ProposalStatusLog();
-        log.setProposalId(proposalId);
+        log.setProposalId(proposal.getId());
         log.setFromStatus(fromStatus);
         log.setToStatus(toStatus);
         log.setAction(action);
@@ -170,6 +170,9 @@ public class ProposalStateMachine {
         log.setRemark(remark);
         ProposalAuditHelper.fillOnCreate(loginUser, log);
         statusLogService.save(log);
+        //update-begin---author:spex ---date:2026-09-02  for：【消息未读】写日志后 fan-out-----------
+        statusLogService.dispatchUnread(proposal, log, loginUser);
+        //update-end---author:spex ---date:2026-09-02  for：【消息未读】写日志后 fan-out-----------
     }
 
     /** 无额外条件的路线。内部把 Guard 填成 null。 */

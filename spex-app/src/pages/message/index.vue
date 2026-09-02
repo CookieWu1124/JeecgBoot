@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import type { AppMessageItem } from '@/api/proposal'
-import { fetchAppMessages, markAppMessageRead } from '@/api/proposal'
+import {
+  fetchAppMessages,
+  fetchAppUnreadCount,
+  markAppMessageRead,
+  markAppMessagesReadAll,
+} from '@/api/proposal'
 
 defineOptions({
   name: 'Message',
@@ -35,11 +40,14 @@ interface ViewItem {
 const scope = ref<'all' | 'unread'>('all')
 const items = ref<ViewItem[]>([])
 const loading = ref(false)
+const markingAll = ref(false)
 const finished = ref(false)
 const pageNo = ref(1)
 const pageSize = 20
+const unreadCount = ref(0)
 
 const pageTitle = computed(() => scope.value === 'unread' ? '未读消息' : '全部动态')
+const showReadAll = computed(() => unreadCount.value > 0)
 
 onLoad((query) => {
   const raw = String(query?.scope || 'all').toLowerCase()
@@ -66,11 +74,20 @@ function mapItem(row: AppMessageItem): ViewItem {
   }
 }
 
+async function refreshUnreadCount() {
+  try {
+    unreadCount.value = Number(await fetchAppUnreadCount()) || 0
+  }
+  catch {
+    unreadCount.value = 0
+  }
+}
+
 async function resetAndLoad() {
   pageNo.value = 1
   finished.value = false
   items.value = []
-  await loadMore()
+  await Promise.all([loadMore(), refreshUnreadCount()])
 }
 
 async function loadMore() {
@@ -110,6 +127,8 @@ async function handleOpen(item: ViewItem) {
       else {
         item.unread = false
       }
+      if (unreadCount.value > 0)
+        unreadCount.value -= 1
     }
     catch (err) {
       console.error('标记已读失败', err)
@@ -122,6 +141,42 @@ async function handleOpen(item: ViewItem) {
   uni.navigateTo({ url: `/pages/proposal/detail?id=${item.proposalId}` })
 }
 
+function handleReadAll() {
+  if (!showReadAll.value || markingAll.value)
+    return
+  uni.showModal({
+    title: '全部已读',
+    content: `确定将 ${unreadCount.value} 条未读标为已读？`,
+    confirmColor: '#1890FF',
+    success: async (res) => {
+      if (!res.confirm)
+        return
+      markingAll.value = true
+      try {
+        await markAppMessagesReadAll()
+        unreadCount.value = 0
+        if (scope.value === 'unread') {
+          items.value = []
+          finished.value = true
+        }
+        else {
+          items.value.forEach((item) => {
+            item.unread = false
+          })
+        }
+        uni.showToast({ title: '已全部已读', icon: 'success' })
+      }
+      catch (err) {
+        console.error('全部已读失败', err)
+        uni.showToast({ title: '操作失败', icon: 'none' })
+      }
+      finally {
+        markingAll.value = false
+      }
+    },
+  })
+}
+
 onReachBottom(() => {
   loadMore()
 })
@@ -129,6 +184,13 @@ onReachBottom(() => {
 
 <template>
   <view class="msg-page">
+    <view v-if="showReadAll" class="msg-toolbar">
+      <text class="msg-toolbar__hint">{{ unreadCount }} 条未读</text>
+      <text class="msg-toolbar__btn" @click="handleReadAll">
+        {{ markingAll ? '处理中…' : '全部已读' }}
+      </text>
+    </view>
+
     <view
       v-for="item in items"
       :key="item.id"
@@ -164,6 +226,28 @@ onReachBottom(() => {
   min-height: 100vh;
   padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, #e6f4ff 0%, #eef5ff 40%, #f5faff 100%);
+}
+
+.msg-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.msg-toolbar__hint {
+  color: #6b7390;
+  font-size: 12px;
+}
+
+.msg-toolbar__btn {
+  color: #1890ff;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .msg-card {

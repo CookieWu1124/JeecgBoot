@@ -364,7 +364,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setTodoItems(todoItems);
         vo.setFeeds(buildFeeds(loginUser));
         //update-begin---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
-        vo.setUnreadCount(statusLogService.countUnread(userId, isActiveApprover(userId)));
+        vo.setUnreadCount(statusLogService.countUnread(userId));
         //update-end---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
         return vo;
     }

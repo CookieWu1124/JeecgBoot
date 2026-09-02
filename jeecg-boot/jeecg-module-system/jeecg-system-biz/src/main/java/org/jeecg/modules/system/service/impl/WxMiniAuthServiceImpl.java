@@ -43,10 +43,14 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
     private static final String MSG_PROFILE_MISMATCH = "工号与手机号不一致，请联系管理员修正用户信息";
     private static final String MSG_WORK_NO_INVALID = "工号无效，请重新输入";
     private static final String MSG_BOUND_OTHER_WX = "该工号已绑定其他微信，请联系管理员解绑";
-    private static final String ACCESS_TOKEN_CACHE_KEY = "wx_mini:access_token:";
+    //update-begin---author:spex ---date:2026-09-02  for：改用稳定版 access_token，避免多端刷新互踢-----------
+    private static final String ACCESS_TOKEN_CACHE_KEY = "wx_mini:stable_access_token:";
     private static final String JSCODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
-    private static final String CGI_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
+    /** 稳定版凭据，与 cgi-bin/token 互相隔离，有效期内重复调用返回同一 token */
+    private static final String STABLE_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/stable_token";
     private static final String PHONE_URL = "https://api.weixin.qq.com/wxa/business/getuserphonenumber";
+    private static final int WX_ERR_INVALID_CREDENTIAL = 40001;
+    //update-end---author:spex ---date:2026-09-02  for：改用稳定版 access_token，避免多端刷新互踢-----------
 
     @Value("${jeecg.wx-mini.app-id:}")
     private String appId;
@@ -313,7 +317,22 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
     }
 
     private Result<String> fetchWechatPhone(String phoneCode) {
-        Result<String> tokenRes = getAccessToken();
+        //update-begin---author:spex ---date:2026-09-02  for：access_token 失效时清缓存重试一次-----------
+        Result<String> first = doFetchWechatPhone(phoneCode, false);
+        if (first.isSuccess()) {
+            return first;
+        }
+        if (!isInvalidCredential(first.getMessage())) {
+            return first;
+        }
+        log.warn("getuserphonenumber 凭证失效，force_refresh 拉取新的 stable access_token 后重试");
+        clearAccessTokenCache();
+        return doFetchWechatPhone(phoneCode, true);
+        //update-end---author:spex ---date:2026-09-02  for：access_token 失效时清缓存重试一次-----------
+    }
+
+    private Result<String> doFetchWechatPhone(String phoneCode, boolean forceRefreshToken) {
+        Result<String> tokenRes = getAccessToken(forceRefreshToken);
         if (!tokenRes.isSuccess()) {
             return tokenRes;
         }
@@ -329,7 +348,11 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             Integer errcode = body.getInteger("errcode");
             if (errcode != null && errcode != 0) {
                 log.warn("getuserphonenumber 失败: {}", body);
-                return Result.error("获取微信手机号失败：" + body.getString("errmsg"));
+                String errmsg = body.getString("errmsg");
+                if (Integer.valueOf(WX_ERR_INVALID_CREDENTIAL).equals(errcode)) {
+                    return Result.error("获取微信手机号失败：" + errmsg + " [errcode=" + errcode + "]");
+                }
+                return Result.error("获取微信手机号失败：" + errmsg);
             }
             JSONObject phoneInfo = body.getJSONObject("phone_info");
             if (phoneInfo == null) {
@@ -349,28 +372,47 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
         }
     }
 
-    private Result<String> getAccessToken() {
+    private boolean isInvalidCredential(String message) {
+        return message != null && message.contains("errcode=" + WX_ERR_INVALID_CREDENTIAL);
+    }
+
+    private void clearAccessTokenCache() {
+        if (oConvertUtils.isEmpty(appId)) {
+            return;
+        }
+        redisUtil.del(ACCESS_TOKEN_CACHE_KEY + appId);
+    }
+
+    /**
+     * 获取稳定版 access_token。forceRefresh=true 时跳过本地缓存并请求微信刷新。
+     */
+    private Result<String> getAccessToken(boolean forceRefresh) {
         Result<String> cfg = requireWxConfig();
         if (!cfg.isSuccess()) {
             return cfg;
         }
         String cacheKey = ACCESS_TOKEN_CACHE_KEY + appId;
-        Object cached = redisUtil.get(cacheKey);
-        if (cached != null && oConvertUtils.isNotEmpty(cached.toString())) {
-            return Result.OK(cached.toString());
+        if (!forceRefresh) {
+            Object cached = redisUtil.get(cacheKey);
+            if (cached != null && oConvertUtils.isNotEmpty(cached.toString())) {
+                return Result.OK(cached.toString());
+            }
         }
         try {
-            JSONObject vars = new JSONObject();
-            vars.put("grant_type", "client_credential");
-            vars.put("appid", appId);
-            vars.put("secret", appSecret);
-            JSONObject body = getWeixinJson(CGI_TOKEN_URL, vars);
+            //update-begin---author:spex ---date:2026-09-02  for：改用 getStableAccessToken-----------
+            JSONObject payload = new JSONObject();
+            payload.put("grant_type", "client_credential");
+            payload.put("appid", appId);
+            payload.put("secret", appSecret);
+            // 普通模式：有效期内重复调用返回同一 token，避免多环境互踢
+            payload.put("force_refresh", forceRefresh);
+            JSONObject body = postWeixinJson(STABLE_TOKEN_URL, null, payload);
             if (body == null) {
                 return Result.error("获取微信凭证失败");
             }
             Integer errcode = body.getInteger("errcode");
             if (errcode != null && errcode != 0) {
-                log.warn("cgi-bin/token 失败: {}", body);
+                log.warn("cgi-bin/stable_token 失败: {}", body);
                 return Result.error("获取微信凭证失败：" + body.getString("errmsg"));
             }
             String accessToken = body.getString("access_token");
@@ -381,8 +423,9 @@ public class WxMiniAuthServiceImpl implements IWxMiniAuthService {
             long ttl = expiresIn == null ? 7000L : Math.max(60L, expiresIn - 200L);
             redisUtil.set(cacheKey, accessToken, ttl);
             return Result.OK(accessToken);
+            //update-end---author:spex ---date:2026-09-02  for：改用 getStableAccessToken-----------
         } catch (Exception e) {
-            log.error("cgi-bin/token 异常", e);
+            log.error("cgi-bin/stable_token 异常", e);
             return Result.error("获取微信凭证失败，请稍后重试");
         }
     }
