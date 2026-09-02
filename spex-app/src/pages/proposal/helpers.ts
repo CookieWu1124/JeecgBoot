@@ -150,6 +150,13 @@ export function resolveFileUrl(path?: string | null) {
   return `${base}/sys/common/static/${normalized}`
 }
 
+/** 提案附件 biz 前缀：proposal/yyyyMM（与公司前端约定一致） */
+export function getProposalUploadBizPath(date: Date = new Date()): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  return `proposal/${y}${m}`
+}
+
 /**
  * 上传单张现场图到 Jeecg 通用上传
  * 注意：Jeecg `/sys/common/upload` 成功时文件路径在 message 字段
@@ -161,7 +168,7 @@ export function uploadProposalImage(filePath: string): Promise<{ fileUrl: string
       url: uploadFileUrl.COMMON,
       filePath,
       name: 'file',
-      formData: { biz: 'proposal' },
+      formData: { biz: getProposalUploadBizPath() },
       success: (res) => {
         try {
           const body = typeof res.data === 'string' ? JSON.parse(res.data) : res.data

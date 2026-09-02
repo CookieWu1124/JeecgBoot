@@ -100,7 +100,7 @@ jeecg:
     pc: http://localhost:3100
     app: http://localhost:8051
   path:
-    upload: /opt/upFiles
+    upload: /home/spex/upFiles
     webapp: /opt/webapp
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/category/**,/visual/**,/map/**,/jmreport/bigscreen2/**
