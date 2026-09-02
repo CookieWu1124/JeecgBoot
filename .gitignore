@@ -6,6 +6,8 @@ rebel.xml
 ## backend
 **/target
 **/logs
+# scripts 下本地编译产物（如 HrPasswordGen.class），源码 .java 仍入库
+scripts/*.class
 
 ## front
 **/*.lock
