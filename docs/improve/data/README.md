@@ -34,7 +34,7 @@
 | [`../sql/hr_user_seed/`](../sql/hr_user_seed/) | 17 个按「中心+部门」拆分文件 |
 | [`../sql/proposal_config_seed.sql`](../sql/proposal_config_seed.sql) | 提案负责人/委员/批准人（`work_no` 子查询） |
 
-重新生成：`python scripts/hr_seed_gen.py`
+| [`../sql/hr_quick_queries.md`](../sql/hr_quick_queries.md) | **快捷 SQL**：按中心/部门查员工、按节点 id 展机构树 |
 
 ## 导入流程
 

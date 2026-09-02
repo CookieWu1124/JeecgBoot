@@ -31,7 +31,8 @@ docs/improve/
 │   ├── HR字段落库映射.md           # Excel 18 列 ↔ sys_depart/sys_user 完整映射（归档）
 │   └── 员工列表20260822.xls       # HR 人员结构表（真实数据，注意隐私）
 └── sql/
-    └── proposal_init.sql          # Phase 1 数据库初始化（手工执行，不用 Flyway）
+    ├── proposal_init.sql          # Phase 1 数据库初始化（手工执行，不用 Flyway）
+    └── hr_quick_queries.md        # 人员/组织快捷查询 SQL（只读排查，唯一归档）
 ```
 
 ## 发给前端同事（对接包）

@@ -12,6 +12,7 @@
 | `proposal_config_seed.sql` | 联调配置：部门负责人 / 委员会 / 批准人（`work_no`/`org_code` 子查询） | ⭕ 跑完 HR 种子后执行 |
 | `fix/*.sql` | 已有库增量修复（勿当全量） | 仅旧库需要时 |
 | `proposal_tables.md` | 表结构文档（与 init 同步） | 文档 |
+| `hr_quick_queries.md` | **HR 组织/员工快捷 SQL**（按中心部门查人、按 id 展树） | 文档 |
 
 > **不要把人员/组织种子写进 `proposal_menu.sql`**——菜单与样例数据职责分离。  
 > 旧版 `proposal_spex_user_seed.sql` / `proposal_spex_elc_user_seed.sql` 已删除，请只用 `hr_user_seed_*`。

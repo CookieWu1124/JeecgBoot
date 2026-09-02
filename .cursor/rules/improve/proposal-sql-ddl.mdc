@@ -27,6 +27,8 @@ alwaysApply: false
 
 菜单权限以 `docs/improve/sql/proposal_menu.sql` 为准（与业务表 init 分开）。
 
+人员/组织 **快捷查询 SELECT** 以 `docs/improve/sql/hr_quick_queries.md` 为唯一归档（见 `.cursor/rules/improve/proposal-hr-queries.mdc`），勿写入 init/seed/purge。
+
 ## 管理端菜单 component 约定（易踩坑）
 
 JeecgBoot 按 `sys_permission.component` 动态加载 `jeecgboot-vue3/src/views/` 下文件。路径不对时页面空白，提示「查看组件引用是否正确」。

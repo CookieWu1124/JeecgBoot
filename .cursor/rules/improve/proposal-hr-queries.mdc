@@ -1,0 +1,57 @@
+---
+description: 提案改善 — 人员/组织快捷查询 SQL 须写入 hr_quick_queries.md，勿散落其它文档
+globs: docs/improve/sql/hr_quick_queries.md,docs/improve/sql/hr_user*.sql,docs/improve/data/**,scripts/hr_*.py
+alwaysApply: false
+---
+
+# 提案改善 — 人员组织快捷查询 SQL 规则
+
+## 唯一归档位置
+
+**凡提案改善模块内、针对 Jeecg 人员与组织架构（`sys_user` / `sys_depart` / `sys_user_depart`）的 ad-hoc 查询、排查用 SELECT，一律写入：**
+
+`docs/improve/sql/hr_quick_queries.md`
+
+不要在以下位置另起炉灶或长期堆放同类 SQL：
+
+- `proposal_init.sql` / `hr_user_seed*.sql`（种子与 DDL 专用）
+- `docs/improve/data/*.md`（映射与导入规则，非查询手册）
+- 聊天回复、临时 gist、未归档的注释块
+
+## 文档结构与命名
+
+| 章节 | 用途 |
+|------|------|
+| §0 | 按名称查中心/部门 `id`（供后续传参） |
+| §1 | **按中心 / 部门 / 组别查员工**（全貌字段：`org_path`、岗位、状态等） |
+| §2 | **按父级 `id` 或 `org_code` 展机构树**（缩进 + 人数） |
+| §3 | 常用组合示例表 |
+| §4 | 注意事项（S01/Z01 与 Jeecg 默认 A01 树区分等） |
+
+新增查询时：
+
+1. 归入已有章节，或追加 **§1.x / §2.x** 子节，附简短「场景说明」
+2. SQL 须可直接在 `inside_dev` 执行；可变条件用注释 `-- 筛选条件` 标出
+3. 优先复用文档内 **组织解析 JOIN 模式**（组别/部门两种 `sys_user_depart` 挂载）
+
+## 数据模型约束（写 SQL 时遵守）
+
+- 组织 3 级：`CENTER` → `DEPT` → `GROUP`；HR 编码前缀 **斯派科 `S01*`、智能制造中心 `Z01*`**
+- 登录账号 **`username = work_no`**（工号）
+- 员工多数挂在 **组别**；极少数挂 **部门**（如副经理）— 查询须兼容两种挂载
+- 与提案业务表 JOIN 时，外键语义：`proposer_id` / `leader_user_id` 等 → `sys_user.id`；`dept_id` → `sys_depart.id`
+
+## 与其它 sql 文件的边界
+
+| 文件 | 职责 |
+|------|------|
+| `hr_quick_queries.md` | **只读 SELECT**、排查、验收 |
+| `hr_user_purge.sql` / `hr_user_seed*.sql` | 导入/清理 DML |
+| `proposal_config_seed.sql` | 提案配置名册种子 |
+| `proposal_init.sql` | 提案业务表 DDL |
+
+## 变更检查
+
+- [ ] 新查询已写入 `hr_quick_queries.md` 对应章节
+- [ ] `docs/improve/sql/README.md` 索引仍指向该文件（若职责描述有变则同步）
+- [ ] 未把 SELECT 混入 seed / purge / init 脚本
