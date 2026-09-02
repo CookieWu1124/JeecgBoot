@@ -1,6 +1,6 @@
 # 提案改善系统 — 业务表结构
 
-> 数据库：MySQL 5.7+ | 字符集：utf8mb4 | 主键：varchar(36)，应用层 IdType.ASSIGN_ID 生成  
+> 数据库：MySQL 5.7+ | 字符集：utf8mb4 | 主键：varchar(36)，**必须**为 JeecgBoot 默认 `IdType.ASSIGN_ID` 生成的 **19 位纯数字雪花 id**（禁止 `pr0p0sa*` 等字母自定义 id；SQL 种子亦用固定数字雪花）  
 > 可执行 DDL：`proposal_init.sql`（V1.4）  
 > Cursor 规则：`.cursor/rules/improve/proposal-sql-ddl.mdc`
 
@@ -15,6 +15,7 @@
 - [proposal_application](#proposal_application) — 提案申请书
 - [proposal_attachment](#proposal_attachment) — 提案附件
 - [proposal_status_log](#proposal_status_log) — 提案状态变更日志
+- [proposal_status_log_read](#proposal_status_log_read) — 提案状态日志已读（用户×日志）
 - [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
 - [proposal_approval](#proposal_approval) — 批准人决策记录
 
@@ -262,6 +263,27 @@
 
 - **主键**：(`id`)
 - **普通索引** `idx_proposal_status_log_proposal`：(`proposal_id`)
+
+---
+
+## proposal_status_log_read
+
+**表说明**：用户对某条 `proposal_status_log` 的已读记录（一人一条动态日志一行；未读=相关动态 − 本表有记录）
+
+### 业务字段
+
+| 字段名 | 数据类型 | 允许空 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | varchar(36) | 否 | 主键 |
+| `user_id` | varchar(36) | 否 | 读者 sys_user.id |
+| `status_log_id` | varchar(36) | 否 | `proposal_status_log.id` |
+| `read_time` | datetime | 否 | 已读时间 |
+
+### 索引与约束
+
+- **主键**：(`id`)
+- **唯一索引** `uk_proposal_status_log_read`：(`user_id`, `status_log_id`, `tenant_id`)
+- **普通索引** `idx_proposal_status_log_read_log`：(`status_log_id`)
 
 ---
 

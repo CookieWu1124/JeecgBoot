@@ -1,12 +1,20 @@
 package org.jeecg.modules.proposal.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.proposal.entity.ProposalStatusLog;
+import org.jeecg.modules.proposal.vo.app.ProposalMessageItemVo;
 
 import java.util.List;
 
-public interface IProposalStatusLogService extends IService<ProposalStatusLog> {
+public interface IProposalStatusLogService extends com.baomidou.mybatisplus.extension.service.IService<ProposalStatusLog> {
 
-    /** 首页动态：与当前人相关的流转，最多 {@code limit} 条。 */
     List<ProposalStatusLog> listHomeFeeds(String userId, boolean approver, int limit);
+
+    IPage<ProposalMessageItemVo> pageUserMessages(String scope, int pageNo, int pageSize, LoginUser loginUser,
+                                                  boolean approver);
+
+    long countUnread(String userId, boolean approver);
+
+    void markRead(String statusLogId, LoginUser loginUser, boolean approver);
 }

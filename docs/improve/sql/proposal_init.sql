@@ -19,19 +19,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- -----------------------------------------------------------------------------
 
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`)
-SELECT 'pr0p0sa1001committee000000000001', '提案-委员', 'proposal_committee', '提案改善系统：申请/计划书委员审核；粗权限可选，业务待办读委员会名册', 'admin', NOW(), 'admin', NOW(), 0
+SELECT '2094101000000000001', '提案-委员', 'proposal_committee', '提案改善系统：申请/计划书委员审核；粗权限可选，业务待办读委员会名册', 'admin', NOW(), 'admin', NOW(), 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_role` WHERE `role_code` = 'proposal_committee');
 
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`)
-SELECT 'pr0p0sa1002approver000000000001', '提案-批准人', 'proposal_approver', '提案改善系统：申请批准/计划书批准/报告书签核；实际批准人读配置表', 'admin', NOW(), 'admin', NOW(), 0
+SELECT '2094101000000000002', '提案-批准人', 'proposal_approver', '提案改善系统：申请批准/计划书批准/报告书签核；实际批准人读配置表', 'admin', NOW(), 'admin', NOW(), 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_role` WHERE `role_code` = 'proposal_approver');
 
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`)
-SELECT 'pr0p0sa1003deptleader00000000001', '提案-部门负责人', 'proposal_dept_leader', '提案改善系统：任务指派/部门任务池；实际负责人读按部门配置', 'admin', NOW(), 'admin', NOW(), 0
+SELECT '2094101000000000003', '提案-部门负责人', 'proposal_dept_leader', '提案改善系统：任务指派/部门任务池；实际负责人读按部门配置', 'admin', NOW(), 'admin', NOW(), 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_role` WHERE `role_code` = 'proposal_dept_leader');
 
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`)
-SELECT 'pr0p0sa1005admin0000000000000001', '提案-管理员', 'proposal_admin', '提案改善系统：后台配置与统计', 'admin', NOW(), 'admin', NOW(), 0
+SELECT '2094101000000000005', '提案-管理员', 'proposal_admin', '提案改善系统：后台配置与统计', 'admin', NOW(), 'admin', NOW(), 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_role` WHERE `role_code` = 'proposal_admin');
 
 -- -----------------------------------------------------------------------------
@@ -131,23 +131,23 @@ CREATE TABLE `proposal_improvement_type` (
 
 -- 默认五类改善性质（幂等；与现网码一致）
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2101safety00000000000001', 'SAFETY', '安全改善', '安全隐患、防护、作业规范等改善', 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000001', 'SAFETY', '安全改善', '安全隐患、防护、作业规范等改善', 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'SAFETY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2102quality0000000000001', 'QUALITY', '品质改善', '质量、不良、检验与标准相关改善', 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000002', 'QUALITY', '品质改善', '质量、不良、检验与标准相关改善', 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'QUALITY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2103efficiency0000000001', 'EFFICIENCY', '效率改善', '节拍、工时、流程效率相关改善', 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000003', 'EFFICIENCY', '效率改善', '节拍、工时、流程效率相关改善', 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'EFFICIENCY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2104delivery000000000001', 'DELIVERY', '交付改善', '交期、齐套、物流与响应相关改善', 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000004', 'DELIVERY', '交付改善', '交期、齐套、物流与响应相关改善', 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'DELIVERY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2105cost0000000000000001', 'COST', '成本改善', '物料、能耗、浪费与费用相关改善', 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000005', 'COST', '成本改善', '物料、能耗、浪费与费用相关改善', 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'COST' AND `tenant_id` = '');
 
 DROP TABLE IF EXISTS `proposal_score_dimension`;
@@ -177,27 +177,27 @@ CREATE TABLE `proposal_score_dimension` (
 
 -- 默认六维评分配置（幂等）
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2001tangible000000000001', 'tangible', '有形绩效', '节约金额、效率提升、成本降低等可量化收益', 30, 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000001', 'tangible', '有形绩效', '节约金额、效率提升、成本降低等可量化收益', 30, 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'tangible' AND `tenant_id` = '');
 
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2002intangible00000000001', 'intangible', '无形绩效', '安全、质量、士气、客户体验等非直接金额收益', 10, 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000002', 'intangible', '无形绩效', '安全、质量、士气、客户体验等非直接金额收益', 10, 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'intangible' AND `tenant_id` = '');
 
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2003difficulty00000000001', 'difficulty', '难易度', '问题复杂度、跨部门协同难度和落地阻力', 20, 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000003', 'difficulty', '难易度', '问题复杂度、跨部门协同难度和落地阻力', 20, 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'difficulty' AND `tenant_id` = '');
 
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2004thinking0000000000001', 'thinking', '思考性', '问题分析深度、方案完整性和逻辑性', 10, 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000004', 'thinking', '思考性', '问题分析深度、方案完整性和逻辑性', 10, 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'thinking' AND `tenant_id` = '');
 
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2005spread000000000000001', 'spread', '推广性', '是否可复制到其他产线、部门或类似场景', 15, 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000005', 'spread', '推广性', '是否可复制到其他产线、部门或类似场景', 15, 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'spread' AND `tenant_id` = '');
 
 INSERT INTO `proposal_score_dimension` (`id`, `dim_code`, `dim_name`, `description`, `weight_pct`, `sort_no`, `dim_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2006innovation000000000001', 'innovation', '创新性', '方案新颖程度、技术或管理方法创新', 15, 6, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102000000000006', 'innovation', '创新性', '方案新颖程度、技术或管理方法创新', 15, 6, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_score_dimension` WHERE `dim_code` = 'innovation' AND `tenant_id` = '');
 
 -- -----------------------------------------------------------------------------
@@ -326,6 +326,32 @@ CREATE TABLE `proposal_status_log` (
   KEY `idx_proposal_status_log_proposal` (`proposal_id`),
   KEY `idx_proposal_status_log_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案状态变更日志';
+
+-- -----------------------------------------------------------------------------
+-- 六-b、状态日志已读（用户 × 日志）
+-- -----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `proposal_status_log_read`;
+CREATE TABLE `proposal_status_log_read` (
+  `id` varchar(36) NOT NULL COMMENT '主键',
+  `user_id` varchar(36) NOT NULL COMMENT '读者 sys_user.id',
+  `status_log_id` varchar(36) NOT NULL COMMENT 'proposal_status_log.id',
+  `read_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '已读时间',
+  `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
+  `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
+  `update_no` varchar(50) DEFAULT NULL COMMENT '更新人工号',
+  `update_by` varchar(50) DEFAULT NULL COMMENT '更新人名称',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
+  `sys_org_code` varchar(64) DEFAULT NULL COMMENT '所属部门',
+  `sys_org_name` varchar(300) DEFAULT NULL COMMENT '机构名称',
+  `tenant_id` varchar(36) NOT NULL DEFAULT '' COMMENT '租户ID',
+  `remark` varchar(300) DEFAULT NULL COMMENT '备注',
+  `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_proposal_status_log_read` (`user_id`, `status_log_id`, `tenant_id`),
+  KEY `idx_proposal_status_log_read_log` (`status_log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提案状态日志已读（用户×日志）';
 
 -- -----------------------------------------------------------------------------
 -- 七、委员审核记录（申请阶段快照）

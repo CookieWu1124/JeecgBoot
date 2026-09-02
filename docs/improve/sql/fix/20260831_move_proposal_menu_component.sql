@@ -8,8 +8,8 @@ SET NAMES utf8mb4;
 
 UPDATE `sys_permission`
 SET `url` = '/proposal/manage', `component` = 'mes/proposal/manage/index'
-WHERE `id` = 'pr0p0sa3002manage00000000000001';
+WHERE `id` = '2094103000000000002';
 
 UPDATE `sys_permission`
 SET `url` = '/proposal/config', `component` = 'mes/proposal/config/index'
-WHERE `id` = 'pr0p0sa3003config000000000000001';
+WHERE `id` = '2094103000000000003';

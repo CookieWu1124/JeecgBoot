@@ -18,6 +18,8 @@ public class ProposalHomeVo {
     private long doneCount;
     private List<TodoItem> todoItems = new ArrayList<>();
     private List<FeedItem> feeds = new ArrayList<>();
+    /** 与我相关的未读动态数（铃铛角标） */
+    private long unreadCount;
 
     @Data
     public static class TodoItem {

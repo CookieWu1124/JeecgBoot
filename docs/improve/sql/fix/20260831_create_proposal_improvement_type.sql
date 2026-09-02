@@ -30,39 +30,39 @@ CREATE TABLE IF NOT EXISTS `proposal_improvement_type` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='改善性质配置';
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2101safety00000000000001', 'SAFETY', '安全改善', '安全隐患、防护、作业规范等改善', 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000001', 'SAFETY', '安全改善', '安全隐患、防护、作业规范等改善', 1, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'SAFETY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2102quality0000000000001', 'QUALITY', '品质改善', '质量、不良、检验与标准相关改善', 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000002', 'QUALITY', '品质改善', '质量、不良、检验与标准相关改善', 2, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'QUALITY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2103efficiency0000000001', 'EFFICIENCY', '效率改善', '节拍、工时、流程效率相关改善', 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000003', 'EFFICIENCY', '效率改善', '节拍、工时、流程效率相关改善', 3, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'EFFICIENCY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2104delivery000000000001', 'DELIVERY', '交付改善', '交期、齐套、物流与响应相关改善', 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000004', 'DELIVERY', '交付改善', '交期、齐套、物流与响应相关改善', 4, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'DELIVERY' AND `tenant_id` = '');
 
 INSERT INTO `proposal_improvement_type` (`id`, `type_code`, `type_name`, `description`, `sort_no`, `type_status`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
-SELECT 'pr0p0sa2105cost0000000000000001', 'COST', '成本改善', '物料、能耗、浪费与费用相关改善', 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+SELECT '2094102100000000005', 'COST', '成本改善', '物料、能耗、浪费与费用相关改善', 5, 'active', 'admin', NOW(), 'admin', NOW(), '', 'Y'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_improvement_type` WHERE `type_code` = 'COST' AND `tenant_id` = '');
 
--- 提案配置：改善性质按钮（id 均 32 字符；不跑整份 menu.sql，避免清掉已授权按钮）
+-- 提案配置：改善性质按钮（不跑整份 menu.sql 时用；id 为数字雪花）
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT 'pr0p0sa3015cftys0000000000000001', 'pr0p0sa3003config000000000000001', '改善性质-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3015cftys0000000000000001');
+SELECT '2094103000000000015', '2094103000000000003', '改善性质-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000015');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT 'pr0p0sa3016cftyd0000000000000001', 'pr0p0sa3003config000000000000001', '改善性质-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = 'pr0p0sa3016cftyd0000000000000001');
+SELECT '2094103000000000016', '2094103000000000003', '改善性质-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000016');
 
 -- 给 admin / proposal_admin 授权新按钮（幂等）
 INSERT INTO `sys_role_permission` (`id`, `role_id`, `permission_id`)
 SELECT REPLACE(UUID(), '-', ''), r.id, p.id
 FROM `sys_role` r
-JOIN `sys_permission` p ON p.id IN ('pr0p0sa3015cftys0000000000000001', 'pr0p0sa3016cftyd0000000000000001')
+JOIN `sys_permission` p ON p.id IN ('2094103000000000015', '2094103000000000016')
 WHERE r.role_code IN ('admin', 'proposal_admin')
   AND NOT EXISTS (
     SELECT 1 FROM `sys_role_permission` rp

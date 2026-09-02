@@ -265,8 +265,46 @@ export interface AppHomeResult {
   doneCount?: number
   todoItems?: AppHomeTodoItem[]
   feeds?: AppHomeFeedItem[]
+  /** 未读动态数，铃铛角标 */
+  unreadCount?: number
 }
 
 export function fetchAppHome() {
   return http.get<AppHomeResult>('/proposal/app/home')
+}
+
+/** 消息动态列表 GET /proposal/app/message/list */
+export interface AppMessageItem {
+  id?: string
+  proposalId?: string
+  proposalNo?: string
+  title?: string
+  action?: string
+  actionLabel?: string
+  remark?: string
+  time?: string
+  unread?: boolean
+}
+
+export interface AppMessagePage {
+  records?: AppMessageItem[]
+  total?: number
+  current?: number
+  size?: number
+}
+
+export function fetchAppMessages(params: {
+  scope?: 'all' | 'unread'
+  pageNo?: number
+  pageSize?: number
+}) {
+  return http.get<AppMessagePage>('/proposal/app/message/list', params)
+}
+
+export function fetchAppUnreadCount() {
+  return http.get<number>('/proposal/app/message/unreadCount')
+}
+
+export function markAppMessageRead(id: string) {
+  return http.put<string>(`/proposal/app/message/${id}/read`)
 }

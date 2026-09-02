@@ -116,7 +116,8 @@
 | 申请委员审核 | 采用/不采用 + 计划书建议 + 奖励建议 | [x] `pages/proposal/review` 已接真实接口 |
 | 批准人待办 | 申请批准入口 | [x] pages/todo 待核定 |
 | 申请批准 | 批准/不批准 + 核定 `plan_required` / 奖励 | [x] `pages/proposal/approve` 已接真 |
-| 首页 | KPI + 待办摘要 + 动态 | [x] `pages/index` 接 `GET /proposal/app/home` |
+| 首页 | KPI + 待办摘要 + 动态 | [x] `pages/index` 接 `GET /proposal/app/home`；摘要各 3 条；铃铛角标 |
+| 消息 | 全部/未读动态 + 已读 | [x] `pages/message`；F2/F3/F4；我-消息通知「N 条未读」 |
 | 提案列表 Tab | 含待审核进度展示 | [x] `pages/proposal/index` 已接 list |
 | 提案详情 | 申请阶段信息展示 | [x] `pages/proposal/detail` 已接 detail |
 
@@ -161,7 +162,7 @@
 | 8 | 委员全部完成 → `PENDING_APPROVAL` | [x] |
 | 9 | `proposal_approval` + 批准/不批准 + 写 `plan_required` | [x] |
 | 10 | 待办聚合（委员/批准人） | [x] 委员+批准人 pending 已通 |
-| 11 | 站内消息 `SysAnnouncement` | [ ] **本段不做**，留给后续 |
+| 11 | 站内消息 `SysAnnouncement` | [~] 本期用 `proposal_status_log` + `proposal_status_log_read`；未接 SysAnnouncement |
 | 12 | 微信小程序登录 `/sys/wxMini`（silent / bind / unbind） | [x] 系统公共；Shiro 已放行 silent/bind |
 
 ---
@@ -253,3 +254,4 @@
 | 2026-09-01 | **微信登录对接清单**：小程序 A1a/A1b/A1c + 管理端 S7 解绑；发给前端同事以 `docs/improve/api/` 两份清单为准 |
 | 2026-09-01 | **申请段归档暂停**：业务闭环 + 微信登录方案 A（退出不自动 silent，点授权走 bind）拍板；下一里程碑 02 任务分配 |
 | 2026-09-02 | **文档补记**：方案 A 与参考图差异对照；`silentLogin` 先 jscode2session 再查 OpenID 的设计说明（顺序未搞反） |
+| 2026-09-02 | **消息已读 + 首页摘要 3 条**：表 `proposal_status_log_read`；铃铛=全部动态；我-消息通知=未读+「N 条未读」；点详情标已读 |

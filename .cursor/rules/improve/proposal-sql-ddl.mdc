@@ -29,6 +29,20 @@ alwaysApply: false
 
 人员/组织 **快捷查询 SELECT** 以 `docs/improve/sql/hr_quick_queries.md` 为唯一归档（见 `.cursor/rules/improve/proposal-hr-queries.mdc`），勿写入 init/seed/purge。
 
+## 主键 id 生成规则（硬性）
+
+JeecgBoot 默认：`IdType.ASSIGN_ID` → **19 位纯数字雪花 id**（字符串存库，通常 `varchar(32)` / `varchar(36)`）。
+
+| 场景 | 正确做法 | 禁止 |
+|------|----------|------|
+| 业务代码插入 | 依赖 MyBatis-Plus `ASSIGN_ID`，不要手写 id | 自造 `pr0p0sa*`、`spex*` 等含字母可读串 |
+| SQL 种子 / 菜单脚本 | 固定 **19 位纯数字** id（与雪花同形，便于幂等） | `pr0p0sa3001menu…`、带语义字母的 padding id |
+| `sys_permission.id` | ≤32 字符的数字雪花 | 超长或字母混排自定义 id |
+
+参考：销售管理菜单 `sms_menu.sql`、联调配置 `proposal_config_seed.sql` 已是数字雪花；提案菜单/角色种子已统一为 `2094101…` / `2094102…` / `2094103…`。
+
+旧库残留 `pr0p0sa*` → 执行 `docs/improve/sql/fix/20260902_fix_pr0p0sa_ids_to_snowflake.sql`。
+
 ## 管理端菜单 component 约定（易踩坑）
 
 JeecgBoot 按 `sys_permission.component` 动态加载 `jeecgboot-vue3/src/views/` 下文件。路径不对时页面空白，提示「查看组件引用是否正确」。
@@ -59,12 +73,14 @@ JeecgBoot 按 `sys_permission.component` 动态加载 `jeecgboot-vue3/src/views/
 - [ ] 唯一索引组合键**末位含 `tenant_id`**
 - [ ] 业务状态字段不与 `active` 冲突（如 `member_status`, `approver_status`, `dim_status`）
 - [ ] 角色/种子 INSERT 保持幂等（`WHERE NOT EXISTS`）
+- [ ] 种子 / 菜单 id 为 **19 位纯数字**（JeecgBoot ASSIGN_ID 风格），无字母自定义 id
 - [ ] `proposal_tables.md` 已同步
 
 涉及菜单时额外确认：
 
 - [ ] `proposal_menu.sql` 中 url/component 与上表及 `views/mes/proposal/**` 一致
 - [ ] `component` 为 `mes/proposal/...`；`url` 仍为 `/proposal/...`（不要把 `/mes` 写进访问路径）
+- [ ] 菜单/按钮 id 为数字雪花，且 ≤32 字符
 
 ## init 脚本特性（勿破坏）
 
@@ -84,5 +100,6 @@ mysql -u root -p inside_dev < docs/improve/sql/proposal_menu.sql
 - 只在 Navicat/开发库手工改表，不回写 `proposal_init.sql`
 - 在 entity 新增字段但 init 未建列
 - 用 Flyway 片段替代 init 的全量定义（本项目约定手工 init）
+- **手写含字母的自定义主键**（如 `pr0p0sa*`）；必须用 JeecgBoot 默认雪花数字 id
 - `sys_permission.id` 超过 **32 字符**（JeecgBoot 默认为 `varchar(32)`）
 - 在菜单管理或 SQL 中把提案 `component` 改回无 `mes/` 前缀的 `proposal/**`，或把 `url` 改成 `/mes/proposal/**`

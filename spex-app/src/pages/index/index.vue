@@ -79,6 +79,7 @@ const kpis = ref([
 
 const todos = ref<TodoItem[]>([])
 const feeds = ref<FeedItem[]>([])
+const unreadCount = ref(0)
 
 function mapTodo(item: AppHomeTodoItem): TodoItem {
   const kind = item.kind || ''
@@ -142,6 +143,7 @@ async function loadHome() {
     ]
     todos.value = []
     feeds.value = []
+    unreadCount.value = 0
     return
   }
   try {
@@ -153,6 +155,7 @@ async function loadHome() {
     ]
     todos.value = (res?.todoItems || []).map(mapTodo)
     feeds.value = (res?.feeds || []).map(mapFeed)
+    unreadCount.value = Number(res?.unreadCount) || 0
   }
   catch (err) {
     console.error('加载首页失败', err)
@@ -164,7 +167,11 @@ onShow(() => {
 })
 
 function handleMsg() {
-  uni.showToast({ title: '消息功能开发中', icon: 'none' })
+  if (!isLoggedIn.value) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/message/index?scope=all' })
 }
 
 function handleKpi(action: string) {
@@ -217,6 +224,7 @@ function handleFeedItem(item: FeedItem) {
       <view class="relative z-1 px-4 pt-safe">
         <view class="home-msg" hover-class="home-hover" @click="handleMsg">
           <wd-icon name="notification" size="18px" color="#fff" />
+          <view v-if="unreadCount > 0" class="home-msg__dot" />
         </view>
 
         <text class="home-hi">
@@ -353,6 +361,17 @@ function handleFeedItem(item: FeedItem) {
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.16);
+}
+
+.home-msg__dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #ff4d4f;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
 }
 
 .home-hi {

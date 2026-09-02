@@ -123,6 +123,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { useTokenStore, useUserStore } from '@/store'
+import { fetchAppUnreadCount } from '@/api/proposal'
 
 defineOptions({
   name: 'Me',
@@ -144,7 +145,7 @@ interface MenuItem {
   icon: string
   tint: string
   extra?: string
-  action: 'todo' | 'about' | 'cache'
+  action: 'todo' | 'about' | 'cache' | 'message'
 }
 
 interface ServiceItem {
@@ -194,16 +195,37 @@ const services: ServiceItem[] = [
   { name: '统计看板', icon: 'dashboard', tint: 'tint-violet', action: 'stats' },
 ]
 
-const accountMenus: MenuItem[] = [
+const accountMenus = ref<MenuItem[]>([
   { title: '账号与安全', icon: 'lock', tint: 'tint-blue', action: 'todo' },
-  { title: '消息通知', icon: 'notification', tint: 'tint-violet', action: 'todo' },
+  { title: '消息通知', icon: 'notification', tint: 'tint-violet', action: 'message' },
   { title: '通用设置', icon: 'settings', tint: 'tint-slate', action: 'todo' },
-]
+])
 
 const supportMenus: MenuItem[] = [
   { title: '关于 Spex', icon: 'info', tint: 'tint-blue', extra: 'v1.0.0', action: 'about' },
   { title: '清除缓存', icon: 'delete', tint: 'tint-rose', action: 'cache' },
 ]
+
+async function loadUnreadExtra() {
+  const msgMenu = accountMenus.value.find(m => m.action === 'message')
+  if (!msgMenu)
+    return
+  if (!isLoggedIn.value) {
+    msgMenu.extra = undefined
+    return
+  }
+  try {
+    const count = Number(await fetchAppUnreadCount()) || 0
+    msgMenu.extra = count > 0 ? `${count} 条未读` : undefined
+  }
+  catch {
+    msgMenu.extra = undefined
+  }
+}
+
+onShow(() => {
+  loadUnreadExtra()
+})
 
 watch(() => userInfo.value.avatar, () => {
   avatarError.value = false
@@ -238,6 +260,14 @@ function handleService(item?: ServiceItem) {
 }
 
 function handleMenu(item: MenuItem) {
+  if (item.action === 'message') {
+    if (!isLoggedIn.value) {
+      uni.navigateTo({ url: '/pages/login/index' })
+      return
+    }
+    uni.navigateTo({ url: '/pages/message/index?scope=unread' })
+    return
+  }
   if (item.action === 'about') {
     uni.navigateTo({ url: '/pages/about/about' })
     return

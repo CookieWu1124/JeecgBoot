@@ -38,7 +38,9 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     //update-begin---author:spex ---date:2026-09-02  for：【首页待办】摘要展示最新 3 条-----------
     private static final int HOME_TODO_LIMIT = 3;
     //update-end---author:spex ---date:2026-09-02  for：【首页待办】摘要展示最新 3 条-----------
-    private static final int HOME_FEED_LIMIT = 5;
+    //update-begin---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
+    private static final int HOME_FEED_LIMIT = 3;
+    //update-end---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
     private static final Set<String> TERMINAL_STATUSES = Set.of(
             ProposalStatusEnum.COMPLETED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
@@ -361,6 +363,9 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setDoneCount(countDone(userId));
         vo.setTodoItems(todoItems);
         vo.setFeeds(buildFeeds(loginUser));
+        //update-begin---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
+        vo.setUnreadCount(statusLogService.countUnread(userId, isActiveApprover(userId)));
+        //update-end---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
         return vo;
     }
 

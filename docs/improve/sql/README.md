@@ -5,12 +5,14 @@
 | 脚本 | 职责 | 新环境是否必跑 |
 |------|------|----------------|
 | `proposal_init.sql` | **业务表 DDL** + 角色 + 改善性质 / 评分维度种子 | ✅ 必跑 |
-| `proposal_menu.sql` | **管理端菜单/按钮**（`sys_permission`） | ✅ 必跑 |
+| `proposal_menu.sql` | **提案改善**管理端菜单/按钮（`sys_permission`）+ admin/proposal_admin 授权 | ✅ 必跑 |
+| `sms_menu.sql` | **销售管理**管理端菜单/按钮（`sys_permission`）+ admin 授权 | ✅ 有销售模块时必跑 |
 | `hr_user_purge.sql` | **重导前清理**：旧 spex* 样例、S01/Z01 组织、proposal 测试数据 | ⭕ 重导 HR 时先跑 |
 | `hr_user_seed_all.sql` | **HR 全量**：1355 人 + 102 组织节点（2 中心 / 17 部门 / 83 组别） | ⭕ 开发/联调建议跑 |
 | `hr_user_seed/*.sql` | 按「中心 + 部门」拆分的 17 份（内容与 all 一致，便于分批） | ⭕ 按需 |
 | `proposal_config_seed.sql` | 联调配置：部门负责人 / 委员会 / 批准人（`work_no`/`org_code` 子查询） | ⭕ 跑完 HR 种子后执行 |
 | `fix/*.sql` | 已有库增量修复（勿当全量） | 仅旧库需要时 |
+| `fix/20260902_fix_pr0p0sa_ids_to_snowflake.sql` | 旧 `pr0p0sa*` 字母 id → 数字雪花 | 仅仍含旧 id 的库 |
 | `proposal_tables.md` | 表结构文档（与 init 同步） | 文档 |
 | `hr_quick_queries.md` | **HR 组织/员工快捷 SQL**（按中心部门查人、按 id 展树） | 文档 |
 
@@ -26,20 +28,23 @@
 # 2. 提案业务表 + 角色 + 改善性质 / 六维种子
 mysql -u root -p inside_dev < docs/improve/sql/proposal_init.sql
 
-# 3. 管理端菜单权限
+# 3. 管理端菜单权限（提案改善）
 mysql -u root -p inside_dev < docs/improve/sql/proposal_menu.sql
 
-# 4.（重导时）清理旧样例 + proposal 测试数据
+# 4. 管理端菜单权限（销售管理）
+mysql -u root -p inside_dev < docs/improve/sql/sms_menu.sql
+
+# 5.（重导时）清理旧样例 + proposal 测试数据
 mysql -u root -p inside_dev < docs/improve/sql/hr_user_purge.sql
 
-# 5. HR 全量组织 + 1355 用户（或按部门跑 hr_user_seed/*.sql）
+# 6. HR 全量组织 + 1355 用户（或按部门跑 hr_user_seed/*.sql）
 mysql -u root -p inside_dev < docs/improve/sql/hr_user_seed_all.sql
 
-# 6. 联调配置名册 — 部门负责人/委员会/批准人
+# 7. 联调配置名册 — 部门负责人/委员会/批准人
 mysql -u root -p inside_dev < docs/improve/sql/proposal_config_seed.sql
 ```
 
-执行后还需：管理端给 `admin` / `proposal_admin` **授权提案菜单**。配置种子执行后也可在「提案配置」中核对/调整。
+菜单脚本（`proposal_menu.sql` / `sms_menu.sql`）均可幂等重复执行，文末已给对应角色授权；改完请退出重新登录。配置种子执行后也可在「提案配置」中核对/调整。
 
 ## Jeecg `org_code` 优编码约定（重要）
 
