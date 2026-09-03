@@ -44,6 +44,8 @@ public class ProposalConfigController {
     @Autowired
     private IProposalHomeBroadcastService homeBroadcastService;
     @Autowired
+    private IProposalService proposalService;
+    @Autowired
     private ProposalOrgFillHelper orgFillHelper;
 
     @Operation(summary = "部门负责人-列表")
@@ -145,7 +147,16 @@ public class ProposalConfigController {
     @Operation(summary = "委员会成员-删除")
     @DeleteMapping("/committee/delete")
     public Result<String> committeeDelete(@RequestParam String id) {
+        //update-begin---author:spex ---date:2026-09-03  for：【委员会】删委员同步在途未审快照-----------
+        ProposalCommitteeMember member = committeeMemberService.getById(id);
+        if (member == null) {
+            throw new JeecgBootBizTipException("委员会成员不存在或已删除");
+        }
+        String reviewerUserId = member.getUserId();
         committeeMemberService.removeById(id);
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        proposalService.onCommitteeMemberRemoved(reviewerUserId, loginUser);
+        //update-end---author:spex ---date:2026-09-03  for：【委员会】删委员同步在途未审快照-----------
         return Result.OK("删除成功");
     }
 

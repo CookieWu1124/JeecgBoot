@@ -281,3 +281,4 @@
 | 2026-09-03 | **附件路径约定**：各环境 `upload=/home/spex/upFiles`；小程序 `biz=proposal/yyyyMM`；历史 `file_url` 见 `fix/20260902_fix_attachment_file_url_yyyymm.sql` |
 | 2026-09-03 | **公司 DEV 部署文档**：`公司DEV环境-后端Docker部署手册.md` + `deploy/application-docker.yml.template` |
 | 2026-09-03 | **再次归档暂停**：联调补丁收口；下一里程碑仍为 02 任务分配 |
+| 2026-09-03 | **删委员同步在途进度**：C6 删除时清未审快照、保留已审、重算 `review_progress`；满票进待批准；新增不补快照 |

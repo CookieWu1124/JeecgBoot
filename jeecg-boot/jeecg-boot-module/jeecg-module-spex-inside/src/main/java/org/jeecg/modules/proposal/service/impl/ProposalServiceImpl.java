@@ -654,6 +654,57 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         }
     }
 
+    //update-begin---author:spex ---date:2026-09-03  for：【委员会】删委员同步在途审核快照与进度-----------
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void onCommitteeMemberRemoved(String reviewerUserId, LoginUser loginUser) {
+        if (oConvertUtils.isEmpty(reviewerUserId)) {
+            return;
+        }
+        List<ProposalCommitteeReview> unanswered = committeeReviewService.list(
+                new LambdaQueryWrapper<ProposalCommitteeReview>()
+                        .eq(ProposalCommitteeReview::getReviewerId, reviewerUserId)
+                        .and(w -> w.isNull(ProposalCommitteeReview::getConclusion)
+                                .or()
+                                .eq(ProposalCommitteeReview::getConclusion, "")));
+        if (unanswered.isEmpty()) {
+            return;
+        }
+        List<String> candidateIds = unanswered.stream()
+                .map(ProposalCommitteeReview::getProposalId)
+                .filter(oConvertUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.toList());
+        if (candidateIds.isEmpty()) {
+            return;
+        }
+        List<Proposal> pendingProposals = list(new LambdaQueryWrapper<Proposal>()
+                .in(Proposal::getId, candidateIds)
+                .eq(Proposal::getStatus, ProposalStatusEnum.PENDING_REVIEW.getCode()));
+        if (pendingProposals.isEmpty()) {
+            return;
+        }
+        List<String> pendingIds = pendingProposals.stream()
+                .map(Proposal::getId)
+                .collect(Collectors.toList());
+
+        // 已出结论保留；未出结论的快照逻辑删除
+        committeeReviewService.remove(new LambdaQueryWrapper<ProposalCommitteeReview>()
+                .eq(ProposalCommitteeReview::getReviewerId, reviewerUserId)
+                .in(ProposalCommitteeReview::getProposalId, pendingIds)
+                .and(w -> w.isNull(ProposalCommitteeReview::getConclusion)
+                        .or()
+                        .eq(ProposalCommitteeReview::getConclusion, "")));
+
+        for (String proposalId : pendingIds) {
+            Proposal fresh = getById(proposalId);
+            if (fresh != null && ProposalStatusEnum.PENDING_REVIEW.getCode().equals(fresh.getStatus())) {
+                refreshReviewProgress(fresh, loginUser);
+            }
+        }
+    }
+    //update-end---author:spex ---date:2026-09-03  for：【委员会】删委员同步在途审核快照与进度-----------
+
     private void applyListTab(LambdaQueryWrapper<Proposal> qw, String tab) {
         if (oConvertUtils.isEmpty(tab) || "all".equalsIgnoreCase(tab) || "mine".equalsIgnoreCase(tab)) {
             return;
