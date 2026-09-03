@@ -141,9 +141,9 @@ spring:
           slow-sql-millis: 5000
       datasource:
         master:
-          url: jdbc:mysql://192.168.157.94:3306/inside_dev?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
-          username: root
-          password: Spex12345
+          url: jdbc:mysql://192.168.123.101:3306/inside_dev?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+          username: spex
+          password: SpexMes!@#
           driver-class-name: com.mysql.cj.jdbc.Driver
           # 多数据源配置
           #multi-datasource1:
@@ -155,7 +155,7 @@ spring:
   data:
     redis:
       database: 0
-      host: redis
+      host: 192.168.123.92
       port: 6379
       password: spex@123#
 #mybatis plus 设置
