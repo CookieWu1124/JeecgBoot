@@ -7,7 +7,7 @@
 
 | 序号 | 文件 | 业务段 | 规划 Phase | 当前整体进度 |
 |------|------|--------|------------|--------------|
-| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟢 **已归档暂停**（2026-09-01）：业务闭环 + 微信登录；出口 → 02 |
+| 01 | [01_application_DEV_PROGRESS.md](./01_application_DEV_PROGRESS.md) | 申请单（含委员审核、批准人决策） | 1 + 2 | 🟢 **已归档暂停**（2026-09-03）：业务闭环 + 联调补丁（消息未读/小广播/上传路径等）；出口 → 02 |
 | 02 | [02_task_assignment_DEV_PROGRESS.md](./02_task_assignment_DEV_PROGRESS.md) | 任务分配 | 3（前半） | ⚪ 未开始 |
 | 03 | [03_plan_DEV_PROGRESS.md](./03_plan_DEV_PROGRESS.md) | 计划书（条件分支） | 3（后半） | ⚪ 未开始 |
 | 04 | [04_report_DEV_PROGRESS.md](./04_report_DEV_PROGRESS.md) | 报告书 + 六维评分 + 签核结案 | 4 | ⚪ 未开始 |
@@ -34,7 +34,7 @@
 |------|------------|------|------|
 | 数据库初始化 | 1 | `proposal_init.sql` @ `inside_dev` | [x] 2026-08-28 |
 | 管理端菜单权限 | 1 | `proposal_menu.sql` + 角色授权 | [x] admin / proposal_admin |
-| 管理端配置（五 Tab） | 1 | 部门负责人 / 委员会 / 批准人 / **改善性质** / 评分维度 | [x] 改善性质 2026-08-31 落库；inside_dev 用 fix 增量 |
+| 管理端配置（六 Tab） | 1 | 部门负责人 / 委员会 / 批准人 / **改善性质** / 评分维度 / **首页标语** | [x] 首页标语 2026-09-03；inside_dev 用 fix 增量 |
 | 管理端提案管理 | 1 | 仅查询+详情（发起在小程序）；列表/详情弹窗对齐原型 | [x] 2026-08-29 |
 | 统计看板 | 5 | KPI、趋势、排行 | [ ] |
 | HR 导入 / 组织树 | 1 | 复用 Jeecg `sys_user` / `sys_depart`；样例种子见 `sql/proposal_spex_user_seed.sql` | [~] 全量导入未做；斯派科样例 + 电气组别补种 SQL 已出 |
@@ -71,3 +71,9 @@
 | 改善性质配置表 | `proposal_improvement_type` + 配置 Tab + meta 接口；种子 5 码与现网一致 | 2026-08-31 |
 | 微信小程序登录（公共） | `/sys/wxMini`；小程序双登录；管理端解绑；对接清单已齐 | 2026-09-01 |
 | **01 申请段归档暂停** | 业务 + 登录方案 A 拍板；后续联调有问题再开；下一里程碑 02 | 2026-09-01 |
+| 消息未读 + 首页摘要 3 条 | `proposal_status_log_unread`；铃铛/我的未读；F5 全部已读 | 2026-09-02 |
+| 微信 `stable_token` | 取号改 stable_token；40001 清缓存重试 | 2026-09-02 |
+| 首页小广播 /「我的」摘要 | `proposal_home_broadcast`；`/me/summary`；KPI「已批准」 | 2026-09-03 |
+| 附件上传根目录 + 年月子路径 | `/home/spex/upFiles`；`biz=proposal/yyyyMM` | 2026-09-03 |
+| 公司 DEV Docker 部署手册 | 外置 MySQL + 同机 Redis；`deploy/` 模板 | 2026-09-03 |
+| **01 再次归档暂停** | 联调补丁收口；下一里程碑仍为 02 | 2026-09-03 |

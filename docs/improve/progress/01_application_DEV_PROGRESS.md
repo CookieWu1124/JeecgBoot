@@ -7,15 +7,30 @@
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
 | **最后更新** | 2026-09-03 |
-| **本段状态** | 🟢 **联调补丁归档**：申请段业务闭环已交付；本日补齐消息未读表 + 微信 `stable_token`；出口仍停在 `APPROVED`。下一里程碑 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md)；明日继续联调优化 |
+| **本段状态** | 🟢 **已归档暂停**：申请段业务闭环 + 联调补丁已交付；出口仍停在 `APPROVED`。下一里程碑 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md) |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
 
 ---
 
-## 0. 本段归档快照（2026-09-01）
+## 0. 本段归档快照
 
-开发在此暂停，后续联调有问题再开。代码已在远程分支 `v3.9.3-spex-inside`（最近归档提交含对接清单）。
+开发在此暂停，后续联调有问题再开。代码在远程分支 `v3.9.3-spex-inside`。
+
+### 0.1 联调补丁归档（2026-09-03）
+
+在 09-01 业务闭环之上，本轮补齐并已验：
+
+| 块 | 结论 |
+|----|------|
+| 消息未读 | `proposal_status_log_unread` fan-out；铃铛 /「我的」未读数；已读物理删行 |
+| 微信取号 | `stable_token`；40001 清缓存重试 |
+| 首页小广播 | `proposal_home_broadcast` + 配置 Tab；`broadcastSlogan`；空文案不展示（inside_dev 已验） |
+| 首页 /「我的」 | KPI「已批准」；待办摘要各 3 条；`GET /proposal/app/me/summary` |
+| 附件存储 | `jeecg.path.upload=/home/spex/upFiles`；小程序 `biz=proposal/yyyyMM`；历史路径 fix SQL |
+| 公司 DEV 部署 | `公司DEV环境-后端Docker部署手册.md` + `deploy/` 外置配置模板 |
+
+### 0.2 申请段业务归档（2026-09-01）
 
 ### 已交付
 
@@ -174,12 +189,12 @@
 | # | 任务 | 端 | 进度 |
 |---|------|-----|------|
 | 1 | 发起提案 2 步表单页 | 小程序 | [x] |
-| 2 | 图片上传组件对接 `/sys/common/upload` | 小程序 | [x] 发起页已接 |
+| 2 | 图片上传组件对接 `/sys/common/upload` | 小程序 | [x] `biz=proposal/yyyyMM`；根目录 `/home/spex/upFiles` |
 | 3 | 委员审核页 | 小程序 | [x] `review.vue` + 待办入口 |
 | 4 | 批准人申请批准页 | 小程序 | [x] `approve.vue` |
 | 5 | 列表审核进度 `review_progress` 展示 | 小程序 | [x] 列表已展示 reviewProgress |
 | 6 | 管理端提案列表（查询对齐原型） | 管理端 | [x] 仅查询+详情；筛选/列/进度条/状态 Tag |
-| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置五 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
+| 7 | 管理端用户/部门名称回显（非 ID） | 管理端 | [x] 配置六 Tab + 列表 + 详情（提案人所属部门≠改善部门） |
 | 8 | 管理端菜单可见（SQL + 角色授权） | 管理端 | [x] `proposal_menu.sql` 含 component 自愈 UPDATE |
 | 9 | 管理端提案配置对齐原型 | 管理端 | [x] 批准人卡片、委员选人预览、权重合计等 |
 | 10 | 小程序发起提案 2 步页 | 小程序 | [x] `pages/proposal/apply`；确认后只调 create（一次进审核中） |
@@ -202,7 +217,8 @@
 - [x] 管理端详情可查看委员审核意见列表（含未审快照行）
 - [x] 小程序两种登录并存；微信授权仅小程序；退出不解绑
 - [x] 管理端可解绑微信（只删 `sys_third_account`）
-- [~] 微信授权真机/开发者工具：已改 `stable_token` 缓解 40001；明日继续联调（未读需用他人账号产生状态变更才能测出）
+- [x] 微信授权真机/开发者工具：已改 `stable_token` 缓解 40001（未读需用他人账号产生状态变更才能测出）
+- [x] 首页小广播标语读写已验（配置保存 → `/home.broadcastSlogan` → 小程序展示）
 
 ---
 
@@ -259,6 +275,9 @@
 | 2026-09-02 | **消息未读 + 首页摘要 3 条**：表 `proposal_status_log_unread`（fan-out 排除自己；已读物理删行）；铃铛=全部；我-消息通知=未读+「N 条未读」；F5 全部已读 |
 | 2026-09-02 | **微信取号凭证**：`getuserphonenumber` 改用 `cgi-bin/stable_token`；遇 40001 清缓存 `force_refresh` 重试一次（缓解 Redis 缓存到已作废普通 token） |
 | 2026-09-02 | **联调备注**：委员账号（如 600099）自己操作不会产生自己的未读；测未读请用普通提案人（如 600081）新提一单 |
-| 2026-09-03 | **首页小广播**：表 `proposal_home_broadcast`；配置 Tab「首页标语」；`/home.broadcastSlogan`；空文案不展示 |
+| 2026-09-03 | **首页小广播**：表 `proposal_home_broadcast`；配置 Tab「首页标语」；`/home.broadcastSlogan`；空文案不展示；inside_dev 已验 |
 | 2026-09-03 | **首页 KPI**：文案「已结案」→「已批准」；字段/方法改为 `approvedCount` / `countApproved` |
 | 2026-09-03 | **「我的」摘要**：`GET /proposal/app/me/summary`；岗位行=部门·组别·岗位（同首页）；标签=委员/评分座位/批准人；采纳率分母 0→`0%`；累计奖金暂 0 |
+| 2026-09-03 | **附件路径约定**：各环境 `upload=/home/spex/upFiles`；小程序 `biz=proposal/yyyyMM`；历史 `file_url` 见 `fix/20260902_fix_attachment_file_url_yyyymm.sql` |
+| 2026-09-03 | **公司 DEV 部署文档**：`公司DEV环境-后端Docker部署手册.md` + `deploy/application-docker.yml.template` |
+| 2026-09-03 | **再次归档暂停**：联调补丁收口；下一里程碑仍为 02 任务分配 |
