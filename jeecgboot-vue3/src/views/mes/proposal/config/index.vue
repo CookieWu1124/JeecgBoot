@@ -16,6 +16,9 @@
       <a-tab-pane key="scoreDimension" tab="评分维度">
         <ScoreDimensionPanel />
       </a-tab-pane>
+      <a-tab-pane key="homeBroadcast" tab="首页标语">
+        <HomeBroadcastPanel />
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -26,6 +29,7 @@
   import ApproverPanel from './components/ApproverPanel.vue';
   import ImprovementTypePanel from './components/ImprovementTypePanel.vue';
   import ScoreDimensionPanel from './components/ScoreDimensionPanel.vue';
+  import HomeBroadcastPanel from './components/HomeBroadcastPanel.vue';
 
   const activeKey = ref('deptLeader');
 </script>

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.exception.JeecgBootBizTipException;
@@ -23,7 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * 管理端 - 提案配置（五 Tab）
+ * 管理端 - 提案配置（六 Tab）
  */
 @Slf4j
 @Tag(name = "管理端-提案配置")
@@ -41,6 +42,8 @@ public class ProposalConfigController {
     private IProposalScoreDimensionService scoreDimensionService;
     @Autowired
     private IProposalImprovementTypeService improvementTypeService;
+    @Autowired
+    private IProposalHomeBroadcastService homeBroadcastService;
     @Autowired
     private ProposalOrgFillHelper orgFillHelper;
 
@@ -236,6 +239,25 @@ public class ProposalConfigController {
         scoreDimensionService.removeById(id);
         return Result.OK("删除成功");
     }
+
+    //update-begin---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/PUT-----------
+    @Operation(summary = "首页标语-查询")
+    @GetMapping("/homeBroadcast")
+    public Result<ProposalHomeBroadcast> homeBroadcastGet() {
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        return Result.OK(homeBroadcastService.getCurrent(loginUser));
+    }
+
+    @AutoLog(value = "管理端-提案配置-首页标语-保存")
+    @Operation(summary = "首页标语-保存")
+    @RequiresPermissions("proposal:config:homeBroadcast:save")
+    @PutMapping("/homeBroadcast")
+    public Result<String> homeBroadcastSave(@RequestBody ProposalHomeBroadcast entity) {
+        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+        homeBroadcastService.saveCurrent(entity, loginUser);
+        return Result.OK("保存成功");
+    }
+    //update-end---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/PUT-----------
 
     private void fillAudit(ProposalBaseEntity entity) {
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();

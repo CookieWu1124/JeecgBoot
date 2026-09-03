@@ -55,11 +55,16 @@ const { hasLogin } = storeToRefs(tokenStore)
 
 const isLoggedIn = computed(() => hasLogin.value && !!userInfo.value.username)
 const displayName = computed(() => userInfo.value.nickname || userInfo.value.username || '用户')
+
+/** 优先用后端 deptDesc（部门 · 组别）；本地 userInfo 仅兜底，不再写死「提案改善系统」 */
+const deptDesc = ref('')
 const displayDept = computed(() => {
+  if (deptDesc.value)
+    return deptDesc.value
   return userInfo.value.departName
     || userInfo.value.orgCodeTxt
     || userInfo.value.departIds_dictText
-    || '提案改善系统'
+    || ''
 })
 
 /** 优先用后端 greeting（服务器时区）；本地仅作未登录/失败兜底（开发者工具 JS 时区常不准） */
@@ -74,11 +79,12 @@ function localGreeting() {
 
 const greeting = ref(localGreeting())
 const greetText = computed(() => greeting.value || localGreeting())
+const broadcastSlogan = ref('')
 
 const kpis = ref([
   { label: '待办', value: 0, action: 'todo' },
   { label: '进行中', value: 0, action: 'proposal' },
-  { label: '已结案', value: 0, action: 'proposal' },
+  { label: '已批准', value: 0, action: 'proposal' },
 ])
 
 const todos = ref<TodoItem[]>([])
@@ -141,10 +147,12 @@ function mapFeed(item: AppHomeFeedItem, index: number): FeedItem {
 async function loadHome() {
   if (!isLoggedIn.value) {
     greeting.value = localGreeting()
+    deptDesc.value = ''
+    broadcastSlogan.value = ''
     kpis.value = [
       { label: '待办', value: 0, action: 'todo' },
       { label: '进行中', value: 0, action: 'proposal' },
-      { label: '已结案', value: 0, action: 'proposal' },
+      { label: '已批准', value: 0, action: 'proposal' },
     ]
     todos.value = []
     feeds.value = []
@@ -154,10 +162,12 @@ async function loadHome() {
   try {
     const res = await fetchAppHome()
     greeting.value = res?.greeting || localGreeting()
+    deptDesc.value = res?.deptDesc || ''
+    broadcastSlogan.value = (res?.broadcastSlogan || '').trim()
     kpis.value = [
       { label: '待办', value: Number(res?.todoCount) || 0, action: 'todo' },
       { label: '进行中', value: Number(res?.doingCount) || 0, action: 'proposal' },
-      { label: '已结案', value: Number(res?.doneCount) || 0, action: 'proposal' },
+      { label: '已批准', value: Number(res?.approvedCount) || 0, action: 'proposal' },
     ]
     todos.value = (res?.todoItems || []).map(mapTodo)
     feeds.value = (res?.feeds || []).map(mapFeed)
@@ -255,6 +265,13 @@ function handleFeedItem(item: FeedItem) {
     </view>
 
     <view class="home-body px-4">
+      <view v-if="broadcastSlogan" class="home-broadcast">
+        <view class="home-broadcast__ic">
+          <wd-icon name="sound" size="16px" color="#FA8C16" />
+        </view>
+        <text class="home-broadcast__txt">{{ broadcastSlogan }}</text>
+      </view>
+
       <view class="home-sec">
         <view class="home-sec__left">
           <view class="home-sec__bar" />
@@ -432,6 +449,36 @@ function handleFeedItem(item: FeedItem) {
 
 .home-body {
   padding-top: 4px;
+}
+
+.home-broadcast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(24, 56, 120, 0.06);
+}
+
+.home-broadcast__ic {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgba(250, 140, 22, 0.12);
+}
+
+.home-broadcast__txt {
+  flex: 1;
+  color: #3a4259;
+  font-size: 13.5px;
+  line-height: 1.45;
+  font-weight: 500;
 }
 
 .home-empty {

@@ -89,7 +89,7 @@ SELECT '2094103000000000006', '2094103000000000002', '删除提案', NULL, NULL,
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000006');
 
 -- -----------------------------------------------------------------------------
--- 提案配置 — 按钮权限（五 Tab）
+-- 提案配置 — 按钮权限（六 Tab）
 -- -----------------------------------------------------------------------------
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT '2094103000000000007', '2094103000000000003', '部门负责人-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:deptLeader:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
@@ -131,6 +131,10 @@ INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is
 SELECT '2094103000000000016', '2094103000000000003', '改善性质-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000016');
 
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
+SELECT '2094103000000000017', '2094103000000000003', '首页标语-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:homeBroadcast:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000017');
+
 -- 修正父级 is_leaf
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = '2094103000000000001';
 UPDATE `sys_permission` SET `is_leaf` = 0 WHERE `id` = '2094103000000000002';
@@ -159,7 +163,7 @@ WHERE `id` = '2094103000000000003';
 -- 目录开头会 DELETE 按钮级 sys_role_permission，故授权必须放在文末重绑。
 -- -----------------------------------------------------------------------------
 INSERT INTO `sys_role_permission` (`id`, `role_id`, `permission_id`)
-SELECT REPLACE(UUID(), '-', ''), r.id, p.id
+SELECT MD5(CONCAT(r.id, '#', p.id)), r.id, p.id
 FROM `sys_role` r
 JOIN `sys_permission` p ON p.id IN (
   '2094103000000000001',
@@ -177,7 +181,8 @@ JOIN `sys_permission` p ON p.id IN (
   '2094103000000000013',
   '2094103000000000014',
   '2094103000000000015',
-  '2094103000000000016'
+  '2094103000000000016',
+  '2094103000000000017'
 )
 WHERE r.role_code IN ('admin', 'proposal_admin')
   AND NOT EXISTS (

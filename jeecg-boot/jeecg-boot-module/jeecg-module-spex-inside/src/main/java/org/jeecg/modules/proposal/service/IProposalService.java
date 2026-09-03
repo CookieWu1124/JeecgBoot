@@ -9,6 +9,7 @@ import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.jeecg.modules.proposal.vo.app.ProposalHomeVo;
+import org.jeecg.modules.proposal.vo.app.ProposalMeSummaryVo;
 
 public interface IProposalService extends IService<Proposal> {
 
@@ -26,6 +27,9 @@ public interface IProposalService extends IService<Proposal> {
     IPage<Proposal> listForUser(String tab, String title, int pageNo, int pageSize, LoginUser loginUser);
 
     ProposalHomeVo buildHome(LoginUser loginUser);
+
+    /** 小程序「我的」：岗位行、配置角色标签、我的提案/采纳率/累计奖金 */
+    ProposalMeSummaryVo buildMeSummary(LoginUser loginUser);
 
     // 【Phase2】委员并行审核
     /** 当前委员待审列表（PENDING_REVIEW 且本人未提交） */

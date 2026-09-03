@@ -13,9 +13,11 @@ public class ProposalHomeVo {
     private String greeting;
     private String userName;
     private String deptDesc;
+    /** 首页小广播标语；空则前端不展示 */
+    private String broadcastSlogan;
     private long todoCount;
     private long doingCount;
-    private long doneCount;
+    private long approvedCount;
     private List<TodoItem> todoItems = new ArrayList<>();
     private List<FeedItem> feeds = new ArrayList<>();
     /** 与我相关的未读动态数（铃铛角标） */

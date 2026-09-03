@@ -18,6 +18,8 @@ import org.jeecg.modules.proposal.vo.CommitteeReviewRequest;
 import org.jeecg.modules.proposal.vo.ProposalCreateRequest;
 import org.jeecg.modules.proposal.vo.ProposalDetailVo;
 import org.jeecg.modules.proposal.vo.app.ProposalHomeVo;
+import org.jeecg.modules.proposal.vo.app.ProposalMeSummaryVo;
+import org.jeecg.modules.proposal.vo.UserBriefVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +43,7 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     //update-begin---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
     private static final int HOME_FEED_LIMIT = 3;
     //update-end---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
-    /** 首页「已结案」/列表 done Tab：已批准、不批准、已完成（与进行中 notIn 互斥） */
+    /** 列表 done Tab / 进行中互斥：已批准、不批准、已完成 */
     private static final Set<String> DONE_STATUSES = Set.of(
             ProposalStatusEnum.APPROVED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
@@ -70,6 +72,8 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private IProposalImprovementTypeService improvementTypeService;
     @Autowired
     private ProposalOrgFillHelper orgFillHelper;
+    @Autowired
+    private IProposalHomeBroadcastService homeBroadcastService;
 
     private static final String CONCLUSION_ADOPT = "ADOPT";
     private static final String CONCLUSION_REJECT = "REJECT";
@@ -356,12 +360,15 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         vo.setGreeting(buildGreeting());
         vo.setUserName(loginUser.getRealname());
         vo.setDeptDesc(buildDeptDesc(loginUser));
+        //update-begin---author:spex ---date:2026-09-03  for：【首页】小广播标语-----------
+        vo.setBroadcastSlogan(homeBroadcastService.getCurrentContent(loginUser));
+        //update-end---author:spex ---date:2026-09-03  for：【首页】小广播标语-----------
 
         String userId = loginUser.getId();
         List<ProposalHomeVo.TodoItem> todoItems = buildHomeTodos(loginUser);
         vo.setTodoCount(countHomeTodos(loginUser));
         vo.setDoingCount(countDoing(userId));
-        vo.setDoneCount(countDone(userId));
+        vo.setApprovedCount(countApproved(userId));
         vo.setTodoItems(todoItems);
         vo.setFeeds(buildFeeds(loginUser));
         //update-begin---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
@@ -369,6 +376,72 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         //update-end---author:spex ---date:2026-09-02  for：【首页铃铛】未读角标-----------
         return vo;
     }
+
+    //update-begin---author:spex ---date:2026-09-03  for：【我的】岗位/角色标签/三项统计-----------
+    @Override
+    public ProposalMeSummaryVo buildMeSummary(LoginUser loginUser) {
+        ProposalMeSummaryVo vo = new ProposalMeSummaryVo();
+        String userId = loginUser.getId();
+        vo.setPositionLine(buildMePositionLine(userId));
+        vo.setRoleTags(buildMeRoleTags(userId));
+        vo.setMyProposalCount(count(new LambdaQueryWrapper<Proposal>()
+                .eq(Proposal::getProposerId, userId)));
+        vo.setAdoptionRate(buildAdoptionRate(userId));
+        // 结案段未交付：累计奖金固定占位 0
+        vo.setTotalBonus(BigDecimal.ZERO);
+        return vo;
+    }
+
+    /** 姓名下行：部门 · 组别（同首页）· 岗位；缺段则省略 */
+    private String buildMePositionLine(String userId) {
+        String deptGroup = orgFillHelper.buildUserDeptGroupDesc(userId);
+        Map<String, UserBriefVo> map = orgFillHelper.loadUsers(Collections.singletonList(userId));
+        UserBriefVo user = map.get(userId);
+        String position = user != null && oConvertUtils.isNotEmpty(user.getPositionType())
+                ? user.getPositionType().trim() : "";
+        if (oConvertUtils.isNotEmpty(deptGroup) && oConvertUtils.isNotEmpty(position)) {
+            return deptGroup + " · " + position;
+        }
+        return oConvertUtils.isNotEmpty(deptGroup) ? deptGroup : position;
+    }
+
+    private List<String> buildMeRoleTags(String userId) {
+        List<String> tags = new ArrayList<>();
+        ProposalCommitteeMember member = committeeMemberService.getOne(
+                new LambdaQueryWrapper<ProposalCommitteeMember>()
+                        .eq(ProposalCommitteeMember::getUserId, userId)
+                        .eq(ProposalCommitteeMember::getMemberStatus, "active")
+                        .last("limit 1"));
+        if (member != null) {
+            tags.add("委员");
+            if (member.getScoreEnabled() != null && member.getScoreEnabled() == 1) {
+                tags.add("评分座位");
+            }
+        }
+        if (isActiveApprover(userId)) {
+            tags.add("批准人");
+        }
+        return tags;
+    }
+
+    /**
+     * 采纳率 = 已批准 / (已批准 + 不批准)；分母为 0 返回 {@code 0%}
+     */
+    private String buildAdoptionRate(String userId) {
+        long approved = count(new LambdaQueryWrapper<Proposal>()
+                .eq(Proposal::getProposerId, userId)
+                .eq(Proposal::getStatus, ProposalStatusEnum.APPROVED.getCode()));
+        long rejected = count(new LambdaQueryWrapper<Proposal>()
+                .eq(Proposal::getProposerId, userId)
+                .eq(Proposal::getStatus, ProposalStatusEnum.REJECTED_FINAL.getCode()));
+        long decided = approved + rejected;
+        if (decided <= 0) {
+            return "0%";
+        }
+        long percent = Math.round(approved * 100.0 / decided);
+        return percent + "%";
+    }
+    //update-end---author:spex ---date:2026-09-03  for：【我的】岗位/角色标签/三项统计-----------
 
     private ProposalApplication getApplication(String proposalId) {
         ProposalApplication application = applicationService.getOne(new LambdaQueryWrapper<ProposalApplication>()
@@ -707,10 +780,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
                 .notIn(Proposal::getStatus, DONE_STATUSES));
     }
 
-    private long countDone(String userId) {
+    /** 首页 KPI「已批准」：仅计自己作为提案人且状态为已批准 */
+    private long countApproved(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
-                .in(Proposal::getStatus, DONE_STATUSES));
+                .eq(Proposal::getStatus, ProposalStatusEnum.APPROVED.getCode()));
     }
 
     /** 委员未审 + 批准人待核定 + 部门负责人待指派；按名册/配置位，不走权限抛错。 */
@@ -847,12 +921,19 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
         return "晚上好";
     }
 
+    //update-begin---author:spex ---date:2026-09-03  for：【首页】deptDesc 改为部门·组别-----------
     private String buildDeptDesc(LoginUser loginUser) {
-        if (oConvertUtils.isNotEmpty(loginUser.getOrgCode())) {
-            return loginUser.getOrgCode();
+        if (loginUser == null) {
+            return "";
         }
+        String desc = orgFillHelper.buildUserDeptGroupDesc(loginUser.getId());
+        if (oConvertUtils.isNotEmpty(desc)) {
+            return desc;
+        }
+        // 无挂靠部门时不回退 orgCode（编码对用户无意义）
         return "";
     }
+    //update-end---author:spex ---date:2026-09-03  for：【首页】deptDesc 改为部门·组别-----------
 
     private String trimToNull(String value) {
         if (value == null) {

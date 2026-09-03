@@ -164,6 +164,40 @@ public class ProposalOrgFillHelper {
     }
     //update-end---author:spex ---date:2026-09-01  for：【提案管理】按部门名/提案人姓名查 id，列表用 MP in-----------
 
+    //update-begin---author:spex ---date:2026-09-03  for：【首页】部门·组别文案（对齐原型）-----------
+    /**
+     * 首页副标题：部门 · 组别。员工多挂在组别；挂部门级时只显示部门名。
+     */
+    public String buildUserDeptGroupDesc(String userId) {
+        if (oConvertUtils.isEmpty(userId)) {
+            return "";
+        }
+        String sql = "select leaf.org_type as leaf_type, leaf.depart_name as leaf_name, "
+                + "parent.depart_name as parent_name "
+                + "from sys_user_depart ud "
+                + "join sys_depart leaf on leaf.id = ud.dep_id and leaf.del_flag = '0' "
+                + "left join sys_depart parent on parent.id = leaf.parent_id and parent.del_flag = '0' "
+                + "where ud.user_id = ? "
+                + "order by case leaf.org_type when 'GROUP' then 0 when 'DEPT' then 1 else 2 end "
+                + "limit 1";
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId);
+        if (rows.isEmpty()) {
+            return "";
+        }
+        Map<String, Object> row = rows.get(0);
+        String leafType = row.get("leaf_type") == null ? "" : String.valueOf(row.get("leaf_type"));
+        String leafName = row.get("leaf_name") == null ? "" : String.valueOf(row.get("leaf_name")).trim();
+        String parentName = row.get("parent_name") == null ? "" : String.valueOf(row.get("parent_name")).trim();
+        if ("GROUP".equalsIgnoreCase(leafType) && oConvertUtils.isNotEmpty(parentName) && oConvertUtils.isNotEmpty(leafName)) {
+            return parentName + " · " + leafName;
+        }
+        if (oConvertUtils.isNotEmpty(leafName)) {
+            return leafName;
+        }
+        return parentName;
+    }
+    //update-end---author:spex ---date:2026-09-03  for：【首页】部门·组别文案（对齐原型）-----------
+
     public Map<String, UserBriefVo> loadUsers(Collection<String> userIds) {
         List<String> ids = distinctIds(userIds);
         if (ids.isEmpty()) {

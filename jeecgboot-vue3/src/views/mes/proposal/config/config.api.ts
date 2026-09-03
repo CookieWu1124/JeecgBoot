@@ -16,6 +16,7 @@ enum Api {
   scoreDimensionList = '/proposal/admin/config/scoreDimension/list',
   scoreDimensionSave = '/proposal/admin/config/scoreDimension/save',
   scoreDimensionDelete = '/proposal/admin/config/scoreDimension/delete',
+  homeBroadcast = '/proposal/admin/config/homeBroadcast',
   userBriefs = '/proposal/meta/userBriefs',
 }
 
@@ -134,3 +135,8 @@ export const saveScoreDimension = (params) => defHttp.post({ url: Api.scoreDimen
 
 export const deleteScoreDimension = (params, handleSuccess) =>
   defHttp.delete({ url: Api.scoreDimensionDelete, data: params }, { joinParamsToUrl: true }).then(() => handleSuccess());
+
+export const getHomeBroadcast = () => defHttp.get({ url: Api.homeBroadcast });
+
+export const saveHomeBroadcast = (params: { id?: string; content?: string }) =>
+  defHttp.put({ url: Api.homeBroadcast, params });

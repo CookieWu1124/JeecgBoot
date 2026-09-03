@@ -123,7 +123,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { useTokenStore, useUserStore } from '@/store'
-import { fetchAppUnreadCount } from '@/api/proposal'
+import { fetchAppMeSummary, fetchAppUnreadCount } from '@/api/proposal'
 
 defineOptions({
   name: 'Me',
@@ -162,31 +162,23 @@ const { hasLogin } = storeToRefs(tokenStore)
 
 const isLoggedIn = computed(() => hasLogin.value && !!userInfo.value.username)
 const displayName = computed(() => userInfo.value.nickname || userInfo.value.username || 'Spex 用户')
+
+const positionLine = ref('')
+const roleTags = ref<string[]>([])
+const stats = ref([
+  { label: '我的提案', value: '--' },
+  { label: '采纳率', value: '0%' },
+  { label: '累计奖金', value: '--' },
+])
+
 const displayMeta = computed(() => {
   if (!isLoggedIn.value)
     return '登录后查看提案与奖金数据'
-  const depart = userInfo.value.departName || userInfo.value.orgCodeTxt || userInfo.value.departIds_dictText || ''
-  const post = userInfo.value.post || userInfo.value.post_dictText || userInfo.value.role || ''
-  if (depart && post)
-    return `${depart} · ${post}`
-  return depart || post || 'Spex 用户'
+  return positionLine.value || 'Spex 用户'
 })
-const roleTags = computed(() => {
-  if (!isLoggedIn.value)
-    return [] as string[]
-  const fromRoles = (userInfo.value.roles || []).filter(Boolean)
-  if (fromRoles.length)
-    return fromRoles.slice(0, 3)
-  return []
-})
+
 const avatarText = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const avatarError = ref(false)
-
-const stats = [
-  { label: '参与提案', value: '--' },
-  { label: '采纳率', value: '--' },
-  { label: '累计奖金', value: '--' },
-]
 
 const services: ServiceItem[] = [
   { name: '我的提案', icon: 'list', tint: 'tint-blue', action: 'proposal' },
@@ -206,6 +198,43 @@ const supportMenus: MenuItem[] = [
   { title: '清除缓存', icon: 'delete', tint: 'tint-rose', action: 'cache' },
 ]
 
+function formatBonus(raw: number | string | undefined | null) {
+  const n = Number(raw)
+  if (!Number.isFinite(n))
+    return '¥0'
+  return `¥${n.toLocaleString('zh-CN')}`
+}
+
+function resetMeSummary() {
+  positionLine.value = ''
+  roleTags.value = []
+  stats.value = [
+    { label: '我的提案', value: '--' },
+    { label: '采纳率', value: '0%' },
+    { label: '累计奖金', value: '--' },
+  ]
+}
+
+async function loadMeSummary() {
+  if (!isLoggedIn.value) {
+    resetMeSummary()
+    return
+  }
+  try {
+    const res = await fetchAppMeSummary()
+    positionLine.value = (res?.positionLine || '').trim()
+    roleTags.value = (res?.roleTags || []).filter(Boolean)
+    stats.value = [
+      { label: '我的提案', value: String(res?.myProposalCount ?? 0) },
+      { label: '采纳率', value: res?.adoptionRate || '0%' },
+      { label: '累计奖金', value: formatBonus(res?.totalBonus ?? 0) },
+    ]
+  }
+  catch {
+    resetMeSummary()
+  }
+}
+
 async function loadUnreadExtra() {
   const msgMenu = accountMenus.value.find(m => m.action === 'message')
   if (!msgMenu)
@@ -224,6 +253,7 @@ async function loadUnreadExtra() {
 }
 
 onShow(() => {
+  loadMeSummary()
   loadUnreadExtra()
 })
 
@@ -296,6 +326,7 @@ function handleLogout() {
       if (!res.confirm)
         return
       await tokenStore.logout()
+      resetMeSummary()
       uni.showToast({ title: '已退出登录', icon: 'none' })
     },
   })

@@ -6,7 +6,7 @@
 | **规划 Phase** | Phase 1（骨架）+ Phase 2（审核流） |
 | **主表字段** | `title`, `improvement_types`, `dept_id`, `proposer_id`, `dept_leader_id`, `plan_required`*, `award_amount`* |
 | **子表** | `proposal_application`, `proposal_attachment` |
-| **最后更新** | 2026-09-02 |
+| **最后更新** | 2026-09-03 |
 | **本段状态** | 🟢 **联调补丁归档**：申请段业务闭环已交付；本日补齐消息未读表 + 微信 `stable_token`；出口仍停在 `APPROVED`。下一里程碑 → [02 任务分配](./02_task_assignment_DEV_PROGRESS.md)；明日继续联调优化 |
 
 > \* `plan_required`、`award_amount` 在**批准人决策**时写入，逻辑上仍属申请阶段收尾。
@@ -23,7 +23,7 @@
 |----|------|
 | 申请段业务 | 发起一次进审核中 → 委员并行审 → 批准人决策；四档状态；无草稿/撤回 |
 | 小程序 spex-app | 登录、首页、发起、列表、详情、待办、委员审、批准已接真 |
-| 管理端 Vue3 | 提案只读列表/详情；配置五 Tab；用户管理「解绑微信」 |
+| 管理端 Vue3 | 提案只读列表/详情；配置六 Tab；用户管理「解绑微信」 |
 | 对接文档 | `docs/improve/api/` 两份清单可直接发给前端同事 |
 
 ### 微信登录（系统公共能力，不绑提案模块）
@@ -101,7 +101,7 @@
 | 申请批准决策 | POST | `/proposal/approval/application/{proposalId}` | 共用 | [x] |
 | 首页聚合 | GET | `/proposal/app/home` | 小程序 | [x] |
 | 管理端列表/详情 | * | `/proposal/admin/manage/*` | 管理端 | [x] 列表+详情含申请书/留痕/委员意见/批准决策 |
-| 配置（委员/批准人） | * | `/proposal/admin/config/*` | 管理端 | [x] |
+| 配置（委员/批准人/首页标语） | * | `/proposal/admin/config/*` | 管理端 | [x] 六 Tab |
 
 ---
 
@@ -126,7 +126,7 @@
 | 页面 | 路径 | 进度 |
 |------|------|------|
 | 提案管理列表（仅查询+详情） | `views/mes/proposal/manage/index` | [x] 筛选/列对齐原型；无新增/勾选 |
-| 提案配置（五 Tab） | `views/mes/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / **改善性质** / 评分维度 |
+| 提案配置（六 Tab） | `views/mes/proposal/config/index` | [x] 部门负责人 / 委员会 / 批准人卡片 / **改善性质** / 评分维度 / **首页标语** |
 | 提案详情弹窗 | `views/mes/proposal/manage/components/ProposalModal` | [x] 对齐原型：摘要卡/四 Tab/申请单分块；委员意见表已接；计划书·报告书占位；操作留痕已接 status_log |
 
 ---
@@ -140,6 +140,7 @@
 | `proposal_attachment` | 1 | [x] | 现场图片等 |
 | `proposal_status_log` | 1 | [x] | 提交/委员齐/批准等由状态机写日志 |
 | `proposal_status_log_unread` | 1 | [x] | 未读 fan-out（排除操作人）；已读物理删行；见 `fix/20260902_create_proposal_status_log_unread.sql` |
+| `proposal_home_broadcast` | 1 | [x] | 首页小广播；租户一行；见 `fix/20260903_create_proposal_home_broadcast.sql` |
 | `proposal_committee_member` | 1 | [x] | 审核名册 |
 | `proposal_approver` | 1 | [x] | 批准人配置 |
 | `proposal_dept_leader` | 1 | [x] | 提交前校验 |
@@ -258,3 +259,6 @@
 | 2026-09-02 | **消息未读 + 首页摘要 3 条**：表 `proposal_status_log_unread`（fan-out 排除自己；已读物理删行）；铃铛=全部；我-消息通知=未读+「N 条未读」；F5 全部已读 |
 | 2026-09-02 | **微信取号凭证**：`getuserphonenumber` 改用 `cgi-bin/stable_token`；遇 40001 清缓存 `force_refresh` 重试一次（缓解 Redis 缓存到已作废普通 token） |
 | 2026-09-02 | **联调备注**：委员账号（如 600099）自己操作不会产生自己的未读；测未读请用普通提案人（如 600081）新提一单 |
+| 2026-09-03 | **首页小广播**：表 `proposal_home_broadcast`；配置 Tab「首页标语」；`/home.broadcastSlogan`；空文案不展示 |
+| 2026-09-03 | **首页 KPI**：文案「已结案」→「已批准」；字段/方法改为 `approvedCount` / `countApproved` |
+| 2026-09-03 | **「我的」摘要**：`GET /proposal/app/me/summary`；岗位行=部门·组别·岗位（同首页）；标签=委员/评分座位/批准人；采纳率分母 0→`0%`；累计奖金暂 0 |

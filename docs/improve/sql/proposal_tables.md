@@ -18,6 +18,7 @@
 - [proposal_status_log_unread](#proposal_status_log_unread) — 提案状态日志未读（用户×日志）
 - [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
 - [proposal_approval](#proposal_approval) — 批准人决策记录
+- [proposal_home_broadcast](#proposal_home_broadcast) — 首页小广播标语（租户唯一）
 
 ---
 
@@ -335,3 +336,21 @@
 - **主键**：(`id`)
 - **唯一索引** `uk_proposal_approval_stage`：(`proposal_id`, `stage`, `tenant_id`)
 - **普通索引** `idx_proposal_approval_approver`：(`approver_id`)
+
+---
+
+## proposal_home_broadcast
+
+**表说明**：小程序首页「小广播」标语。租户内全局唯一一行；管理端「提案配置 → 首页标语」维护；无启停开关，`content` 为空时首页不展示该条。
+
+### 业务字段
+
+| 字段名 | 数据类型 | 允许空 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | varchar(36) | 否 | 主键 |
+| `content` | varchar(200) | 否 | 标语文案（默认空串） |
+
+### 索引与约束
+
+- **主键**：(`id`)
+- **唯一索引** `uk_proposal_home_broadcast_tenant`：(`tenant_id`)

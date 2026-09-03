@@ -260,9 +260,12 @@ export interface AppHomeResult {
   greeting?: string
   userName?: string
   deptDesc?: string
+  /** 首页小广播标语；空则不展示 */
+  broadcastSlogan?: string
   todoCount?: number
   doingCount?: number
-  doneCount?: number
+  /** 自己作为提案人且已批准的数量 */
+  approvedCount?: number
   todoItems?: AppHomeTodoItem[]
   feeds?: AppHomeFeedItem[]
   /** 未读动态数，铃铛角标 */
@@ -271,6 +274,23 @@ export interface AppHomeResult {
 
 export function fetchAppHome() {
   return http.get<AppHomeResult>('/proposal/app/home')
+}
+
+/** 小程序「我的」摘要 GET /proposal/app/me/summary */
+export interface AppMeSummary {
+  /** 部门 · 组别 · 岗位（部门组别口径同首页 deptDesc） */
+  positionLine?: string
+  /** 委员 / 评分座位 / 批准人 */
+  roleTags?: string[]
+  myProposalCount?: number
+  /** 如 67%；无已决策提案时为 0% */
+  adoptionRate?: string
+  /** 结案段前固定 0 */
+  totalBonus?: number | string
+}
+
+export function fetchAppMeSummary() {
+  return http.get<AppMeSummary>('/proposal/app/me/summary')
 }
 
 /** 消息动态列表 GET /proposal/app/message/list */

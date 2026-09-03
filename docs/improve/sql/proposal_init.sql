@@ -416,6 +416,33 @@ CREATE TABLE `proposal_approval` (
   KEY `idx_proposal_approval_approver` (`approver_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='批准人决策记录';
 
+-- -----------------------------------------------------------------------------
+-- 九、首页小广播标语（租户唯一一行）
+-- -----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `proposal_home_broadcast`;
+CREATE TABLE `proposal_home_broadcast` (
+  `id` varchar(36) NOT NULL COMMENT '主键',
+  `content` varchar(200) NOT NULL DEFAULT '' COMMENT '标语文案',
+  `create_no` varchar(50) DEFAULT NULL COMMENT '创建人工号',
+  `create_by` varchar(50) DEFAULT NULL COMMENT '创建人名称',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建日期',
+  `update_no` varchar(50) DEFAULT NULL COMMENT '更新人工号',
+  `update_by` varchar(50) DEFAULT NULL COMMENT '更新人名称',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
+  `sys_org_code` varchar(64) DEFAULT NULL COMMENT '所属部门',
+  `sys_org_name` varchar(300) DEFAULT NULL COMMENT '机构名称',
+  `tenant_id` varchar(36) NOT NULL DEFAULT '' COMMENT '租户ID',
+  `remark` varchar(300) DEFAULT NULL COMMENT '备注',
+  `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_proposal_home_broadcast_tenant` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='首页小广播标语（租户唯一）';
+
+INSERT INTO `proposal_home_broadcast` (`id`, `content`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
+SELECT '2094102200000000001', '人人参与改善 · 点滴汇聚效益', 'admin', NOW(), 'admin', NOW(), '', 'Y'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_home_broadcast` WHERE `tenant_id` = '');
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =============================================================================
