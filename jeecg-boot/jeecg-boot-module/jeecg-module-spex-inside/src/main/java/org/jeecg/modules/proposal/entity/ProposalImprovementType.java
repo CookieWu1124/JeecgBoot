@@ -7,19 +7,19 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("proposal_application")
-@Schema(description = "proposal application")
-public class ProposalApplication extends ProposalBaseEntity implements Serializable {
+@TableName("proposal_improvement_type")
+@Schema(description = "改善性质配置")
+public class ProposalImprovementType extends ProposalBaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String proposalId;
-    private String currentSituation;
-    private String improvementSuggestion;
-    private Date submitTime;
+    private String typeCode;
+    private String typeName;
+    private String description;
+    private Integer sortNo;
+    private String typeStatus;
 }

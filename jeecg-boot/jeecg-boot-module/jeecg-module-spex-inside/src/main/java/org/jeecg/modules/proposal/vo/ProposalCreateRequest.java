@@ -15,7 +15,6 @@ public class ProposalCreateRequest {
     private String teamType;
     private String currentSituation;
     private String improvementSuggestion;
-    private String email;
     private List<AttachmentItem> attachments;
 
     @Data

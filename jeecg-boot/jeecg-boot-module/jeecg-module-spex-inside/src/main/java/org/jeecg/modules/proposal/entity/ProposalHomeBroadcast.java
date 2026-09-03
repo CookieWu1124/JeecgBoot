@@ -7,19 +7,19 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
 
+/**
+ * 首页小广播标语（租户唯一一行）
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("proposal_application")
-@Schema(description = "proposal application")
-public class ProposalApplication extends ProposalBaseEntity implements Serializable {
+@TableName("proposal_home_broadcast")
+@Schema(description = "首页小广播标语")
+public class ProposalHomeBroadcast extends ProposalBaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String proposalId;
-    private String currentSituation;
-    private String improvementSuggestion;
-    private Date submitTime;
+    @Schema(description = "标语文案")
+    private String content;
 }

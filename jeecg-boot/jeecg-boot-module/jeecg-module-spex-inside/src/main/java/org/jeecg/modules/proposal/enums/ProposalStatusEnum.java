@@ -1,30 +1,85 @@
 package org.jeecg.modules.proposal.enums;
 
 import lombok.Getter;
+import org.jeecg.modules.proposal.entity.Proposal;
 
+/**
+ * 提案主表 {@code proposal.status} 的合法取值。{@link #code} 落库，{@link #label} 给前端/提示。
+ * <p>
+ * 申请段口径（当前交付）：{@link #PENDING_REVIEW}、{@link #PENDING_APPROVAL}、
+ * {@link #APPROVED}、{@link #REJECTED_FINAL}。{@link #APPROVED} 与后续 {@link #PENDING_ASSIGN}
+ * 不得合并——阶段 2/3/4 是否做尚未定，批准后停在已批准。
+ * <p>
+ * 申请段无暂存、无撤回；发起直接写入 {@link #PENDING_REVIEW}。
+ * 合法跳转见 {@code ProposalStateMachine}，不要在 Service 里拼字符串改 status。
+ */
 @Getter
 public enum ProposalStatusEnum {
 
-    DRAFT("DRAFT", "\u8349\u7a3f"),
-    PENDING_REVIEW("PENDING_REVIEW", "\u5f85\u5ba1\u6838"),
-    PENDING_APPROVAL("PENDING_APPROVAL", "\u5f85\u6279\u51c6"),
-    REJECTED_FINAL("REJECTED_FINAL", "\u4e0d\u6279\u51c6"),
-    WITHDRAWN("WITHDRAWN", "\u5df2\u64a4\u56de"),
-    PENDING_ASSIGN("PENDING_ASSIGN", "\u5f85\u6307\u6d3e"),
-    PENDING_CLAIM("PENDING_CLAIM", "\u5f85\u9886\u53d6"),
-    IN_PROGRESS("IN_PROGRESS", "\u8fdb\u884c\u4e2d"),
-    PLAN_PENDING_REVIEW("PLAN_PENDING_REVIEW", "\u8ba1\u5212\u4e66\u5f85\u5ba1"),
-    PLAN_PENDING_APPROVAL("PLAN_PENDING_APPROVAL", "\u8ba1\u5212\u4e66\u5f85\u6279"),
-    PLAN_REJECTED("PLAN_REJECTED", "\u5df2\u9a73\u56de"),
-    PENDING_EVALUATION("PENDING_EVALUATION", "\u5f85\u8bc4\u5b9a"),
-    PENDING_SIGNOFF("PENDING_SIGNOFF", "\u5f85\u7b7e\u6838"),
-    COMPLETED("COMPLETED", "\u5df2\u5b8c\u6210");
+    PENDING_REVIEW("PENDING_REVIEW", "审核中"),
+    PENDING_APPROVAL("PENDING_APPROVAL", "待批准"),
+    /** 申请段通过。不要写成待指派；阶段 2 入口待定。 */
+    APPROVED("APPROVED", "已批准"),
+    REJECTED_FINAL("REJECTED_FINAL", "不批准"),
+    PENDING_ASSIGN("PENDING_ASSIGN", "待指派"),
+    PENDING_CLAIM("PENDING_CLAIM", "待领取"),
+    /** 任务已分配。下一步交计划书还是交报告书，看 plan_required，不单看本状态。 */
+    IN_PROGRESS("IN_PROGRESS", "进行中"),
+    PLAN_PENDING_REVIEW("PLAN_PENDING_REVIEW", "计划书待审"),
+    PLAN_PENDING_APPROVAL("PLAN_PENDING_APPROVAL", "计划书待批"),
+    PLAN_REJECTED("PLAN_REJECTED", "已驳回"),
+    PENDING_EVALUATION("PENDING_EVALUATION", "待评定"),
+    PENDING_SIGNOFF("PENDING_SIGNOFF", "待签核"),
+    COMPLETED("COMPLETED", "已完成");
 
+    /** 写入 proposal.status / status_log.from_status / to_status。 */
     private final String code;
+    /** 界面显示名。 */
     private final String label;
 
     ProposalStatusEnum(String code, String label) {
         this.code = code;
         this.label = label;
+    }
+
+    /** 库里读出的 status 字符串转枚举；未知值返回 null，由状态机报「未知提案状态」。 */
+    public static ProposalStatusEnum fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        for (ProposalStatusEnum item : values()) {
+            if (item.code.equals(code)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /** 给列表/详情回显；未知码原样返回，避免空白。 */
+    public static String labelOf(String code) {
+        ProposalStatusEnum item = fromCode(code);
+        return item == null ? code : item.getLabel();
+    }
+
+    /** 全流程不再迁出：不批准 / 已完成。已批准不是全流程终态（阶段 2 可能再往下）。 */
+    public boolean terminal() {
+        return this == REJECTED_FINAL || this == COMPLETED;
+    }
+
+    /** 当前交付的申请段四档。 */
+    public boolean applicationStage() {
+        return this == PENDING_REVIEW || this == PENDING_APPROVAL
+                || this == APPROVED || this == REJECTED_FINAL;
+    }
+
+    /** 申请段已闭环：已批准或不批准。 */
+    public boolean applicationClosed() {
+        return this == APPROVED || this == REJECTED_FINAL;
+    }
+
+    public static void attachLabel(Proposal proposal) {
+        if (proposal != null) {
+            proposal.setStatusLabel(labelOf(proposal.getStatus()));
+        }
     }
 }
