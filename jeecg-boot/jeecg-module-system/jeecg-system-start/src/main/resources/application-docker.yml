@@ -271,6 +271,9 @@ jeecg:
     webapp: /opt/webapp
   shiro:
     excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**
+  wx-mini:
+    app-id: wxce3a1b42d7fa0bd6
+    app-secret: '96ea456f97842dee826cec403a36d321'
   #阿里云oss存储和大鱼短信秘钥配置
   oss:
     accessKey: ??
