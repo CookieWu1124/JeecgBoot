@@ -155,7 +155,7 @@ spring:
   data:
     redis:
       database: 0
-      host: jeecg-boot-redis
+      host: redis
       port: 6379
       password:
 #mybatis plus 设置
@@ -326,7 +326,7 @@ jeecg:
     logRetentionDays: 30
   #分布式锁配置
   redisson:
-    address: jeecg-boot-redis:6379
+    address: redis:6379
     password:
     type: STANDALONE
     enabled: true
