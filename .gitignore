@@ -1,0 +1,16 @@
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+# Maven 编译产物
+target/
+*.class
+# 日志
+logs/
+*.log
+# 系统文件
+Thumbs.db
+.DS_Store
+desktop.ini

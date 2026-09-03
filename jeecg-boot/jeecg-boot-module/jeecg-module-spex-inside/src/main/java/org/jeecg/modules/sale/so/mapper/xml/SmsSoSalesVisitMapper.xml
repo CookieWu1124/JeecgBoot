@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.sale.so.mapper.SmsSoSalesVisitMapper">
+
+    <select id="selectMyTodoList" resultType="org.jeecg.modules.sale.so.vo.MyTodoVO">
+        SELECT
+            c.customer_name AS customerName,
+            p.*,
+            CASE WHEN maxv.next_visit_time &lt; CURDATE() THEN 1 ELSE 0 END AS isOverdue
+        FROM sms_so_sales_customer c
+                 INNER JOIN sms_so_sales_project p ON c.id = p.customer_id
+                 INNER JOIN (
+            --子查询：每个项目拿到最新一次拜访的下次跟进时间
+            SELECT project_id, MAX(next_visit_time) AS next_visit_time
+            FROM sms_so_sales_visit
+            GROUP BY project_id
+        ) maxv ON p.id = maxv.project_id
+
+        WHERE
+      --只查当前销售领取的客户
+            c.sale_user_id = #{saleUserId}
+      -- 下次跟进时间：小于等于当前日期+3天（包含逾期的，visitDate已经过去的）
+          AND DATE(maxv.next_visit_time) &lt;= DATE_ADD(CURDATE(),INTERVAL #{days} DAY)
+
+        ORDER BY maxv.next_visit_time ASC
+    </select>
+</mapper>

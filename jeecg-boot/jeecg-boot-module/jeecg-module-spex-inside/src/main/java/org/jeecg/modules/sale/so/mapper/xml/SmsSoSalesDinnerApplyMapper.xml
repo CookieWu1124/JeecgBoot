@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.sale.so.mapper.SmsSoSalesDinnerApplyMapper">
+    <select id="selectMaxShipNoByPrefix" resultType="java.lang.String">
+        SELECT MAX(apply_no)
+        FROM sms_so_sales_dinner_apply
+        WHERE apply_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+</mapper>
