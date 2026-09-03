@@ -62,14 +62,18 @@ const displayDept = computed(() => {
     || '提案改善系统'
 })
 
-const greetText = computed(() => {
+/** 优先用后端 greeting（服务器时区）；本地仅作未登录/失败兜底（开发者工具 JS 时区常不准） */
+function localGreeting() {
   const hour = new Date().getHours()
   if (hour < 12)
     return '早上好'
   if (hour < 18)
     return '下午好'
   return '晚上好'
-})
+}
+
+const greeting = ref(localGreeting())
+const greetText = computed(() => greeting.value || localGreeting())
 
 const kpis = ref([
   { label: '待办', value: 0, action: 'todo' },
@@ -136,6 +140,7 @@ function mapFeed(item: AppHomeFeedItem, index: number): FeedItem {
 
 async function loadHome() {
   if (!isLoggedIn.value) {
+    greeting.value = localGreeting()
     kpis.value = [
       { label: '待办', value: 0, action: 'todo' },
       { label: '进行中', value: 0, action: 'proposal' },
@@ -148,6 +153,7 @@ async function loadHome() {
   }
   try {
     const res = await fetchAppHome()
+    greeting.value = res?.greeting || localGreeting()
     kpis.value = [
       { label: '待办', value: Number(res?.todoCount) || 0, action: 'todo' },
       { label: '进行中', value: Number(res?.doingCount) || 0, action: 'proposal' },

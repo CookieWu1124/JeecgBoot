@@ -41,10 +41,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     //update-begin---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
     private static final int HOME_FEED_LIMIT = 3;
     //update-end---author:spex ---date:2026-09-02  for：【首页动态】摘要展示最新 3 条-----------
-    private static final Set<String> TERMINAL_STATUSES = Set.of(
-            ProposalStatusEnum.COMPLETED.getCode(),
+    /** 首页「已结案」/列表 done Tab：已批准、不批准、已完成（与进行中 notIn 互斥） */
+    private static final Set<String> DONE_STATUSES = Set.of(
+            ProposalStatusEnum.APPROVED.getCode(),
             ProposalStatusEnum.REJECTED_FINAL.getCode(),
-            ProposalStatusEnum.APPROVED.getCode()
+            ProposalStatusEnum.COMPLETED.getCode()
     );
 
     @Autowired
@@ -585,13 +586,11 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
             return;
         }
         if ("doing".equalsIgnoreCase(tab)) {
-            qw.notIn(Proposal::getStatus, TERMINAL_STATUSES);
+            qw.notIn(Proposal::getStatus, DONE_STATUSES);
             return;
         }
         if ("done".equalsIgnoreCase(tab)) {
-            qw.in(Proposal::getStatus, ProposalStatusEnum.COMPLETED.getCode(),
-                    ProposalStatusEnum.REJECTED_FINAL.getCode(),
-                    ProposalStatusEnum.APPROVED.getCode());
+            qw.in(Proposal::getStatus, DONE_STATUSES);
         }
     }
 
@@ -705,16 +704,13 @@ public class ProposalServiceImpl extends ServiceImpl<ProposalMapper, Proposal> i
     private long countDoing(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
-                .notIn(Proposal::getStatus, TERMINAL_STATUSES));
+                .notIn(Proposal::getStatus, DONE_STATUSES));
     }
 
     private long countDone(String userId) {
         return count(new LambdaQueryWrapper<Proposal>()
                 .eq(Proposal::getProposerId, userId)
-                .in(Proposal::getStatus,
-                        ProposalStatusEnum.APPROVED.getCode(),
-                        ProposalStatusEnum.REJECTED_FINAL.getCode(),
-                        ProposalStatusEnum.COMPLETED.getCode()));
+                .in(Proposal::getStatus, DONE_STATUSES));
     }
 
     /** 委员未审 + 批准人待核定 + 部门负责人待指派；按名册/配置位，不走权限抛错。 */
