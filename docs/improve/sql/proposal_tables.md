@@ -18,7 +18,7 @@
 - [proposal_status_log_unread](#proposal_status_log_unread) — 提案状态日志未读（用户×日志）
 - [proposal_committee_review](#proposal_committee_review) — 委员审核记录（申请阶段快照）
 - [proposal_approval](#proposal_approval) — 批准人决策记录
-- [proposal_home_broadcast](#proposal_home_broadcast) — 首页小广播标语（租户唯一）
+- [proposal_home_broadcast](#proposal_home_broadcast) — 首页小广播标语（业务上 active=Y 一条）
 
 ---
 
@@ -341,7 +341,8 @@
 
 ## proposal_home_broadcast
 
-**表说明**：小程序首页「小广播」标语。查询取 `active=Y` 最新一条；保存时将现有 Y 全部置 N 后插入新行。`content` 为空时首页不展示该条。
+**表说明**：小程序首页「小广播」标语。查询取 `active=Y` 最新一条；保存时将现有 Y 全部置 N 后插入新行。`content` 为空时首页不展示该条。  
+**注意**：不要对 `tenant_id` 建唯一键——软删行仍占 `tenant_id`，再插会 `Duplicate entry`。
 
 ### 业务字段
 
@@ -353,4 +354,4 @@
 ### 索引与约束
 
 - **主键**：(`id`)
-- **唯一索引** `uk_proposal_home_broadcast_tenant`：(`tenant_id`)
+- **普通索引** `idx_proposal_home_broadcast_active`：(`active`)

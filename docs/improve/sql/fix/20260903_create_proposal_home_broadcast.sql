@@ -19,12 +19,14 @@ CREATE TABLE IF NOT EXISTS `proposal_home_broadcast` (
   `remark` varchar(300) DEFAULT NULL COMMENT '备注',
   `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_proposal_home_broadcast_tenant` (`tenant_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='首页小广播标语（租户唯一）';
+  KEY `idx_proposal_home_broadcast_active` (`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='首页小广播标语';
+
+-- 已建库若仍带 uk_proposal_home_broadcast_tenant，请另执行 20260903_drop_proposal_home_broadcast_uk.sql
 
 INSERT INTO `proposal_home_broadcast` (`id`, `content`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
 SELECT '2094102200000000001', '人人参与改善 · 点滴汇聚效益', 'admin', NOW(), 'admin', NOW(), '', 'Y'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_home_broadcast` WHERE `tenant_id` = '');
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_home_broadcast` WHERE `id` = '2094102200000000001');
 
 -- 按钮权限（挂在提案配置菜单下，不新建菜单）
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)

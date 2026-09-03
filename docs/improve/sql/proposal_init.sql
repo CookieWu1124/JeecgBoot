@@ -417,7 +417,7 @@ CREATE TABLE `proposal_approval` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='批准人决策记录';
 
 -- -----------------------------------------------------------------------------
--- 九、首页小广播标语（租户唯一一行）
+-- 九、首页小广播标语（业务上有效一条：active=Y；勿对 tenant_id 建唯一键，否则软删后再插会撞键）
 -- -----------------------------------------------------------------------------
 
 DROP TABLE IF EXISTS `proposal_home_broadcast`;
@@ -436,12 +436,12 @@ CREATE TABLE `proposal_home_broadcast` (
   `remark` varchar(300) DEFAULT NULL COMMENT '备注',
   `active` varchar(4) DEFAULT 'Y' COMMENT '是否有效(逻辑删除取反)：N-否，Y-是',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_proposal_home_broadcast_tenant` (`tenant_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='首页小广播标语（租户唯一）';
+  KEY `idx_proposal_home_broadcast_active` (`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='首页小广播标语';
 
 INSERT INTO `proposal_home_broadcast` (`id`, `content`, `create_by`, `create_time`, `update_by`, `update_time`, `tenant_id`, `active`)
 SELECT '2094102200000000001', '人人参与改善 · 点滴汇聚效益', 'admin', NOW(), 'admin', NOW(), '', 'Y'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_home_broadcast` WHERE `tenant_id` = '');
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `proposal_home_broadcast` WHERE `id` = '2094102200000000001');
 
 SET FOREIGN_KEY_CHECKS = 1;
 
