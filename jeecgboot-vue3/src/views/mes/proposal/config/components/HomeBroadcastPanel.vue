@@ -18,7 +18,7 @@
           />
         </a-form-item>
         <a-form-item>
-          <a-button type="primary" :loading="saving" v-auth="'proposal:config:homeBroadcast:save'" @click="handleSave">
+          <a-button type="primary" :loading="saving" @click="handleSave">
             保存
           </a-button>
         </a-form-item>

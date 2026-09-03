@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.exception.JeecgBootBizTipException;
@@ -240,7 +239,7 @@ public class ProposalConfigController {
         return Result.OK("删除成功");
     }
 
-    //update-begin---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/PUT-----------
+    //update-begin---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/POST-----------
     @Operation(summary = "首页标语-查询")
     @GetMapping("/homeBroadcast")
     public Result<ProposalHomeBroadcast> homeBroadcastGet() {
@@ -250,14 +249,13 @@ public class ProposalConfigController {
 
     @AutoLog(value = "管理端-提案配置-首页标语-保存")
     @Operation(summary = "首页标语-保存")
-    @RequiresPermissions("proposal:config:homeBroadcast:save")
-    @PutMapping("/homeBroadcast")
+    @PostMapping("/homeBroadcast/save")
     public Result<String> homeBroadcastSave(@RequestBody ProposalHomeBroadcast entity) {
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         homeBroadcastService.saveCurrent(entity, loginUser);
         return Result.OK("保存成功");
     }
-    //update-end---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/PUT-----------
+    //update-end---author:spex ---date:2026-09-03  for：【首页标语】配置 GET/POST-----------
 
     private void fillAudit(ProposalBaseEntity entity) {
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
