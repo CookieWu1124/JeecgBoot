@@ -44,4 +44,10 @@ public interface IProposalService extends IService<Proposal> {
 
     /** 申请批准决策：批准→APPROVED；不批准→REJECTED_FINAL。不进入待指派。 */
     void submitApplicationApproval(String proposalId, ApplicationApprovalRequest request, LoginUser loginUser);
+
+    /**
+     * 委员会名册删除成员后：在途（审核中）提案中，删除该委员未出结论的快照；已出结论保留；
+     * 重算 review_progress，若已审满则进入待批准。新增委员不补在途快照（本方法不处理）。
+     */
+    void onCommitteeMemberRemoved(String reviewerUserId, LoginUser loginUser);
 }
