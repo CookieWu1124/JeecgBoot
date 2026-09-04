@@ -44,6 +44,8 @@ public class Swagger3Config implements WebMvcConfigurer {
             "/sys/login",
             "/sys/phoneLogin",
             "/sys/mLogin",
+            "/sys/wxMini/silentLogin",
+            "/sys/wxMini/bind",
             "/sys/sms",
             "/sys/cas/client/validateLogin",
             "/test/jeecgDemo/demo3",

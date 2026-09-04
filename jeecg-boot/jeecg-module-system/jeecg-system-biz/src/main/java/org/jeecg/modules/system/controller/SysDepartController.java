@@ -37,6 +37,8 @@ import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.ImportParams;
 import org.jeecgframework.poi.excel.entity.enmus.ExcelType;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -60,6 +62,9 @@ import java.util.*;
 @RestController
 @RequestMapping("/sys/sysDepart")
 @Slf4j
+//update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
+@Tag(name = "系统-部门")
+//update-end---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
 public class SysDepartController {
 
 	@Autowired
@@ -106,6 +111,9 @@ public class SysDepartController {
 	 * 
 	 * @return
 	 */
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
+    @Operation(summary = "部门树（选部门组件 JSelectDept）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
 	@RequestMapping(value = "/queryTreeList", method = RequestMethod.GET)
 	public Result<List<SysDepartTreeModel>> queryTreeList(@RequestParam(name = "ids", required = false) String ids) {
 		Result<List<SysDepartTreeModel>> result = new Result<>();
@@ -568,6 +576,9 @@ public class SysDepartController {
 	 * @param orgCode
 	 * @return
 	 */
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
+    @Operation(summary = "按组织编码取部门（提案人所属部门回显）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
 	@GetMapping("/getDepartName")
 	public Result<SysDepart> getDepartName(@RequestParam(name = "orgCode") String orgCode) {
 		Result<SysDepart> result = new Result<>();
@@ -599,6 +610,9 @@ public class SysDepartController {
 	 * @param deptIds
 	 * @return
 	 */
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
+    @Operation(summary = "按部门 id 批量查询（部门名称回显）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选部门接口补 Knife4j 注解-----------
 	@RequestMapping(value = "/queryByIds", method = RequestMethod.GET)
 	public Result<Collection<SysDepart>> queryByIds(@RequestParam(name = "deptIds") String deptIds) {
 		Result<Collection<SysDepart>> result = new Result<>();

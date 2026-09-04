@@ -1,0 +1,101 @@
+# =============================================================================
+# 公司 DEV · 后端外部配置覆盖模板
+# -----------------------------------------------------------------------------
+# 用法：
+#   1. 复制本文件到服务器：/opt/spex-dev/config/application-docker.yml
+#   2. 把下方所有 <<...>> 占位符换成真实值（勿提交含真实密码的副本进 Git）
+#   3. docker-compose 需挂载：./config:/jeecg-boot/config
+#   4. 打包使用 -Pdocker，使 spring.profiles.active=docker，才会合并本文件
+#
+# 说明：本文件只覆盖「发版必改」+「安全止血」项；其余沿用 jar 内 application-docker.yml。
+# 手册：docs/improve/公司DEV环境-后端Docker部署手册.md
+# 止血清单：docs/improve/security/20260904_止血Checklist.md（SEC-20260904-*）
+# =============================================================================
+
+spring:
+  flyway:
+    # 提案库靠手工 SQL；务必关闭
+    enabled: false
+    clean-disabled: true
+
+  datasource:
+    # ---- SEC-20260904-C1：覆盖 jar 内 Druid 默认 admin/123456 ----
+    druid:
+      stat-view-servlet:
+        # DEV 可被扫描时建议 false；若必须开监控：改为 true + 强口令 + allow
+        enabled: false
+        # login-username: <<DRUID_USER>>
+        # login-password: <<DRUID_PWD>>
+        # allow: 127.0.0.1,192.168.0.0/16
+        reset-enable: false
+    dynamic:
+      datasource:
+        master:
+          # ---- SEC-20260904-H1：优先内网主机；勿用已暴露的公网 IP 作长期方案 ----
+          # 建议：专用账号（非 root）；库支持时 useSSL=true
+          # 示例：jdbc:mysql://10.x.x.x:3306/inside_dev?characterEncoding=UTF-8&useUnicode=true&useSSL=true&tinyInt1isBit=false&serverTimezone=Asia/Shanghai
+          url: <<JDBC_URL>>
+          username: <<DB_USER>>
+          password: <<DB_PASSWORD>>
+          driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      database: 0
+      # 与 Compose 内 Redis 服务名一致（同一 docker network）
+      host: jeecg-boot-redis
+      port: 6379
+      # Redis 无密码则保持空；有密码则填写并与 redis-server --requirepass 一致
+      password: <<REDIS_PASSWORD_OR_EMPTY>>
+
+# ---- SEC-20260904-C3：收窄 Actuator（覆盖 jar 内 metrics/httpexchanges 等暴露）----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /internal-actuator
+  endpoint:
+    health:
+      show-details: never
+    env:
+      enabled: false
+    heapdump:
+      enabled: false
+    threaddump:
+      enabled: false
+    mappings:
+      enabled: false
+
+jeecg:
+  uploadType: local
+  path:
+    # 须与 Compose volume 容器侧路径一致，例如：./upFiles:/jeecg-boot/upFiles
+    upload: /jeecg-boot/upFiles
+    webapp: /jeecg-boot/webapp
+  domainUrl:
+    # 管理端 / 小程序实际访问入口（给链接拼装用；前端 baseURL 另配）
+    pc: http://<<APP_HOST_OR_DOMAIN>>:3100
+    app: http://<<APP_HOST_OR_DOMAIN>>:8080
+  # 微信小程序（后端专用；与公众平台该环境 AppID 一致）
+  wx-mini:
+    app-id: <<WX_MINI_APP_ID>>
+    app-secret: '<<WX_MINI_APP_SECRET>>'
+  # 分布式锁走同一 Redis
+  redisson:
+    address: jeecg-boot-redis:6379
+    password: <<REDIS_PASSWORD_OR_EMPTY>>
+    type: STANDALONE
+    enabled: true
+
+# ---- SEC-20260904-H2：对可被扫描的 DEV/预发默认屏蔽文档 ----
+# 仅本机且端口不对网段开放时，可临时 production: false
+knife4j:
+  enable: true
+  production: true
+  basic:
+    enable: false
+
+# ---- SEC-20260904-C2：CORS 无法用本文件修复 ----
+# 须改 jeecg-boot-base-core WebMvcConfiguration（allowedOriginPattern=*）后发版
+# 步骤见 docs/improve/security/20260904_止血Checklist.md §2.1

@@ -47,6 +47,8 @@ import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
 import org.jeecgframework.poi.excel.entity.enmus.ExcelType;
 import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -71,6 +73,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/sys/user")
+//update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
+@Tag(name = "系统-用户")
+//update-end---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
 public class SysUserController {
 
 	@Autowired
@@ -123,6 +128,9 @@ public class SysUserController {
      * @return
      */
     @PermissionData(pageComponent = "system/UserList")
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
+    @Operation(summary = "用户分页列表（选人组件 JSelectUser）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Result<IPage<SysUser>> queryPageList(SysUser user,@RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 									  @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,HttpServletRequest req) {
@@ -522,6 +530,9 @@ public class SysUserController {
      * @param username
      * @return
      */
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
+    @Operation(summary = "按部门分页选用户（部门负责人弹窗）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
     @RequestMapping(value = "/queryUserComponentData", method = RequestMethod.GET)
     public Result<IPage<SysUser>> queryUserComponentData(
             @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
@@ -623,6 +634,9 @@ public class SysUserController {
 	 * @param userIds
 	 * @return
 	 */
+    //update-begin---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
+    @Operation(summary = "按用户 id 批量查询（姓名/工号/职位回显）")
+    //update-end---author:spex ---date:2026-08-31  for：【提案管理端】选人接口补 Knife4j 注解-----------
 	@RequestMapping(value = "/queryByIds", method = RequestMethod.GET)
 	public Result<Collection<SysUser>> queryByIds(@RequestParam(name = "userIds") String userIds) {
 		Result<Collection<SysUser>> result = new Result<>();
