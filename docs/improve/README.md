@@ -1,6 +1,7 @@
 # 提案改善系统 — 资料目录
 
-> 本目录集中存放提案改善业务的规划文档、原型、样例数据与 SQL 脚本，供开发与 Cursor AI 编码参考。
+> 本目录集中存放提案改善业务的规划文档、原型、样例数据与 SQL 脚本，供开发与 Cursor AI 编码参考。  
+> **个人 / 公司双分支**：前端、本目录文档、规则与种子**只留在个人开发分支**；公司 work 仅合后端业务。操作约定见 [`docs/cursor/worktree-人工操作手册.md`](../cursor/worktree-人工操作手册.md)。
 
 ## 目录结构
 
@@ -11,6 +12,10 @@ docs/improve/
 ├── 移动端本地联调指南.md            # 后端开发者移动端/H5/Apifox 联调教程
 ├── 公司DEV环境-后端Docker部署手册.md # JAR + Docker（外置 MySQL / 同机 Redis）部署清单与步骤
 ├── deploy/                          # 公司 DEV 外部配置模板（application-docker.yml.template）
+├── security/                        # 安全评估与加固归档（Finding ID / frontmatter）
+│   ├── README.md                    # 目录约定与检索说明
+│   ├── 20260904_JeecgBoot安全评估.md # JeecgBoot 3.9.3 / MOM 测试环境（SEC-20260904-*）
+│   └── 20260904_止血Checklist.md     # 阶段 1 对照 deploy 模板逐项落地
 ├── 微信开发者工具-小程序联调教程.md  # 从安装开发者工具到测通微信授权登录（0-1）
 ├── 微信授权登录-生命周期脉络.md      # 从注册微信到 bind 的通俗时间线（复习用）
 ├── 微信小程序登录-其他模块接入.md    # 公共 /sys/wxMini 如何给其他业务复用

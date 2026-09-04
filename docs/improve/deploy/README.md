@@ -2,9 +2,10 @@
 
 | 文件 | 说明 |
 |------|------|
-| [`application-docker.yml.template`](./application-docker.yml.template) | 服务器 `config/application-docker.yml` 覆盖模板（占位符，无真实密钥） |
+| [`application-docker.yml.template`](./application-docker.yml.template) | 服务器 `config/application-docker.yml` 覆盖模板（占位符，无真实密钥；含安全止血段） |
 
-完整步骤见：[公司DEV环境-后端Docker部署手册.md](../公司DEV环境-后端Docker部署手册.md)
+完整步骤见：[公司DEV环境-后端Docker部署手册.md](../公司DEV环境-后端Docker部署手册.md)  
+安全止血勾选：[security/20260904_止血Checklist.md](../security/20260904_止血Checklist.md)
 
 ```bash
 # 在应用服务器
