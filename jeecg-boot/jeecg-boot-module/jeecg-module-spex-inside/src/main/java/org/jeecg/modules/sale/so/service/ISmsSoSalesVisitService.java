@@ -24,4 +24,6 @@ public interface ISmsSoSalesVisitService extends IService<SmsSoSalesVisit> {
     List<SmsSoSalesVisit> exportList(SmsSoSalesVisit smsSoSalesVisit, Map<String, String[]> parameterMap);
 
     IPage<MyTodoVO> queryMyTodo(Page<MyTodoVO> page, String loginUserId);
+
+    void comment(SmsSoSalesVisit smsSoSalesVisit);
 }

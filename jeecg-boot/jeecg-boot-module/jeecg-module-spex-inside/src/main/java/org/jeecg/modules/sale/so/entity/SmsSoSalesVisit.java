@@ -115,4 +115,17 @@ public class SmsSoSalesVisit implements Serializable {
 	/**备注*/
     @Schema(description = "备注")
     private java.lang.String remark;
+    /** 点评内容 */
+    @Schema(description = "点评内容")
+    private String visitComment;
+    /** 点评人ID */
+    @Schema(description = "点评人ID")
+    private String commentUserId;
+    /** 点评人姓名 */
+    @Schema(description = "点评人姓名")
+    private String commentUserName;
+    /** 点评时间 */
+    @Schema(description = "点评时间")
+    private Date commentTime;
+
 }

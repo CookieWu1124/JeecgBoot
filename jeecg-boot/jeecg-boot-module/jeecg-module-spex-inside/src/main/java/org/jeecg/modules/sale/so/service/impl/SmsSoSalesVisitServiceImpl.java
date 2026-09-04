@@ -11,12 +11,14 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.sale.so.utils.DictUtil;
+import org.jeecg.modules.sale.so.utils.PreDealUtils;
 import org.jeecg.modules.sale.so.vo.MyTodoVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +36,8 @@ public class SmsSoSalesVisitServiceImpl extends ServiceImpl<SmsSoSalesVisitMappe
 
     @Autowired
     private DictUtil dictUtil;
+    @Autowired
+    private PreDealUtils preDealUtils;
 
     @Override
     public void saveMain(SmsSoSalesVisit smsSoSalesVisit) {
@@ -70,5 +74,17 @@ public class SmsSoSalesVisitServiceImpl extends ServiceImpl<SmsSoSalesVisitMappe
     public IPage<MyTodoVO> queryMyTodo(Page<MyTodoVO> page, String loginUserId) {
         // 3天
         return this.baseMapper.selectMyTodoList(page, loginUserId,3);
+    }
+
+    @Override
+    public void comment(SmsSoSalesVisit smsSoSalesVisit) {
+        SmsSoSalesVisit comment = new  SmsSoSalesVisit();
+        preDealUtils.preDealEntityById(comment);
+        comment.setId(smsSoSalesVisit.getId());
+        comment.setCommentUserId(comment.getUpdateNo());
+        comment.setCommentUserName(comment.getUpdateBy());
+        comment.setCommentTime(new Date());
+        comment.setVisitComment(smsSoSalesVisit.getVisitComment());
+        this.updateById(comment);
     }
 }

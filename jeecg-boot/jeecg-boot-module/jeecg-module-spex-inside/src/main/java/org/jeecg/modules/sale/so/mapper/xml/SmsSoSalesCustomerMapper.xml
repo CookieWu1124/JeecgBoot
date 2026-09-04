@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.sale.so.mapper.SmsSoSalesCustomerMapper">
-
+    <!--
+            清除客户saleUserId：
+            规则：客户下所有项目的【最新拜访visitDate】全部超过30天，或者项目无拜访记录，则sale_user_id置null
+            先子查询：每个projectId对应的最大visitDate
+        -->
+    <update id="clearExpireCustomerSaleUserId">
+        UPDATE sms_so_sales_customer cust
+        SET cust.sale_user_id = NULL
+        WHERE cust.id IN (
+            SELECT DISTINCT t.customer_id FROM (
+                                                   SELECT proj.customer_id
+                                                   FROM sms_so_sales_project proj
+                                                            LEFT JOIN (
+                                                       SELECT project_id, MAX(visit_date) AS max_visit_date
+                                                       FROM sms_so_sales_visit
+                                                       WHERE active = 'Y'
+                                                       GROUP BY project_id
+                                                   ) visitMax ON proj.id = visitMax.project_id
+                                                   WHERE proj.active = 'Y'
+                                                   GROUP BY proj.customer_id
+                                                   HAVING MAX(IFNULL(visitMax.max_visit_date,'1970-01-01')) &lt; DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                                               ) t
+        )
+          AND cust.active = 'Y'
+          AND cust.sale_user_id IS NOT NULL;
+    </update>
 </mapper>

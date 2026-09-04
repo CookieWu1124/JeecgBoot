@@ -153,6 +153,6 @@ public class SmsSoSalesProject implements Serializable {
 	/**备注*/
     @Schema(description = "备注")
     private java.lang.String remark;
-    @Schema(description = "是否是临时客户（0否 1是）")
+    @Schema(description = "是否是临时客户（0正式 1意向 2运维）")
     private java.lang.String isTemp;
 }

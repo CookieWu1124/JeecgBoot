@@ -11,4 +11,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface SmsSoSalesCustomerMapper extends BaseMapper<SmsSoSalesCustomer> {
 
+    int clearExpireCustomerSaleUserId();
 }

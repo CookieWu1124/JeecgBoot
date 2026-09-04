@@ -48,6 +48,29 @@ public class SmsSoSalesSerialServiceImpl extends ServiceImpl<SmsSoSalesSerialMap
         return type.getPrefix() + year + String.format("%0" + type.getSerialLength() + "d", counter.getCurSerial());
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String ywProjectNo() {
+        NoTypeEnum type = NoTypeEnum.PROJ_YW;
+        int year = LocalDate.now().getYear();
+
+        //行锁锁住计数器
+        SmsSoSalesSerial counter = smsSoSalesSerialMapper.selectForUpdate(type.getCode(), year);
+        if (counter == null) {
+            counter = new SmsSoSalesSerial();
+            counter.setNoType(type.getCode());
+            counter.setCurYear(year);
+            counter.setCurSerial(1);
+            smsSoSalesSerialMapper.insert(counter);
+        } else {
+            //流水号+1
+            smsSoSalesSerialMapper.incrementSerial(counter.getId());
+            counter.setCurSerial(counter.getCurSerial() + 1);
+        }
+        //拼接编号：前缀+年份+3位补零流水
+        return type.getPrefix() + year + String.format("%0" + type.getSerialLength() + "d", counter.getCurSerial());
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String convertTempToFormal(String tempNo) {

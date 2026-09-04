@@ -209,4 +209,20 @@ public class SmsSoSalesVisitController extends JeecgController<SmsSoSalesVisit, 
         IPage<MyTodoVO> resultPage = smsSoSalesVisitService.queryMyTodo(page,loginUserId);
         return Result.OK(resultPage);
     }
+
+    /**
+     *  上级点评
+     *
+     * @param smsSoSalesVisit
+     * @return
+     */
+
+    @AutoLog(value = "项目拜访跟进记录-上级点评")
+    @Operation(summary="项目拜访跟进记录-上级点评", description="项目拜访跟进记录-上级点评")
+    @PostMapping(value = "/comment")
+    public Result<?> comment(@RequestBody SmsSoSalesVisit smsSoSalesVisit) {
+        preDealUtils.preDealEntityById(smsSoSalesVisit);
+        smsSoSalesVisitService.comment(smsSoSalesVisit);
+        return Result.OK("成功!");
+    }
 }

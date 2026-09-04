@@ -46,8 +46,11 @@ public class SmsSoSalesProjectServiceImpl extends ServiceImpl<SmsSoSalesProjectM
         if ("1".equals(smsSoSalesProject.getIsTemp())) {
             String projectNo = smsSoSalesSerialService.nextProjectNo(true);
             smsSoSalesProject.setProjectNo(projectNo);
-        } else {
+        } else if ("2".equals(smsSoSalesProject.getIsTemp())){
             String projectNo = smsSoSalesSerialService.nextProjectNo(false);
+            smsSoSalesProject.setProjectNo(projectNo);
+        } else {
+            String projectNo = smsSoSalesSerialService.ywProjectNo();
             smsSoSalesProject.setProjectNo(projectNo);
         }
         LambdaQueryChainWrapper<SmsSoSalesProject> wrapper = new LambdaQueryChainWrapper<>(getBaseMapper());

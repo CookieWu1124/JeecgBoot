@@ -130,7 +130,7 @@ public class SmsSoSalesCustomerController extends JeecgController<SmsSoSalesCust
         if(oConvertUtils.isNotEmpty(keyword)){
             queryWrapper.and(wrapper -> wrapper.like("customer_name", keyword).or().like("customer_no", keyword));
         }
-        queryWrapper.eq("sale_user_id", "");
+        queryWrapper.isNull("sale_user_id");
         queryWrapper.eq("active", ACTIVE_Y);
         queryWrapper.orderByDesc("create_time");
         Page<SmsSoSalesCustomer> page = new Page<SmsSoSalesCustomer>(pageNo, pageSize);

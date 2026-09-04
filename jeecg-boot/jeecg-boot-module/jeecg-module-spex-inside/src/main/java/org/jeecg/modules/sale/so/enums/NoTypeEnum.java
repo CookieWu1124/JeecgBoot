@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum NoTypeEnum {
     PROJ_FORMAL("PROJ_FORMAL", "", 3),   // 正式项目：2026001
-    PROJ_TEMP("PROJ_TEMP", "FC", 3);     // 临时项目：FC2026001
-
+    PROJ_TEMP("PROJ_TEMP", "FC", 3),     // 临时项目：FC2026001
+    PROJ_YW("PROJ_YW", "YW", 3);
     private final String code;
     private final String prefix;
     private final int serialLength;

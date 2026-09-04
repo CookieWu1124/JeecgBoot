@@ -78,7 +78,17 @@ public class SmsSoSalesCustomer implements Serializable {
 	@Excel(name = "关键决策人", width = 15)
     @Schema(description = "关键决策人")
     private java.lang.String authorityUser;
-	/**创建人工号*/
+    /**决策人职位*/
+    @Excel(name = "决策人职位", width = 15)
+    @Schema(description = "决策人职位")
+    private String decisionPost;
+
+    /**决策人联系电话*/
+    @Excel(name = "决策人联系电话", width = 15)
+    @Schema(description = "决策人联系电话")
+    private String decisionPhone;
+
+    /**创建人工号*/
     @Schema(description = "创建人工号")
     private java.lang.String createNo;
 	/**创建人*/

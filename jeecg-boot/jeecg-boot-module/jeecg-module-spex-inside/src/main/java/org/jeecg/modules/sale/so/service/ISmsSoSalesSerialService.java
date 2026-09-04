@@ -2,6 +2,7 @@ package org.jeecg.modules.sale.so.service;
 
 import org.jeecg.modules.sale.so.entity.SmsSoSalesSerial;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @Description: 项目编号流水号表
@@ -16,6 +17,9 @@ public interface ISmsSoSalesSerialService extends IService<SmsSoSalesSerial> {
      * @return 编号 FC2026001 / 2026001
      */
     String nextProjectNo(boolean isTemp);
+
+    @Transactional(rollbackFor = Exception.class)
+    String ywProjectNo();
 
     /**
      * 临时项目转正
