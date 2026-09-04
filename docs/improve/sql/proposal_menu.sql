@@ -78,43 +78,51 @@ WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '20941030000000000
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
--- 提案配置 — 按钮权限（六 Tab）
+-- 提案配置 — 按钮权限（与公司库 192.168.123.101 对齐；新增用 add、编辑用 edit）
 -- -----------------------------------------------------------------------------
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT '2094103000000000007', '2094103000000000003', '部门负责人-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:deptLeader:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000007');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000008', '2094103000000000003', '部门负责人-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:deptLeader:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000008');
+SELECT '2095669402780868610', '2094103000000000003', '部门负责人-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:deptLeader:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2095669402780868610');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000009', '2094103000000000003', '委员会-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:committee:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000009');
+SELECT '2095666029281189890', '2094103000000000003', '委员会-添加', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:committee:add', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2095666029281189890');
+
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
+SELECT '2095667544930689025', '2094103000000000003', '委员会-编辑', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:committee:edit', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2095667544930689025');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT '2094103000000000010', '2094103000000000003', '委员会-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:committee:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000010');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000011', '2094103000000000003', '批准人-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:approver:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+SELECT '2094103000000000011', '2094103000000000003', '批准人-配置', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:approver:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000011');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000012', '2094103000000000003', '批准人-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:approver:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000012');
+SELECT '2094103000000000013', '2094103000000000003', '评分维度-新增', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:scoreDimension:add', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000013');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000013', '2094103000000000003', '评分维度-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:scoreDimension:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000013');
+SELECT '2095668717456760833', '2094103000000000003', '评分维度-编辑', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:scoreDimension:edit', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2095668717456760833');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT '2094103000000000014', '2094103000000000003', '评分维度-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:scoreDimension:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000014');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000015', '2094103000000000003', '改善性质-保存', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:save', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+SELECT '2094103000000000015', '2094103000000000003', '改善性质-添加', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:add', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000015');
+
+INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
+SELECT '2095667812799913986', '2094103000000000003', '改善性质-编辑', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:edit', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2095667812799913986');
 
 INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
 SELECT '2094103000000000016', '2094103000000000003', '改善性质-删除', NULL, NULL, 0, NULL, NULL, 2, 'proposal:config:improvementType:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
@@ -159,16 +167,18 @@ JOIN `sys_permission` p ON p.id IN (
   '2094103000000000002',
   '2094103000000000003',
   '2094103000000000007',
-  '2094103000000000008',
-  '2094103000000000009',
   '2094103000000000010',
   '2094103000000000011',
-  '2094103000000000012',
   '2094103000000000013',
   '2094103000000000014',
   '2094103000000000015',
   '2094103000000000016',
-  '2094103000000000017'
+  '2094103000000000017',
+  '2095666029281189890',
+  '2095667544930689025',
+  '2095667812799913986',
+  '2095668717456760833',
+  '2095669402780868610'
 )
 WHERE r.role_code IN ('admin', 'proposal_admin')
   AND NOT EXISTS (

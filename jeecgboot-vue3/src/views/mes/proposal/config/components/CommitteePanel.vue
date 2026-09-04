@@ -2,7 +2,7 @@
   <div>
     <BasicTable @register="registerTable">
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:committee:save'">
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:committee:add'">
           添加成员
         </a-button>
       </template>
@@ -45,7 +45,7 @@
   }
   function getTableAction(record) {
     return [
-      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:committee:save' },
+      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:committee:edit' },
       {
         label: '移除',
         color: 'error',

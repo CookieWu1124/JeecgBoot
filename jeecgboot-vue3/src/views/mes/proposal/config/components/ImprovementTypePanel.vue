@@ -2,7 +2,7 @@
   <div>
     <BasicTable @register="registerTable">
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:improvementType:save'">
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:improvementType:add'">
           新增性质
         </a-button>
       </template>
@@ -46,7 +46,7 @@
   }
   function getTableAction(record) {
     return [
-      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:improvementType:save' },
+      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:improvementType:edit' },
       {
         label: '删除',
         color: 'error',

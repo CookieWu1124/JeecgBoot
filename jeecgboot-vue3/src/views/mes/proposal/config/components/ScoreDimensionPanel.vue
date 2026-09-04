@@ -3,7 +3,7 @@
     <BasicTable @register="registerTable" :afterFetch="afterFetch">
       <template #tableTitle>
         <div class="score-toolbar">
-          <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:scoreDimension:save'">
+          <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleAdd" v-auth="'proposal:config:scoreDimension:add'">
             新增维度
           </a-button>
           <div class="weight-summary">
@@ -68,7 +68,7 @@
   }
   function getTableAction(record) {
     return [
-      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:scoreDimension:save' },
+      { label: '编辑', onClick: handleEdit.bind(null, record), auth: 'proposal:config:scoreDimension:edit' },
       {
         label: '删除',
         color: 'error',
