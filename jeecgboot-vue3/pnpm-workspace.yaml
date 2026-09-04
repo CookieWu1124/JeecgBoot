@@ -1,7 +1,0 @@
-# pnpm 10+ 需显式批准依赖的构建脚本，否则会报 ERR_PNPM_IGNORED_BUILDS
-allowBuilds:
-  '@logicflow/core': true
-  '@scarf/scarf': false
-  core-js: true
-  esbuild: true
-  vue-demi: true
