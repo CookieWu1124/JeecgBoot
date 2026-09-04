@@ -1,0 +1,30 @@
+---
+description: 个人 spex-inside ↔ 公司 miniapp-dev 双分支同步/cherry-pick 硬约束（勿把前端文档配置合进公司库）
+alwaysApply: true
+---
+
+# 双分支 cherry-pick（提案 · spex-inside）
+
+完整人工步骤见：`docs/cursor/worktree-人工操作手册.md`（**勿**把该手册或整份 `docs/` pick 进公司库）。
+
+## 目录与分支
+
+| 角色 | 目录 | 分支 | 同步方向 |
+|------|------|------|----------|
+| 个人（主） | `C:\workspace\IDEA\spex-inside` | `v3.9.3-spex-inside` | 前端/文档/规则/种子只留这里 |
+| 公司 | `C:\workspace\IDEA\spex-inside-work` | `miniapp-dev` | **仅后台业务**；remote `gitlab` + 可选 `github` |
+
+## Agent 硬性
+
+1. **禁止**对公司仓做个人分支的整仓 `git merge`。
+2. 向公司同步时：**只** cherry-pick / 拷贝带 **`[base]`** 的后端业务改动。
+3. **禁止**带入公司 `miniapp-dev`：
+   - `spex-app/`、`jeecgboot-vue3/`
+   - `docs/**`、`.cursor/**`、`AGENTS.md`
+   - 个人 SQL 种子/原型、本 worktree 手册
+   - **全部** `application-*.yml`（含 `uploadType` / `jeecg.minio.*`：个人公网 MinIO ≠ 公司内网 MinIO）
+4. **必须保留**公司侧：`org.jeecg.modules.sale/**`、公司 yml、sale 相关 pom/框架补丁。
+5. 冲突时：业务逻辑可合入；**yml / sale 以公司为准**。
+6. 公司目录提交后：`git push gitlab miniapp-dev`（可选再 `git push github miniapp-dev`）。
+
+用户说「同步到公司 / cherry-pick / 合到 miniapp-dev」时，先按本规则筛选路径，再执行；细节命令以手册 §4–§5 为准。

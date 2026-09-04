@@ -1,7 +1,7 @@
-# Git Worktree / 双分支操作手册（提案改善 · spex-inside）
+﻿# Git Worktree / 双分支操作手册（提案改善 · spex-inside）
 
 > **读者**：项目维护者（人工查阅）。  
-> **Agent 约定**：Cursor Agent 以个人开发分支上的 `AGENTS.md`、`.cursor/rules/`、`docs/improve/` 为准；**本文档不参与公司库真相源**，勿把本文或整份 `docs/` cherry-pick 进公司分支。
+> **Agent 约定**：同步/cherry-pick 时以 `.cursor/rules/improve/dual-branch-cherry-pick.mdc`（`alwaysApply`）为准；细节步骤见本文。Cursor Agent 业务真相源仍为 `docs/improve/` 与 `.cursor/rules/improve/` 其它规则。**本文档不参与公司库真相源**，勿把本文或整份 `docs/` cherry-pick 进公司分支。
 
 ---
 
@@ -18,7 +18,7 @@
 
 | 角色 | 建议目录 | 分支 | Remote | 放什么 |
 |------|----------|------|--------|--------|
-| **个人开发（主）** | `C:\workspace\IDEA\spex-inside` | `v3.9.3-spex-inside`（或后续个人主分支） | 个人 GitHub（如 `CookieWu92` / `CookieWu1124`） | 后端业务 + **vue3 + spex-app + docs + SQL 种子 + Cursor 规则/约束 + 原型/需求** |
+| **个人开发（主）** | `C:\workspace\IDEA\spex-inside` | `v3.9.3-spex-inside`（或后续个人主分支） | 个人 GitHub（`CookieWu1124`） | 后端业务 + **vue3 + spex-app + docs + SQL 种子 + Cursor 规则/约束 + 原型/需求** |
 | **公司协作** | `C:\workspace\IDEA\spex-inside-work` | **`miniapp-dev`**（与同事同一分支，勿再平行维护 `v3.9.3-spex-inside-work`） | **`gitlab`** = 公司 GitLab；可选 `github` 镜像同名 `miniapp-dev` | **仅后台业务相关代码**；保留同事 `sale` 与公司 `application-*.yml` |
 
 当前双 remote 示例（公司 work 目录）：
