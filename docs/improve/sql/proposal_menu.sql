@@ -74,19 +74,8 @@ FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000003');
 
 -- -----------------------------------------------------------------------------
--- 提案管理 — 按钮权限
+-- 提案管理：仅查询+详情，不设添加/编辑/删除按钮权限（发起在小程序）
 -- -----------------------------------------------------------------------------
-INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000004', '2094103000000000002', '添加提案', NULL, NULL, 0, NULL, NULL, 2, 'proposal:manage:add', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000004');
-
-INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000005', '2094103000000000002', '编辑提案', NULL, NULL, 0, NULL, NULL, 2, 'proposal:manage:edit', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000005');
-
-INSERT INTO `sys_permission` (`id`, `parent_id`, `name`, `url`, `component`, `is_route`, `component_name`, `redirect`, `menu_type`, `perms`, `perms_type`, `sort_no`, `always_show`, `icon`, `is_leaf`, `keep_alive`, `hidden`, `hide_tab`, `description`, `create_by`, `create_time`, `update_by`, `update_time`, `del_flag`, `rule_flag`, `status`, `internal_or_external`)
-SELECT '2094103000000000006', '2094103000000000002', '删除提案', NULL, NULL, 0, NULL, NULL, 2, 'proposal:manage:delete', '1', NULL, 0, NULL, 1, 0, 0, 0, NULL, 'admin', NOW(), NULL, NULL, 0, 0, '1', 0
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `sys_permission` WHERE `id` = '2094103000000000006');
 
 -- -----------------------------------------------------------------------------
 -- 提案配置 — 按钮权限（六 Tab）
@@ -169,9 +158,6 @@ JOIN `sys_permission` p ON p.id IN (
   '2094103000000000001',
   '2094103000000000002',
   '2094103000000000003',
-  '2094103000000000004',
-  '2094103000000000005',
-  '2094103000000000006',
   '2094103000000000007',
   '2094103000000000008',
   '2094103000000000009',
