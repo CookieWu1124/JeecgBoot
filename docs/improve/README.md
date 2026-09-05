@@ -22,7 +22,7 @@ docs/improve/
 ├── 阿里云短信服务开通配置手册.md    # 阿里云短信签名/模板开通 + JeecgBoot yml 对接
 ├── assets/                        # 归档图、示意图（非代码生成物）
 │   ├── wechat-login/             # 微信授权登录绑定流程图（产品参考）
-│   └── sms-login/                # 短信验证登录开发流程图（产品/开发参考）
+│   └── sms-login/                # 短信登录定稿：简化版流程 md + 流程图（完整版仅对照）
 ├── api/                           # 对外/跨端接口对接文档
 │   ├── 提案小程序-接口对接清单.md   # 申请段：发给 App 前端同事的接口清单
 │   ├── 提案管理端-接口对接清单.md   # 申请段：发给 Vue3 管理端同事的接口清单
@@ -68,8 +68,8 @@ docs/improve/
 6. **微信开发者工具** → `微信开发者工具-小程序联调教程.md`：从安装软件到测通「工号+微信授权」
 7. **微信登录脉络** → `微信授权登录-生命周期脉络.md`：手机绑号 → 开发者工具 → jsCode/phoneCode → 进系统
 8. **登录绑定流程图（产品参考）** → `assets/wechat-login/登录绑定流程图.png`：波哥 spexSys 原图；与方案 A 差异见同目录 README
-8a. **短信验证登录流程图** → `assets/sms-login/短信验证登录开发流程图.png`：工号+手机+验证码 / HR / openid
-8b. **HR 员工校验联调清单** → `api/HR员工校验接口-联调清单.md`：发给 HR 的字段与业务码
+8a. **短信验证登录（定稿·简化版）** → `assets/sms-login/手机短信验证登录流程-简化版.md` + 同目录简化版流程图  
+8b. **HR 员工校验联调清单** → `api/HR员工校验接口-联调清单.md`：发给 HR 的字段与业务码  
 8c. **阿里云短信开通** → `阿里云短信服务开通配置手册.md`：签名/模板申请 + Jeecg yml
 9. **其他模块接入微信登录** → `微信小程序登录-其他模块接入.md`：同一 AppID 只改前端；新 AppID 才扩配置
 10. **小程序原型** → `prototype/improveSys.html`：23 页页面结构与字段
@@ -81,7 +81,7 @@ docs/improve/
 
 | 项 | 说明 |
 |----|------|
-| 登录 | 管理端 `POST /sys/login`；小程序工号+密码 `POST /sys/mLogin`，工号+微信授权 `POST /sys/wxMini/*`（开发期保留）；短信登录（规划中，见 `assets/sms-login/` + HR 联调清单）；`username = workNo` |
+| 登录 | 管理端账号密码；小程序 **目标态**为短信登录（见 `assets/sms-login/` 简化版）；微信授权与小程序密码为「目标态停用、开发期保留」；`username = workNo` |
 | 用户/组织 | 复用 Jeecg `sys_user` / `sys_depart`；业务名册用配置表 |
 | API 路径 | 共用 `/proposal/**` · 管理端 `/proposal/admin/**` · 小程序聚合 `/proposal/app/**` |
 | App 对接清单 | `api/提案小程序-接口对接清单.md`（申请段 + 工号密码/微信授权登录） |
