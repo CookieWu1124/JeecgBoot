@@ -19,11 +19,14 @@ docs/improve/
 ├── 微信开发者工具-小程序联调教程.md  # 从安装开发者工具到测通微信授权登录（0-1）
 ├── 微信授权登录-生命周期脉络.md      # 从注册微信到 bind 的通俗时间线（复习用）
 ├── 微信小程序登录-其他模块接入.md    # 公共 /sys/wxMini 如何给其他业务复用
+├── 阿里云短信服务开通配置手册.md    # 阿里云短信签名/模板开通 + JeecgBoot yml 对接
 ├── assets/                        # 归档图、示意图（非代码生成物）
-│   └── wechat-login/             # 登录绑定流程图（产品参考，波哥 spexSys 资料）
+│   ├── wechat-login/             # 微信授权登录绑定流程图（产品参考）
+│   └── sms-login/                # 短信验证登录开发流程图（产品/开发参考）
 ├── api/                           # 对外/跨端接口对接文档
 │   ├── 提案小程序-接口对接清单.md   # 申请段：发给 App 前端同事的接口清单
-│   └── 提案管理端-接口对接清单.md   # 申请段：发给 Vue3 管理端同事的接口清单
+│   ├── 提案管理端-接口对接清单.md   # 申请段：发给 Vue3 管理端同事的接口清单
+│   └── HR员工校验接口-联调清单.md   # 短信登录：提案后端 ↔ HR 校验字段口径
 ├── progress/                      # 四段业务开发进度追踪（状态/API/页面/验收）
 │   ├── README.md                  # 进度索引
 │   ├── 01_application_DEV_PROGRESS.md
@@ -65,6 +68,9 @@ docs/improve/
 6. **微信开发者工具** → `微信开发者工具-小程序联调教程.md`：从安装软件到测通「工号+微信授权」
 7. **微信登录脉络** → `微信授权登录-生命周期脉络.md`：手机绑号 → 开发者工具 → jsCode/phoneCode → 进系统
 8. **登录绑定流程图（产品参考）** → `assets/wechat-login/登录绑定流程图.png`：波哥 spexSys 原图；与方案 A 差异见同目录 README
+8a. **短信验证登录流程图** → `assets/sms-login/短信验证登录开发流程图.png`：工号+手机+验证码 / HR / openid
+8b. **HR 员工校验联调清单** → `api/HR员工校验接口-联调清单.md`：发给 HR 的字段与业务码
+8c. **阿里云短信开通** → `阿里云短信服务开通配置手册.md`：签名/模板申请 + Jeecg yml
 9. **其他模块接入微信登录** → `微信小程序登录-其他模块接入.md`：同一 AppID 只改前端；新 AppID 才扩配置
 10. **小程序原型** → `prototype/improveSys.html`：23 页页面结构与字段
 11. **管理端原型** → `prototype/index.html`：提案管理 + 提案配置（忽略其他菜单）
@@ -75,7 +81,7 @@ docs/improve/
 
 | 项 | 说明 |
 |----|------|
-| 登录 | 管理端 `POST /sys/login`；小程序工号+密码 `POST /sys/mLogin`，工号+微信授权 `POST /sys/wxMini/*`；`username = workNo` |
+| 登录 | 管理端 `POST /sys/login`；小程序工号+密码 `POST /sys/mLogin`，工号+微信授权 `POST /sys/wxMini/*`（开发期保留）；短信登录（规划中，见 `assets/sms-login/` + HR 联调清单）；`username = workNo` |
 | 用户/组织 | 复用 Jeecg `sys_user` / `sys_depart`；业务名册用配置表 |
 | API 路径 | 共用 `/proposal/**` · 管理端 `/proposal/admin/**` · 小程序聚合 `/proposal/app/**` |
 | App 对接清单 | `api/提案小程序-接口对接清单.md`（申请段 + 工号密码/微信授权登录） |
